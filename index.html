@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Shardfall</title>
+<link rel="stylesheet" href="css/ui.css">
+<style>
+html, body { margin: 0; height: 100%; background: #14121F; overflow: hidden; touch-action: none; user-select: none; }
+#game { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; object-fit: contain; background: #14121F; display: block; }
+#ui { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; pointer-events: none; }
+#ui > * { pointer-events: auto; }
+</style>
+</head>
+<body>
+<canvas id="game" width="1280" height="720"></canvas>
+<div id="ui"></div>
+<script src="src/core/config.js"></script>
+<script src="src/core/util.js"></script>
+<script src="src/core/rng.js"></script>
+<script src="src/core/events.js"></script>
+<script src="src/core/stats.js"></script>
+<script src="src/core/spatial.js"></script>
+<script src="src/core/pool.js"></script>
+<script src="src/lang/vi.js"></script>
+<script src="src/lang/en.js"></script>
+<script src="src/core/i18n.js"></script>
+<script src="src/core/save.js"></script>
+<script src="src/core/input.js"></script>
+<script src="src/core/camera.js"></script>
+<script src="src/core/loop.js"></script>
+<script src="src/data/weapons.js"></script>
+<script src="src/data/enemies.js"></script>
+<script src="src/data/bosses.js"></script>
+<script src="src/data/waves.js"></script>
+<script src="src/data/characters.js"></script>
+<script src="src/data/items.js"></script>
+<script src="src/data/upgrades.js"></script>
+<script src="src/data/meta.js"></script>
+<script src="src/sim/world.js"></script>
+<script src="src/sim/player.js"></script>
+<script src="src/sim/weapons.js"></script>
+<script src="src/sim/projectiles.js"></script>
+<script src="src/sim/combat.js"></script>
+<script src="src/sim/enemies.js"></script>
+<script src="src/sim/bosses.js"></script>
+<script src="src/sim/director.js"></script>
+<script src="src/sim/items.js"></script>
+<script src="src/sim/progression.js"></script>
+<script src="src/sim/shop.js"></script>
+<script src="src/sim/pickups.js"></script>
+<script src="src/sim/meta.js"></script>
+<script src="src/sim/run.js"></script>
+<script src="src/fx/shapes.js"></script>
+<script src="src/fx/render.js"></script>
+<script src="src/fx/particles.js"></script>
+<script src="src/fx/floor.js"></script>
+<script src="src/fx/juice.js"></script>
+<script src="src/fx/audio.js"></script>
+<script src="src/ui/hud.js"></script>
+<script src="src/ui/screens.js"></script>
+<script src="src/ui/touch.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
