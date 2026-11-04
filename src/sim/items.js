@@ -5,7 +5,7 @@
   const KEYS = ['kill', 'hit', 'dash', 'hurt', 'dodge', 'revive', 'wave', 'clear', 'shot'];
   const ACTIVE = {};
   const tmp = [];
-  let inited = false, busy = 0, buffs = [], delayed = [], ctr = {}, ramp = 0, stillT = 0;
+  let inited = false, busy = 0, buffs = [], delayed = [], ctr = {}, cds = {}, ramp = 0, stillT = 0;
   for (let i = 0; i < KEYS.length; i++) ACTIVE[KEYS[i]] = [];
 
   function val(h, key, n) { return NR.data.itemUtil.val(h.p[key], n); }
@@ -78,6 +78,16 @@
       ctr[id] = 0;
       const e = nearestEnemy(p, 650);
       if (!e) return;
+      const dmg = val(h, 'dmg', n) * dmgStat(p), o = { weaponId: src(id), element: 'shock' };
+      NR.combat.hitEnemy(e, dmg, o);
+      NR.combat.chain(e, dmg, o);
+    },
+    // time-gated bolt: one per cooldown no matter how many weapon hands fire or how fast (static_charm)
+    zap: function (p, n, h, ev, id) {
+      if (cds[id] > 0) return;
+      const e = nearestEnemy(p, 650);
+      if (!e) return;
+      cds[id] = val(h, 'cd', n);
       const dmg = val(h, 'dmg', n) * dmgStat(p), o = { weaponId: src(id), element: 'shock' };
       NR.combat.hitEnemy(e, dmg, o);
       NR.combat.chain(e, dmg, o);
@@ -197,7 +207,7 @@
       rebuild(p);
     });
   }
-  function reset() { buffs = []; delayed = []; ctr = {}; ramp = 0; stillT = 0; busy = 0; rebuild(null); }
+  function reset() { buffs = []; delayed = []; ctr = {}; cds = {}; ramp = 0; stillT = 0; busy = 0; rebuild(null); }
 
   function grant(p, id, source) {
     const d = NR.data.items[id];
@@ -250,6 +260,7 @@
         b.t -= dt;
         if (b.t <= 0) { NR.stats.removeMods(p, b.src); buffs.splice(i, 1); }
       }
+      for (const k in cds) if (cds[k] > 0) cds[k] -= dt;
       for (let i = delayed.length - 1; i >= 0; i--) {
         const d = delayed[i];
         d.t -= dt;

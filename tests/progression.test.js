@@ -115,12 +115,13 @@ module.exports = function (H) {
     eq(dealt(b) > 0, n >= 2, 'radius grows per stack (110/135/160)');
   };
   SC.static_charm = function (NR, n) {
-    const p = give(NR, 'static_charm', n), a = foe(NR, p.x + 200, p.y), every = [6, 5, 4][n - 1]; sync(NR);
+    const p = give(NR, 'static_charm', n), a = foe(NR, p.x + 200, p.y, 5000), cd = [1.6, 1.35, 1.1][n - 1], dmg = [26, 36, 46][n - 1]; sync(NR);
     const shot = function () { NR.events.emit('weapon:fire', { weaponId: 'pistol', slot: 0, kind: 'projectile', x: p.x, y: p.y, angle: 0 }); };
-    for (let i = 0; i < every - 1; i++) shot();
-    eq(dealt(a), 0, 'nothing before shot ' + every); shot();
-    near(dealt(a), [20, 28, 36][n - 1], 'bolt damage on shot ' + every);
-    for (let i = 0; i < every; i++) shot(); near(dealt(a), 2 * [20, 28, 36][n - 1], 'repeats every ' + every);
+    shot(); near(dealt(a), dmg, 'first shot zaps at once');
+    for (let i = 0; i < 60; i++) shot(); near(dealt(a), dmg, 'a flood of shots (many hands, fast fire) inside the cooldown adds nothing');
+    p.vx = 100; // moving: no Steady Aim buff
+    NR.items.update(cd - 0.05); shot(); near(dealt(a), dmg, 'still cooling down');
+    NR.items.update(0.1); shot(); near(dealt(a), 2 * dmg, 'zaps again once ' + cd + 's passed');
   };
   SC.venom_vial = function (NR, n) {
     const p = give(NR, 'venom_vial', n), seen = chancy(NR, true), e = foe(NR, 700, 600);

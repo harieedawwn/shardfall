@@ -108,8 +108,8 @@
     tpl: { vi: 'Khi lướt: sóng băng bán kính {r} gây {dmg} sát thương và làm đóng băng. Mỗi cộng dồn: +{r+} bán kính, +{dmg+} sát thương.', en: 'On dash: frost nova (radius {r}) dealing {dmg} damage and freezing. Each extra stack: +{r+} radius, +{dmg+} damage.' }
   });
   it('static_charm', 'rare', 'Bùa tĩnh điện', 'Static Charm', 45, {
-    hooks: [H('shot', 'arc', { every: S(6, -1, 4), dmg: S(20, 8, 44) })],
-    tpl: { vi: 'Mỗi {every} phát bắn: tia sét đánh kẻ gần nhất gây {dmg} sát thương. Mỗi cộng dồn: bắn ít hơn {every+} phát, +{dmg+} sát thương.', en: 'Every {every} shots: a bolt strikes the nearest enemy for {dmg}. Each extra stack: {every+} fewer shots, +{dmg+} damage.' }
+    hooks: [H('shot', 'zap', { cd: S(1.6, -0.25, 0.8), dmg: S(26, 10, 56) })],
+    tpl: { vi: 'Khi đang bắn: cứ {cd}s một tia sét đánh kẻ gần nhất gây {dmg} sát thương (không phụ thuộc số súng hay tốc độ bắn). Mỗi cộng dồn: hồi nhanh hơn {cd+}s, +{dmg+} sát thương.', en: 'While firing: every {cd}s a bolt strikes the nearest enemy for {dmg} (independent of weapon count and fire rate). Each extra stack: {cd+}s faster, +{dmg+} damage.' }
   });
   it('venom_vial', 'rare', 'Lọ độc', 'Venom Vial', 45, {
     hooks: [H('kill', 'cloud', { chance: S(0.15, 0.07, 0.4), r: 70, dps: 8, life: 3, element: 'poison' })],

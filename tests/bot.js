@@ -15,13 +15,34 @@ module.exports = function (NR) {
   function create(opts) {
     opts = opts || {};
     const rnd = mkRnd(((opts.seed | 0) ^ 0xB07) >>> 0);
-    const st = { lastDash: -999, tick: 0, strafe: 1, prevDash: false };
+    const st = { lastDash: -999, tick: 0, strafe: 1, prevDash: false, reach: 999, reachT: -999 };
     const intent = { mx: 0, my: 0, aim: 0, fire: false, dash: false, pause: false, device: 'kbm' };
     const A = NR.config.ARENA;
+
+    // how far the build can hurt: melee/orbit/aura builds must close in, anything with a gun keeps the kiting game
+    function reachOf(p) {
+      let best = 0;
+      for (let i = 0; i < p.weapons.length; i++) {
+        const d = NR.data.weapons[p.weapons[i].id];
+        if (!d) continue;
+        const r = NR.weapons.resolve(p, i);
+        let v;
+        if (d.kind === 'melee') v = r.r > 0 ? r.range + r.r * 0.6 : r.range * Math.sqrt(r.area || 1);
+        else if (d.kind === 'orbit') v = (r.orad || 90) * 1.25;
+        else if (d.kind === 'aura') v = (r.r || 120) * 1.1;
+        else if (d.kind === 'beam' && r.arc > 0) v = r.range;
+        else if (d.kind === 'drone') v = 600;
+        else v = r.range || 500;
+        if (v > best) best = v;
+      }
+      return best || 600;
+    }
 
     function think(W) {
       const p = W.player;
       st.tick++;
+      if (p && !p.dead && st.tick - st.reachT >= 30) { st.reach = reachOf(p); st.reachT = st.tick; }
+      if (p && !p.dead && st.reach < 300) return thinkMelee(W, p);
       intent.dash = false; intent.fire = false; intent.mx = 0; intent.my = 0;
       if (!p || p.dead) return intent;
       if (st.tick % 180 === 0) st.strafe = rnd() < 0.5 ? -1 : 1;
@@ -64,6 +85,55 @@ module.exports = function (NR) {
       if (near) { intent.aim = Math.atan2(near.y - p.y, near.x - p.x); intent.fire = nd < 800; }
       else intent.aim = Math.atan2(ay, ax);
       if (threat && p.dash.charges > 0 && p.iframes <= 0 && !st.prevDash && st.tick - st.lastDash > 20 && m > 0.1) {
+        intent.dash = true; st.lastDash = st.tick;
+      }
+      st.prevDash = intent.dash;
+      return intent;
+    }
+
+    // melee mode: walk into the nearest enemy (bosses included), strafe around it, dodge bullets, dash through danger
+    function thinkMelee(W, p) {
+      intent.dash = false; intent.fire = false; intent.mx = 0; intent.my = 0;
+      if (st.tick % 120 === 0) st.strafe = rnd() < 0.5 ? -1 : 1;
+      const want = st.reach * 0.55;
+      let ax = 0, ay = 0, near = null, nd = Infinity, bulletThreat = false, contact = false;
+      const E = W.enemies;
+      for (let i = 0; i < E.length; i++) {
+        const e = E[i];
+        if (e.dead) continue;
+        const dx = p.x - e.x, dy = p.y - e.y, d = Math.sqrt(dx * dx + dy * dy) || 1, edge = d - e.r;
+        if (edge < nd) { nd = edge; near = e; }
+        if (edge < 40) { const w = (1 - edge / 40) * 0.6; ax += dx / d * w; ay += dy / d * w; }
+        if (edge < p.r + 18) contact = true;
+      }
+      const P = W.projectiles;
+      for (let i = 0; i < P.length; i++) {
+        const b = P[i];
+        if (b.dead || b.team !== 'enemy') continue;
+        const dx = p.x - b.x, dy = p.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        if (d < 150) { const w = (1 - d / 150) * 1.1; ax += dx / d * w; ay += dy / d * w; if (d < b.r + p.r + 34) bulletThreat = true; }
+      }
+      const A = NR.config.ARENA, M = 120;
+      if (p.x < M) ax += (M - p.x) / M * 1.4; else if (p.x > A.w - M) ax -= (p.x - (A.w - M)) / M * 1.4;
+      if (p.y < M) ay += (M - p.y) / M * 1.4; else if (p.y > A.h - M) ay -= (p.y - (A.h - M)) / M * 1.4;
+      let aim = p.aim || 0;
+      if (near) {
+        const ex = near.x - p.x, ey = near.y - p.y, d = Math.sqrt(ex * ex + ey * ey) || 1;
+        if (nd > want) { ax += ex / d * 1.4; ay += ey / d * 1.4; }            // close in
+        const tx = -ey / d * st.strafe, ty = ex / d * st.strafe;             // orbit it while hitting
+        ax += tx * (nd <= want ? 0.9 : 0.25); ay += ty * (nd <= want ? 0.9 : 0.25);
+        aim = Math.atan2(ey, ex); intent.fire = nd < st.reach + 80;
+      } else {
+        let pk = null, pd = 700 * 700;
+        for (let i = 0; i < W.pickups.length; i++) { const k = W.pickups[i], dx = k.x - p.x, dy = k.y - p.y, d2 = dx * dx + dy * dy; if (!k.dead && d2 < pd) { pd = d2; pk = k; } }
+        if (pk) { const d = Math.sqrt(pd) || 1; ax += (pk.x - p.x) / d; ay += (pk.y - p.y) / d; }
+      }
+      const m = Math.sqrt(ax * ax + ay * ay);
+      if (m > 1) { ax /= m; ay /= m; }
+      intent.mx = ax; intent.my = ay; intent.aim = aim;
+      const hurt = p.hp < p.maxHp * 0.5;
+      const far = near && nd > 320 && p.dash.charges >= p.dash.max && p.dash.max >= 2;
+      if ((bulletThreat || (contact && hurt) || far) && p.dash.charges > 0 && p.iframes <= 0 && !st.prevDash && st.tick - st.lastDash > 20 && m > 0.1) {
         intent.dash = true; st.lastDash = st.tick;
       }
       st.prevDash = intent.dash;

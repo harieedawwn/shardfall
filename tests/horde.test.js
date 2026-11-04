@@ -388,6 +388,14 @@ module.exports = function (H) {
     ok(NR.__w.kinds.shoot && NR.__w.kinds.dash && NR.__w.kinds.blast && NR.__w.kinds.summon, 'all attack kinds seen ' + JSON.stringify(NR.__w.kinds));
   });
 
+  H.test('horde: a melee-only bot (dasher) closes in and beats boss 1 instead of kiting forever', function () {
+    for (const seed of [1, 2, 3]) {
+      const s = H.runSim({ seconds: 600, seed: seed, char: 'dasher', danger: 0 });
+      ok(s.result !== 'timeout', 'seed ' + seed + ': stuck at wave ' + s.wave + ' (boss never killed)');
+      ok(s.wave >= 6, 'seed ' + seed + ': died at wave ' + s.wave + ' before clearing boss 1');
+    }
+  });
+
   H.test('horde: determinism - same seed, same hash, with and without fx', function () {
     const a = H.runSim({ seconds: 60, seed: 5, char: 'ranger', danger: 3 }), b = H.runSim({ seconds: 60, seed: 5, char: 'ranger', danger: 3 }), c = H.runSim({ seconds: 60, seed: 5, char: 'ranger', danger: 3, fx: true });
     H.eq(a.hash, b.hash); H.eq(a.hash, c.hash);
