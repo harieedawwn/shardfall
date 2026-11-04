@@ -19,8 +19,8 @@
   ];
   // Specials (v2): heavy hitters the director drops into every wave on its own schedule (not in the wave budget pools).
   const SP = [
-    ['juggernaut', 'hex', '#6B5E7A', 'Kẻ Nghiền', 'Juggernaut', 30, 520, 46, 24, 6, true, 'juggernaut', { cost: 0, cd: 3.6, tele: 0.9, blastR: 140, range: 230 }],
-    ['kidnapper', 'capsule', '#3E7A64', 'Kẻ Bắt Cóc', 'Snatcher', 16, 170, 150, 8, 2, false, 'kidnapper', { cost: 0, cd: 3, grabT: 1.5, drag: 210, breakHp: 0.22 }],
+    ['juggernaut', 'hex', '#6B5E7A', 'Kẻ Nghiền', 'Juggernaut', 30, 420, 46, 24, 6, true, 'juggernaut', { cost: 0, cd: 3.6, tele: 0.9, blastR: 140, range: 230 }],
+    ['kidnapper', 'capsule', '#3E7A64', 'Kẻ Bắt Cóc', 'Snatcher', 16, 120, 140, 8, 2, false, 'kidnapper', { cost: 0, cd: 4, grabT: 1.1, drag: 190, breakHp: 0.14 }],
     ['warlord', 'star', '#B8452F', 'Kẻ Tiếp Sức', 'Warlord', 18, 260, 52, 12, 3, false, 'warlord', { cost: 0, cd: 4.5, tele: 0.9, buffR: 280, hpBoost: 0.7, dmgBoost: 1.25, keepMin: 280, keepMax: 400 }],
     ['trickster', 'tri', '#4FA8F0', 'Bóng Láu', 'Trickster', 10, 120, 165, 10, 1, false, 'trickster', { cost: 0, cd: 1.5, keepMin: 210, keepMax: 330, blinkCd: 2.4, bulletSpeed: 340, bulletR: 5 }],
     ['engineer', 'square', '#C9A24B', 'Thợ Pháo', 'Engineer', 14, 150, 105, 6, 1, false, 'engineer', { cost: 0, build: 2.6, cd: 5, maxTurrets: 2 }],

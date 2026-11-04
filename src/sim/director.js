@@ -8,7 +8,8 @@
   const wfn = function (o) { return o.weight; };
   let chillT = 0, extra = 0;
   const spT = [], spId = []; let spN = 0, spI = 0;
-  const SPECIALS = [['juggernaut', 1], ['kidnapper', 1], ['trickster', 2], ['engineer', 3], ['mortar', 3], ['warlord', 4]];
+  // [id, first wave at danger 0]; each danger level brings them one wave earlier (never before wave 2)
+  const SPECIALS = [['trickster', 4], ['juggernaut', 5], ['kidnapper', 6], ['engineer', 7], ['mortar', 8], ['warlord', 10]];
   let info = null, total = 0, spent = 0, bossSpawned = false, cleared = false, minCost = 0.4, clock = 0, plN = 0;
   const plT = new Float64Array(128), plC = new Int32Array(128); // spawn-marker log: enemies waiting behind a marker count against the cap
   const affTmp = [];
@@ -60,9 +61,18 @@
     const dn = W.danger | 0;
     let hs = NR.util.hash('sp' + W.seed + ':' + n) >>> 0; // own stream: does not shift NR.rng for the rest of the wave
     const R = { range: function (a, b) { hs = (Math.imul(hs, 1664525) + 1013904223) >>> 0; return a + hs / 4294967296 * (b - a); }, int: function (a, b) { return a + Math.floor(this.range(0, 0.9999) * (b - a + 1)); } };
-    let count = info.isBoss ? 2 + (dn >= 3 ? 1 : 0) : Math.min(7, 3 + Math.floor(n / 3) + (dn >= 3 ? 1 : 0) + (dn >= 5 ? 1 : 0));
+    // rare at first, more later: danger 0 sees its first special on wave 4, one per wave until wave 7, then 2, then 3;
+    // high danger starts earlier and ramps a little harder (cap 2 + danger, max 5). Boss waves only from danger 3.
+    const unlock = function (w0) { return Math.max(2, w0 - dn); };
     const pool = [];
-    for (let i = 0; i < SPECIALS.length; i++) if (n >= SPECIALS[i][1]) pool.push(SPECIALS[i][0]);
+    for (let i = 0; i < SPECIALS.length; i++) if (n >= unlock(SPECIALS[i][1])) pool.push(SPECIALS[i][0]);
+    let count = 0;
+    if (pool.length) {
+      const first = unlock(SPECIALS[0][1]);
+      count = 1 + Math.floor((n - first) / 4) + (n >= 7 ? Math.floor(dn / 2) : 0);
+      count = Math.min(count, 2 + dn, 5);
+      if (info.isBoss) count = dn >= 3 ? 1 : 0;
+    }
     spN = count; spI = 0;
     const dur = Math.max(10, info.duration - 3);
     for (let i = 0; i < count; i++) { spT[i] = dur * (0.15 + 0.7 * (i + R.range(0.1, 0.9)) / count); spId[i] = pool[R.int(0, pool.length - 1)]; }
@@ -70,7 +80,7 @@
   function spawnSpecial(W, p, id) {
     const A = NR.config.ARENA, k = NR.util.hash('spp' + W.seed + ':' + W.wave + ':' + spI) >>> 0, ang = (k % 6283) / 1000, d = 380 + (k >>> 13) % 140;
     const x = NR.util.clamp(p.x + Math.cos(ang) * d, 80, A.w - 80), y = NR.util.clamp(p.y + Math.sin(ang) * d, 80, A.h - 80);
-    NR.enemies.spawn(id, x, y, { marker: 1.2, hpMult: 1 + 0.12 * (W.danger | 0) });
+    NR.enemies.spawn(id, x, y, { marker: 1.2, hpMult: 0.75 + 0.12 * (W.danger | 0) });
   }
   const TAU_D = Math.PI * 2;
   function costOf(id) { return NR.data.enemies[id].aiParams.cost; }
