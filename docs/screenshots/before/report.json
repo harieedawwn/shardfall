@@ -1,0 +1,1599 @@
+{
+ "desk-1920x1080/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1920x1080/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 56
+ },
+ "desk-1920x1080/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1920x1080/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 51
+ },
+ "desk-1920x1080/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1920x1080/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "desk-1920x1080/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1920x1080/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1920x1080/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1920x1080/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1920x1080/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\""
+  ],
+  "fps": 60
+ },
+ "desk-1920x1080/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "desk-1366x768/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/select/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "desk-1366x768/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 56
+ },
+ "desk-1366x768/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "desk-1366x768/levelup/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 56
+ },
+ "desk-1366x768/shop/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/settings/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/codex/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "offscreen card node \"Kinh nghiệmMỗi cấp: +5% \"",
+   "offscreen card node \"Sát thươngMỗi cấp: +5% S\"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\""
+  ],
+  "fps": 60
+ },
+ "desk-1366x768/meta/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen branch b-fortune \"FortuneStarting GoldPer \"",
+   "offscreen card node \"ExperiencePer level: +5%\"",
+   "offscreen card node \"DamagePer level: +5% Dam\"",
+   "offscreen card node \"LuckPer level: +5% LuckP\"",
+   "offscreen card node \"Shop discountPer level: \"",
+   "offscreen card node \"DashLv 1: +1 Dash Charge\"",
+   "offscreen card node \"Weapon slotsLv 1: +1 Wea\"",
+   "offscreen card node \"Second windLv 1: +1 Revi\""
+  ],
+  "fps": 60
+ },
+ "desk-1366x768/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/end/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 53
+ },
+ "desk-1440x900/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1440x900/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "offscreen card node \"Sát thươngMỗi cấp: +5% S\"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\""
+  ],
+  "fps": 60
+ },
+ "desk-1440x900/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "ultra-2560x1080/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "ultra-2560x1080/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ultra-2560x1080/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "ultra-2560x1080/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 49
+ },
+ "ultra-2560x1080/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ultra-2560x1080/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ultra-2560x1080/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "ultra-2560x1080/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ultra-2560x1080/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "ultra-2560x1080/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "ultra-2560x1080/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\""
+  ],
+  "fps": 60
+ },
+ "ultra-2560x1080/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "win-1280x800@1.25/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "win-1280x800@1.25/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "win-1280x800@1.25/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "win-1280x800@1.25/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 58
+ },
+ "win-1280x800@1.25/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "win-1280x800@1.25/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "win-1280x800@1.25/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "win-1280x800@1.25/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "win-1280x800@1.25/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "win-1280x800@1.25/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "win-1280x800@1.25/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "offscreen card node \"Sát thươngMỗi cấp: +5% S\"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\""
+  ],
+  "fps": 60
+ },
+ "win-1280x800@1.25/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "iphoneSE-land/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen sh hex \"\"",
+   "tap<44 46x32 btn on \"VI\"",
+   "tap<44 51x32 btn \"EN\"",
+   "tap<44 460x41 btn pri big \"Chơi\"",
+   "tap<44 460x41 btn big \"Nâng cấp0\"",
+   "tap<44 460x41 btn big \"Bách khoa\"",
+   "tap<44 460x41 btn big \"Cài đặt\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "tap<44 320x41 btn pri big go \"Bắt đầu\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/select/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 93x41 btn back \"Back\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "tap<44 320x41 btn pri big go \"Start run\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "iphoneSE-land/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 49
+ },
+ "iphoneSE-land/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "iphoneSE-land/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 135x41 btn rr \"Đổi thẻ5R\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/levelup/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 132x41 btn rr \"Reroll5R\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 141x41 btn rr \"Làm mới4R\"",
+   "tap<44 102x41 btn pri big next \"Đợt tiếpN\"",
+   "tap<44 217x41 btn buy \"Mua60\"",
+   "tap<44 67x41 btn lk \"Khóa\"",
+   "tap<44 213x41 btn buy \"Mua48\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card offer r-rare \"Vũ khí · Hiếm3Búa hư khô\"",
+   "tap<44 213x41 btn buy \"Mua72\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card offer r-common \"Vật phẩm · Thường4Giáp s\"",
+   "tap<44 213x41 btn buy \"Mua20\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card wslot r-common \"Súng lụcLv 1Vật lýST 21.\"",
+   "tap<44 635x41 btn stats-toggle \"Xem chỉ số\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/shop/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 132x41 btn rr \"Reroll4R\"",
+   "tap<44 122x41 btn pri big next \"Next waveN\"",
+   "tap<44 219x41 btn buy \"Buy60\"",
+   "tap<44 65x41 btn lk \"Lock\"",
+   "tap<44 215x41 btn buy \"Buy48\"",
+   "tap<44 63x41 btn lk \"Lock\"",
+   "offscreen card offer r-rare \"Weapon · Rare3MaulNewHea\"",
+   "tap<44 215x41 btn buy \"Buy72\"",
+   "tap<44 63x41 btn lk \"Lock\"",
+   "offscreen card offer r-common \"Item · Common4Iron Plati\"",
+   "tap<44 215x41 btn buy \"Buy20\"",
+   "tap<44 63x41 btn lk \"Lock\"",
+   "offscreen card wslot r-common \"PistolLv 1PhysicalDMG 21\"",
+   "tap<44 635x41 btn stats-toggle \"Show stats\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 279x41 btn pri big \"Tiếp tục\"",
+   "tap<44 279x41 btn big \"Cài đặt\"",
+   "tap<44 279x41 btn big dng \"Bỏ cuộc\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "tap<44 46x32 btn on \"VI\"",
+   "tap<44 51x32 btn \"EN\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw on \"Bật\"",
+   "tap<44 84x41 btn sw on \"Bật\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 593x41 btn dng \"Xóa toàn bộ dữ liệu\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/settings/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 93x41 btn back \"Back\"",
+   "tap<44 46x32 btn \"VI\"",
+   "tap<44 51x32 btn on \"EN\"",
+   "tap<44 84x41 btn sw \"Off\"",
+   "tap<44 84x41 btn sw on \"On\"",
+   "tap<44 84x41 btn sw on \"On\"",
+   "tap<44 84x41 btn sw \"Off\"",
+   "tap<44 84x41 btn sw \"Off\"",
+   "tap<44 84x41 btn sw \"Off\"",
+   "tap<44 593x41 btn dng \"Erase all data\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/codex/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 93x41 btn back \"Back\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "tap<44 284x41 btn buy poor off \"Nâng15\"",
+   "offscreen card node \"Máu tối đaMỗi cấp: +10 M\"",
+   "tap<44 284x41 btn buy poor off \"Nâng20\"",
+   "offscreen card node \"Tầm hútMỗi cấp: +10% Tầm\"",
+   "tap<44 284x41 btn buy poor off \"Nâng20\"",
+   "offscreen card node \"Kinh nghiệmMỗi cấp: +5% \"",
+   "tap<44 284x41 btn buy poor off \"Nâng25\"",
+   "offscreen card node \"Sát thươngMỗi cấp: +5% S\"",
+   "tap<44 284x41 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "tap<44 284x41 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "tap<44 284x41 btn buy poor off \"Nâng40\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "tap<44 284x41 btn buy poor off \"Nâng120\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "tap<44 284x41 btn buy poor off \"Nâng150\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\"",
+   "tap<44 284x41 btn buy poor off \"Nâng200\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/meta/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 93x41 btn back \"Back\"",
+   "offscreen branch b-fortune \"FortuneStarting GoldPer \"",
+   "tap<44 284x41 btn buy poor off \"Upgrade15\"",
+   "offscreen card node \"Max HPPer level: +10 Max\"",
+   "tap<44 284x41 btn buy poor off \"Upgrade20\"",
+   "offscreen card node \"Pickup rangePer level: +\"",
+   "tap<44 284x41 btn buy poor off \"Upgrade20\"",
+   "offscreen card node \"ExperiencePer level: +5%\"",
+   "tap<44 284x41 btn buy poor off \"Upgrade25\"",
+   "offscreen card node \"DamagePer level: +5% Dam\"",
+   "tap<44 284x41 btn buy poor off \"Upgrade30\"",
+   "offscreen card node \"LuckPer level: +5% LuckP\"",
+   "tap<44 284x41 btn buy poor off \"Upgrade30\"",
+   "offscreen card node \"Shop discountPer level: \"",
+   "tap<44 284x41 btn buy poor off \"Upgrade40\"",
+   "offscreen card node \"DashLv 1: +1 Dash Charge\"",
+   "tap<44 284x41 btn buy poor off \"Upgrade120\"",
+   "offscreen card node \"Weapon slotsLv 1: +1 Wea\"",
+   "tap<44 284x41 btn buy poor off \"Upgrade150\"",
+   "offscreen card node \"Second windLv 1: +1 Revi\"",
+   "tap<44 284x41 btn buy poor off \"Upgrade200\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 99x41 btn pri big \"Chơi lại\"",
+   "tap<44 102x41 btn big \"Về menu\"",
+   "tap<44 113x41 btn big \"Nâng cấp\""
+  ],
+  "fps": 60
+ },
+ "iphoneSE-land/end/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 124x41 btn pri big \"Play again\"",
+   "tap<44 149x41 btn big \"Back to menu\"",
+   "tap<44 115x41 btn big \"Upgrades\""
+  ],
+  "fps": 60
+ },
+ "iphone15pro-land/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen sh hex \"\"",
+   "tap<44 46x32 btn on \"VI\"",
+   "tap<44 51x32 btn \"EN\"",
+   "tap<44 460x41 btn pri big \"Chơi\"",
+   "tap<44 460x41 btn big \"Nâng cấp0\"",
+   "tap<44 460x41 btn big \"Bách khoa\"",
+   "tap<44 460x41 btn big \"Cài đặt\""
+  ],
+  "fps": 56
+ },
+ "iphone15pro-land/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "tap<44 320x41 btn pri big go \"Bắt đầu\""
+  ],
+  "fps": 57
+ },
+ "iphone15pro-land/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "iphone15pro-land/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 51
+ },
+ "iphone15pro-land/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 58
+ },
+ "iphone15pro-land/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 135x41 btn rr \"Đổi thẻ5R\""
+  ],
+  "fps": 57
+ },
+ "iphone15pro-land/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 141x41 btn rr \"Làm mới4R\"",
+   "tap<44 102x41 btn pri big next \"Đợt tiếpN\"",
+   "tap<44 311x41 btn buy \"Mua60\"",
+   "tap<44 67x41 btn lk \"Khóa\"",
+   "tap<44 305x41 btn buy \"Mua48\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card offer r-rare \"Vũ khí · Hiếm3Búa hư khô\"",
+   "tap<44 305x41 btn buy \"Mua72\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card offer r-common \"Vật phẩm · Thường4Giáp s\"",
+   "tap<44 305x41 btn buy \"Mua20\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card wslot r-common \"Súng lụcLv 1Vật lýST 21.\"",
+   "tap<44 820x41 btn stats-toggle \"Xem chỉ số\""
+  ],
+  "fps": 57
+ },
+ "iphone15pro-land/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 371x41 btn pri big \"Tiếp tục\"",
+   "tap<44 371x41 btn big \"Cài đặt\"",
+   "tap<44 371x41 btn big dng \"Bỏ cuộc\""
+  ],
+  "fps": 56
+ },
+ "iphone15pro-land/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "tap<44 46x32 btn on \"VI\"",
+   "tap<44 51x32 btn \"EN\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw on \"Bật\"",
+   "tap<44 84x41 btn sw on \"Bật\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 718x41 btn dng \"Xóa toàn bộ dữ liệu\""
+  ],
+  "fps": 60
+ },
+ "iphone15pro-land/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\""
+  ],
+  "fps": 55
+ },
+ "iphone15pro-land/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "tap<44 376x41 btn buy poor off \"Nâng15\"",
+   "offscreen card node \"Máu tối đaMỗi cấp: +10 M\"",
+   "tap<44 376x41 btn buy poor off \"Nâng20\"",
+   "offscreen card node \"Tầm hútMỗi cấp: +10% Tầm\"",
+   "tap<44 376x41 btn buy poor off \"Nâng20\"",
+   "offscreen card node \"Kinh nghiệmMỗi cấp: +5% \"",
+   "tap<44 376x41 btn buy poor off \"Nâng25\"",
+   "offscreen card node \"Sát thươngMỗi cấp: +5% S\"",
+   "tap<44 376x41 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "tap<44 376x41 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "tap<44 376x41 btn buy poor off \"Nâng40\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "tap<44 376x41 btn buy poor off \"Nâng120\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "tap<44 376x41 btn buy poor off \"Nâng150\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\"",
+   "tap<44 376x41 btn buy poor off \"Nâng200\""
+  ],
+  "fps": 60
+ },
+ "iphone15pro-land/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 99x41 btn pri big \"Chơi lại\"",
+   "tap<44 102x41 btn big \"Về menu\"",
+   "tap<44 113x41 btn big \"Nâng cấp\""
+  ],
+  "fps": 58
+ },
+ "iphone15pro-port/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 49x34 btn on \"VI\"",
+   "tap<44 55x34 btn \"EN\""
+  ],
+  "fps": 60
+ },
+ "iphone15pro-port/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 130x44 btn back \"Quay lại\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\""
+  ],
+  "fps": 60
+ },
+ "iphone15pro-port/select/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 100x44 btn back \"Back\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\""
+  ],
+  "fps": 58
+ },
+ "iphone15pro-port/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "iphone15pro-port/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 55
+ },
+ "iphone15pro-port/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "iphone15pro-port/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 143x44 btn rr \"Đổi thẻ5R\""
+  ],
+  "fps": 60
+ },
+ "iphone15pro-port/levelup/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 139x44 btn rr \"Reroll5R\""
+  ],
+  "fps": 58
+ },
+ "iphone15pro-port/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 78x44 btn buy \"Mua48\"",
+   "tap<44 70x44 btn lk \"Khóa\"",
+   "tap<44 78x44 btn buy \"Mua72\"",
+   "tap<44 70x44 btn lk \"Khóa\"",
+   "tap<44 78x44 btn buy \"Mua20\"",
+   "tap<44 70x44 btn lk \"Khóa\"",
+   "offscreen card wslot r-common \"Súng lụcLv 1Vật lýST 21.\"",
+   "tap<44 373x44 btn stats-toggle \"Xem chỉ số\""
+  ],
+  "fps": 58
+ },
+ "iphone15pro-port/shop/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 80x44 btn buy \"Buy48\"",
+   "tap<44 68x44 btn lk \"Lock\"",
+   "tap<44 80x44 btn buy \"Buy72\"",
+   "tap<44 68x44 btn lk \"Lock\"",
+   "tap<44 80x44 btn buy \"Buy20\"",
+   "tap<44 68x44 btn lk \"Lock\"",
+   "offscreen card wslot r-common \"PistolLv 1PhysicalDMG 21\"",
+   "tap<44 373x44 btn stats-toggle \"Show stats\""
+  ],
+  "fps": 58
+ },
+ "iphone15pro-port/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 58
+ },
+ "iphone15pro-port/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 130x44 btn back \"Quay lại\"",
+   "tap<44 49x34 btn on \"VI\"",
+   "tap<44 55x34 btn \"EN\"",
+   "tap<44 331x44 btn sw \"Tắt\"",
+   "tap<44 331x44 btn sw on \"Bật\"",
+   "tap<44 331x44 btn sw on \"Bật\"",
+   "tap<44 331x44 btn sw \"Tắt\"",
+   "tap<44 331x44 btn sw \"Tắt\"",
+   "tap<44 331x44 btn sw \"Tắt\"",
+   "tap<44 343x44 btn dng \"Xóa toàn bộ dữ liệu\""
+  ],
+  "fps": 60
+ },
+ "iphone15pro-port/settings/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 100x44 btn back \"Back\"",
+   "tap<44 49x34 btn \"VI\"",
+   "tap<44 55x34 btn on \"EN\"",
+   "tap<44 331x44 btn sw \"Off\"",
+   "tap<44 331x44 btn sw on \"On\"",
+   "tap<44 331x44 btn sw on \"On\"",
+   "tap<44 331x44 btn sw \"Off\"",
+   "tap<44 331x44 btn sw \"Off\"",
+   "tap<44 331x44 btn sw \"Off\"",
+   "tap<44 343x44 btn dng \"Erase all data\""
+  ],
+  "fps": 60
+ },
+ "iphone15pro-port/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 130x44 btn back \"Quay lại\""
+  ],
+  "fps": 54
+ },
+ "iphone15pro-port/codex/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 100x44 btn back \"Back\""
+  ],
+  "fps": 57
+ },
+ "iphone15pro-port/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 130x44 btn back \"Quay lại\"",
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "tap<44 347x44 btn buy poor off \"Nâng15\"",
+   "tap<44 347x44 btn buy poor off \"Nâng20\"",
+   "tap<44 347x44 btn buy poor off \"Nâng20\"",
+   "offscreen card node \"Kinh nghiệmMỗi cấp: +5% \"",
+   "tap<44 347x44 btn buy poor off \"Nâng25\"",
+   "offscreen card node \"Sát thươngMỗi cấp: +5% S\"",
+   "tap<44 347x44 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "tap<44 347x44 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "tap<44 347x44 btn buy poor off \"Nâng40\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "tap<44 347x44 btn buy poor off \"Nâng120\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "tap<44 347x44 btn buy poor off \"Nâng150\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\"",
+   "tap<44 347x44 btn buy poor off \"Nâng200\""
+  ],
+  "fps": 58
+ },
+ "iphone15pro-port/meta/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 100x44 btn back \"Back\"",
+   "offscreen branch b-fortune \"FortuneStarting GoldPer \"",
+   "tap<44 347x44 btn buy poor off \"Upgrade15\"",
+   "tap<44 347x44 btn buy poor off \"Upgrade20\"",
+   "tap<44 347x44 btn buy poor off \"Upgrade20\"",
+   "offscreen card node \"ExperiencePer level: +5%\"",
+   "tap<44 347x44 btn buy poor off \"Upgrade25\"",
+   "offscreen card node \"DamagePer level: +5% Dam\"",
+   "tap<44 347x44 btn buy poor off \"Upgrade30\"",
+   "offscreen card node \"LuckPer level: +5% LuckP\"",
+   "tap<44 347x44 btn buy poor off \"Upgrade30\"",
+   "offscreen card node \"Shop discountPer level: \"",
+   "tap<44 347x44 btn buy poor off \"Upgrade40\"",
+   "offscreen card node \"DashLv 1: +1 Dash Charge\"",
+   "tap<44 347x44 btn buy poor off \"Upgrade120\"",
+   "offscreen card node \"Weapon slotsLv 1: +1 Wea\"",
+   "tap<44 347x44 btn buy poor off \"Upgrade150\"",
+   "offscreen card node \"Second windLv 1: +1 Revi\"",
+   "tap<44 347x44 btn buy poor off \"Upgrade200\""
+  ],
+  "fps": 58
+ },
+ "iphone15pro-port/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "iphone15pro-port/end/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "pixel7-land/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen sh hex \"\"",
+   "tap<44 46x32 btn on \"VI\"",
+   "tap<44 51x32 btn \"EN\"",
+   "tap<44 460x41 btn pri big \"Chơi\"",
+   "tap<44 460x41 btn big \"Nâng cấp0\"",
+   "tap<44 460x41 btn big \"Bách khoa\"",
+   "tap<44 460x41 btn big \"Cài đặt\""
+  ],
+  "fps": 57
+ },
+ "pixel7-land/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "tap<44 320x41 btn pri big go \"Bắt đầu\""
+  ],
+  "fps": 60
+ },
+ "pixel7-land/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "pixel7-land/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 51
+ },
+ "pixel7-land/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "pixel7-land/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 135x41 btn rr \"Đổi thẻ5R\""
+  ],
+  "fps": 57
+ },
+ "pixel7-land/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 141x41 btn rr \"Làm mới4R\"",
+   "tap<44 102x41 btn pri big next \"Đợt tiếpN\"",
+   "tap<44 344x41 btn buy \"Mua60\"",
+   "tap<44 67x41 btn lk \"Khóa\"",
+   "tap<44 337x41 btn buy \"Mua48\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card offer r-rare \"Vũ khí · Hiếm3Búa hư khô\"",
+   "tap<44 337x41 btn buy \"Mua72\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card offer r-common \"Vật phẩm · Thường4Giáp s\"",
+   "tap<44 337x41 btn buy \"Mua20\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card wslot r-common \"Súng lụcLv 1Vật lýST 21.\"",
+   "tap<44 883x41 btn stats-toggle \"Xem chỉ số\""
+  ],
+  "fps": 58
+ },
+ "pixel7-land/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 403x41 btn pri big \"Tiếp tục\"",
+   "tap<44 403x41 btn big \"Cài đặt\"",
+   "tap<44 403x41 btn big dng \"Bỏ cuộc\""
+  ],
+  "fps": 57
+ },
+ "pixel7-land/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "tap<44 46x32 btn on \"VI\"",
+   "tap<44 51x32 btn \"EN\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw on \"Bật\"",
+   "tap<44 84x41 btn sw on \"Bật\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 718x41 btn dng \"Xóa toàn bộ dữ liệu\""
+  ],
+  "fps": 60
+ },
+ "pixel7-land/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\""
+  ],
+  "fps": 58
+ },
+ "pixel7-land/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "tap<44 408x41 btn buy poor off \"Nâng15\"",
+   "offscreen card node \"Máu tối đaMỗi cấp: +10 M\"",
+   "tap<44 408x41 btn buy poor off \"Nâng20\"",
+   "offscreen card node \"Tầm hútMỗi cấp: +10% Tầm\"",
+   "tap<44 408x41 btn buy poor off \"Nâng20\"",
+   "offscreen card node \"Kinh nghiệmMỗi cấp: +5% \"",
+   "tap<44 408x41 btn buy poor off \"Nâng25\"",
+   "offscreen card node \"Sát thươngMỗi cấp: +5% S\"",
+   "tap<44 408x41 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "tap<44 408x41 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "tap<44 408x41 btn buy poor off \"Nâng40\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "tap<44 408x41 btn buy poor off \"Nâng120\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "tap<44 408x41 btn buy poor off \"Nâng150\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\"",
+   "tap<44 408x41 btn buy poor off \"Nâng200\""
+  ],
+  "fps": 60
+ },
+ "pixel7-land/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 99x41 btn pri big \"Chơi lại\"",
+   "tap<44 102x41 btn big \"Về menu\"",
+   "tap<44 113x41 btn big \"Nâng cấp\""
+  ],
+  "fps": 60
+ },
+ "android-640x360/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen sh sq \"\"",
+   "offscreen sh dia \"\"",
+   "offscreen sh hex \"\"",
+   "tap<44 46x32 btn on \"VI\"",
+   "tap<44 51x32 btn \"EN\"",
+   "tap<44 460x41 btn pri big \"Chơi\"",
+   "tap<44 460x41 btn big \"Nâng cấp0\"",
+   "tap<44 460x41 btn big \"Bách khoa\"",
+   "tap<44 460x41 btn big \"Cài đặt\""
+  ],
+  "fps": 60
+ },
+ "android-640x360/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "offscreen btn card char locked \"???Chưa mở khóa400\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "offscreen lock \"\"",
+   "tap<44 320x41 btn pri big go \"Bắt đầu\""
+  ],
+  "fps": 60
+ },
+ "android-640x360/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "android-640x360/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 51
+ },
+ "android-640x360/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "android-640x360/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 135x41 btn rr \"Đổi thẻ5R\""
+  ],
+  "fps": 60
+ },
+ "android-640x360/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 141x41 btn rr \"Làm mới4R\"",
+   "tap<44 102x41 btn pri big next \"Đợt tiếpN\"",
+   "offscreen card offer r-common \"Vũ khí · Thường1Súng phu\"",
+   "tap<44 203x41 btn buy \"Mua60\"",
+   "tap<44 67x41 btn lk \"Khóa\"",
+   "offscreen card offer r-common \"Vũ khí · Thường2Quạt băn\"",
+   "tap<44 199x41 btn buy \"Mua48\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card offer r-rare \"Vũ khí · Hiếm3Búa hư khô\"",
+   "tap<44 199x41 btn buy \"Mua72\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card offer r-common \"Vật phẩm · Thường4Giáp s\"",
+   "tap<44 199x41 btn buy \"Mua20\"",
+   "tap<44 66x41 btn lk \"Khóa\"",
+   "offscreen card wslot r-common \"Súng lụcLv 1Vật lýST 21.\"",
+   "tap<44 608x41 btn stats-toggle \"Xem chỉ số\""
+  ],
+  "fps": 60
+ },
+ "android-640x360/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 266x41 btn pri big \"Tiếp tục\"",
+   "tap<44 266x41 btn big \"Cài đặt\"",
+   "tap<44 266x41 btn big dng \"Bỏ cuộc\""
+  ],
+  "fps": 60
+ },
+ "android-640x360/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "tap<44 46x32 btn on \"VI\"",
+   "tap<44 51x32 btn \"EN\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw on \"Bật\"",
+   "tap<44 84x41 btn sw on \"Bật\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 84x41 btn sw \"Tắt\"",
+   "tap<44 566x41 btn dng \"Xóa toàn bộ dữ liệu\""
+  ],
+  "fps": 60
+ },
+ "android-640x360/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\""
+  ],
+  "fps": 60
+ },
+ "android-640x360/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 122x41 btn back \"Quay lại\"",
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "tap<44 270x41 btn buy poor off \"Nâng15\"",
+   "offscreen card node \"Máu tối đaMỗi cấp: +10 M\"",
+   "tap<44 270x41 btn buy poor off \"Nâng20\"",
+   "offscreen card node \"Tầm hútMỗi cấp: +10% Tầm\"",
+   "tap<44 270x41 btn buy poor off \"Nâng20\"",
+   "offscreen card node \"Kinh nghiệmMỗi cấp: +5% \"",
+   "tap<44 270x41 btn buy poor off \"Nâng25\"",
+   "offscreen card node \"Sát thươngMỗi cấp: +5% S\"",
+   "tap<44 270x41 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "tap<44 270x41 btn buy poor off \"Nâng30\"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "tap<44 270x41 btn buy poor off \"Nâng40\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "tap<44 270x41 btn buy poor off \"Nâng120\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "tap<44 270x41 btn buy poor off \"Nâng150\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\"",
+   "tap<44 270x41 btn buy poor off \"Nâng200\""
+  ],
+  "fps": 60
+ },
+ "android-640x360/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 99x41 btn pri big \"Chơi lại\"",
+   "tap<44 102x41 btn big \"Về menu\"",
+   "tap<44 113x41 btn big \"Nâng cấp\""
+  ],
+  "fps": 60
+ },
+ "ipad-land/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 52x36 btn on \"VI\"",
+   "tap<44 58x36 btn \"EN\""
+  ],
+  "fps": 57
+ },
+ "ipad-land/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-land/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 58
+ },
+ "ipad-land/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 43
+ },
+ "ipad-land/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-land/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 56
+ },
+ "ipad-land/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "ipad-land/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 56
+ },
+ "ipad-land/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 52x36 btn on \"VI\"",
+   "tap<44 58x36 btn \"EN\""
+  ],
+  "fps": 60
+ },
+ "ipad-land/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-land/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "offscreen card node \"Kinh nghiệmMỗi cấp: +5% \"",
+   "offscreen card node \"Sát thươngMỗi cấp: +5% S\"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\""
+  ],
+  "fps": 60
+ },
+ "ipad-land/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-port/menu/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen sh hex \"\"",
+   "tap<44 52x36 btn on \"VI\"",
+   "tap<44 58x36 btn \"EN\""
+  ],
+  "fps": 58
+ },
+ "ipad-port/select/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-port/select/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 55
+ },
+ "ipad-port/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-port/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 53
+ },
+ "ipad-port/boss/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "ipad-port/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-port/levelup/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-port/shop/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-port/shop/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 56
+ },
+ "ipad-port/pause/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-port/settings/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 52x36 btn on \"VI\"",
+   "tap<44 58x36 btn \"EN\""
+  ],
+  "fps": 60
+ },
+ "ipad-port/settings/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 52x36 btn \"VI\"",
+   "tap<44 58x36 btn on \"EN\""
+  ],
+  "fps": 60
+ },
+ "ipad-port/codex/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 55
+ },
+ "ipad-port/codex/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 58
+ },
+ "ipad-port/meta/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen branch b-fortune \"Vận mayVàng khởi đầuMỗi \"",
+   "offscreen card node \"May mắnMỗi cấp: +5% May \"",
+   "offscreen card node \"Giảm giá cửa hàngMỗi cấp\"",
+   "offscreen card node \"LướtCấp 1: +1 Lần lướt |\"",
+   "offscreen card node \"Ô vũ khíCấp 1: +1 Ô vũ k\"",
+   "offscreen card node \"Hồi sinhCấp 1: +1 Hồi si\""
+  ],
+  "fps": 57
+ },
+ "ipad-port/meta/en": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "offscreen branch b-fortune \"FortuneStarting GoldPer \"",
+   "offscreen card node \"LuckPer level: +5% LuckP\"",
+   "offscreen card node \"Shop discountPer level: \"",
+   "offscreen card node \"DashLv 1: +1 Dash Charge\"",
+   "offscreen card node \"Weapon slotsLv 1: +1 Wea\"",
+   "offscreen card node \"Second windLv 1: +1 Revi\""
+  ],
+  "fps": 57
+ },
+ "ipad-port/end/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ },
+ "ipad-port/end/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 57
+ }
+}
