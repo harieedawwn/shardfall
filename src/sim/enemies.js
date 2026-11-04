@@ -5,7 +5,8 @@
   const NR = globalThis.NR = globalThis.NR || {};
   const TAU = Math.PI * 2, BULLET_CAP = 70, SQ_MAX = 400, BQ_MAX = 32, SEP_K = 0.6, EMPTY = {};
   const BLOCKED = { projectile: 1, spread: 1, homing: 1, drone: 1 };
-  const AFFIX = { hasty: 1, plated: 1, volatile: 1, regen: 1 };
+  const AFFIX = { shielded: 1, splitter: 1, toxic: 1, hasty: 1, vampiric: 1, volatile: 1, magnetic: 1 };
+  const TOX = { areaKind: 'circle', team: 'enemy', weaponId: null, x: 0, y: 0, r: 34, dmg: 0, tick: 0.5, life: 3, element: 'poison', statusChance: 0, color: '#8BD450', shape: 'ring' };
   const deathP = { enemy: null, weaponId: null, x: 0, y: 0, elite: false, isBoss: false };
   const spawnP = { enemy: null };
   const atkP = { enemy: null, kind: '', time: 0, x: 0, y: 0, r: 0 };
@@ -32,6 +33,14 @@
     if (inited) return;
     inited = true;
     NR.events.on('damage:dealt', onDamage);
+    NR.events.on('player:hurt', function (ev) { // Vampiric elites heal when their own touch lands
+      if (ev.dodged || !ev.srcId) return;
+      const E = NR.world.get().enemies;
+      for (let i = 0; i < E.length; i++) {
+        const e = E[i];
+        if (e.id === ev.srcId && !e.dead && e.affixes && e.affixes.indexOf('vampiric') >= 0) { e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.25); e.flash = 0.05; return; }
+      }
+    });
   }
   // invulnerability and frontal shields give the damage back (hit already applied by combat)
   function onDamage(p) {
@@ -266,7 +275,7 @@
     }
     e.affixes.push(id);
     if (id === 'hasty') e.speed *= 1.35;
-    else if (id === 'plated') { e.armor += 10; e.ai.a0 += 10; }
+    else if (id === 'shielded') { e.maxShield = e.shield = e.maxHp * 0.6; e.flags.aegis = true; } // soaks damage before hp (combat.hitEnemy)
   }
 
   // ---------- per-tick ----------
@@ -306,6 +315,15 @@
     if (SPECIAL[e.ak]) { if (!thinkSpecial(e, p, W, dt, d, ux, uy, sm)) e.rot = Math.atan2(uy, ux); return; }
     switch (e.ak) {
       case 'walker': e.vx = ux * e.speed; e.vy = uy * e.speed; break;
+      case 'runner': { // Gold Runner: flees, hugging the walls instead of getting cornered, bursts faster when you get close
+        const A2 = NR.config.ARENA, M = 230;
+        const wx = e.x < M ? (M - e.x) / M : e.x > A2.w - M ? -(e.x - (A2.w - M)) / M : 0, wy = e.y < M ? (M - e.y) / M : e.y > A2.h - M ? -(e.y - (A2.h - M)) / M : 0;
+        let fx = -ux + wx * 1.6 - uy * a.dir * 0.55, fy = -uy + wy * 1.6 + ux * a.dir * 0.55;
+        const fm = Math.sqrt(fx * fx + fy * fy) || 1, sp = e.speed * (d < ap.panic ? 1.25 : 1);
+        e.vx = fx / fm * sp; e.vy = fy / fm * sp;
+        if ((wx !== 0 || wy !== 0) && fx * ux + fy * uy > 0.2) a.dir = -a.dir; // heading toward the player along a wall: turn around
+        e.rot = Math.atan2(e.vy, e.vx); return;
+      }
       case 'weaver': {
         const w = Math.sin(e.age * 4 + a.ph) * ap.weave;
         e.vx = (ux - uy * w) * e.speed; e.vy = (uy + ux * w) * e.speed; break;
@@ -475,6 +493,20 @@
     e.rot = Math.atan2(uy, ux);
   }
 
+  // per-tick affix effects: Toxic Trail drops poison pools behind the elite, Magnetic drags the player in
+  function eliteTick(e, p, W, dt) {
+    const af = e.affixes, a = e.ai;
+    for (let k = 0; k < af.length; k++) {
+      const id = af[k];
+      if (id === 'toxic') {
+        a.trT = (a.trT || 0) - dt;
+        if (a.trT <= 0 && W.areas.length < 150) { a.trT = 0.38; TOX.x = e.x; TOX.y = e.y; TOX.dmg = e.dmg * 0.45; TOX.weaponId = null; NR.combat.createArea(TOX); }
+      } else if (id === 'magnetic' && !p.dead && !p.grabbedBy) {
+        const dx = e.x - p.x, dy = e.y - p.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        if (d < 380 && d > e.r + p.r + 6) { const k2 = 520 * dt * (1 - d / 520); p.kbx += dx / d * k2; p.kby += dy / d * k2; }
+      }
+    }
+  }
   function update(dt) {
     const W = NR.world.get(), p = W.player, E = W.enemies, A = NR.config.ARENA;
     NR.spatial.rebuild(W); // grid must match the post-cleanup list
@@ -491,8 +523,7 @@
       const st = e.status, f = e.flags;
       f.frozen = !!(st.freeze && st.freeze.t > 0); f.burning = !!(st.burn && st.burn.t > 0); f.poisoned = !!(st.poison && st.poison.t > 0);
       if (e.ai.hitCd > 0) e.ai.hitCd -= dt;
-      if (e.affixes.length && e.affixes.indexOf('regen') >= 0 && e.hp < e.maxHp && !f.frozen) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.03 * dt);
-      if (st.pull && st.pull.t > 0) { // status.pull: 260 px/s toward the point, decaying over 0.4 s (Horde moves and expires it)
+        if (st.pull && st.pull.t > 0) { // status.pull: 260 px/s toward the point, decaying over 0.4 s (Horde moves and expires it)
         const k = 260 * (st.pull.t / 0.4) * dt, dx = st.pull.x - e.x, dy = st.pull.y - e.y, dd = Math.sqrt(dx * dx + dy * dy) || 1;
         if (dd > k) { e.x += dx / dd * k; e.y += dy / dd * k; }
         st.pull.t -= dt;
@@ -505,6 +536,7 @@
       think(e, p, W, dt, d, ux, uy, sm);
       if (e.dead) continue;
       e.x += e.vx * dt * sm; e.y += e.vy * dt * sm;
+      if (f.elite) eliteTick(e, p, W, dt);
       if (e.ai.state !== 'vanish') separate(e);
       e.x = NR.util.clamp(e.x, e.r, A.w - e.r); e.y = NR.util.clamp(e.y, e.r, A.h - e.r);
       if (e.ak === 'kidnapper' && e.ai.state === 'grab' && p.grabbedBy === e.id) { p.x = e.x - Math.cos(e.rot) * (e.r + p.r - 2); p.y = e.y - Math.sin(e.rot) * (e.r + p.r - 2); p.vx = 0; p.vy = 0; }
@@ -524,6 +556,12 @@
     if (e.flags.elite) {
       if (NR.pickups) NR.pickups.spawn('chest', e.x, e.y, 0);
       if (e.affixes.indexOf('volatile') >= 0) queueBlast(e.x, e.y, 90, e.dmg * 1.2, 0.7, e);
+      if (e.affixes.indexOf('splitter') >= 0 && e.ai.gen === 0) { // Splitter elite: three small, fast copies
+        for (let k = 0; k < 3; k++) {
+          const ang = e.ai.ph + k * TAU / 3, c = spawn(e.defId, e.x + Math.cos(ang) * e.r * 0.8, e.y + Math.sin(ang) * e.r * 0.8, { gen: 1, hpMult: 0.3, speedMult: 1.2, xpMult: 0.25, scale: 0.55 });
+          if (c) c.gold = 0;
+        }
+      }
     }
     if (e.ak === 'splitter' && e.ai.gen === 0 && ap) {
       for (let k = 0; k < ap.splits; k++) {

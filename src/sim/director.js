@@ -3,7 +3,7 @@
   const NR = globalThis.NR = globalThis.NR || {};
   const startP = { wave: 0, zone: '', isBoss: false, duration: 0 };
   const clearP = { wave: 0, isBoss: false };
-  const AFFIXES = ['hasty', 'plated', 'volatile', 'regen'];
+  const AFFIXES = ['shielded', 'splitter', 'toxic', 'hasty', 'vampiric', 'volatile', 'magnetic'];
   const RESERVE = 12;          // slots kept free for boss summons and splitter children
   const wfn = function (o) { return o.weight; };
   let chillT = 0, extra = 0;
@@ -116,7 +116,7 @@
       const ch = Math.min(0.45, W.scale.elite + info.eliteChance);
       if (ch > 0 && NR.rng.chance(ch)) {
         affTmp.length = 0;
-        const cnt = W.danger >= 4 ? 2 : 1;
+        const cnt = (W.danger >= 3 || W.wave >= 11) ? 2 : 1; // 1 affix, 2 from danger 3 or wave 11
         while (affTmp.length < cnt) { const id = NR.rng.pick(AFFIXES); if (affTmp.indexOf(id) < 0) affTmp.push(id); }
         aff = affTmp;
       }

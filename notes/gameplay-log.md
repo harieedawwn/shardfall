@@ -50,3 +50,14 @@ Decisions are logged here instead of asking. Baseline before this pass: 108 test
   progression (36 items, 23 unique catalysts, scenarios for the 6 new items), script-order test tolerant of new files.
 - Balance (160 runs): win 43.1% (d0 73.8%, d3 12.5%), no id >35%; hydra_bow 9.5% and katana 18% are the top watch items for step 7.
 - Next: step 4 (elite affixes + mid-wave events).
+
+## Step 4 - Elites + mid-wave events  (DONE)
+- Affixes replaced by the 7 requested (`NR.data.affixes`, data/enemies.js): shielded (barrier soaks damage, `e.shield`, combat.hitEnemy), splitter, toxic trail, hasty (Haste), vampiric, volatile, magnetic. Old `plated`/`regen` removed (tests updated).
+  Elite rule: 1 affix, 2 at danger >= 3 or wave >= 11 (director). Elites always drop a chest (already true; tested). fx: outline in the affix colour (+2nd ring), glyph badges above the head, shield arc (render.js affixMarks).
+- Events: `src/data/events.js`, `src/sim/waveevents.js` (`NR.waveEvents`, hooked in `run.startWave` and `run.step`, state `W.event`). Treasure Runner (new event-only enemy `treasure_runner`, AI `runner`: flees along walls, 12 s),
+  Cursed Shrine (hold 3 s in the ring -> elite pack + escorts -> rare+ chest: chest `value` = min item tier, pickups.openChest(out,minTier)), Shard Storm (14 s telegraphed meteors via `enemy:attack` blast, XP shards).
+  New events `event:start` / `event:end` (SPEC 8 + harness table). `W.stats.elites`, `W.stats.eventsWon` added (for step 6).
+- HUD: event chip (name, objective, progress bar) under the wave pill, banner on start, win/fail toast, edge arrow to the target when off-screen; fx rings + sfx `event_start/win/fail`; shrine ring+pillar drawn in the world; runner has coin orbit + pulse ring.
+- Bot: dodges meteor marks. Without that the storm dragged bot win rate d0 from 73% to 29% (affixes alone: 75%); with it 72.5% (seeds 1-10). The bot never seeks events on purpose.
+- Tests: new suite `tests/events.test.js` (11 tests: data, each affix, each event + rewards, scheduling window/rate/boss exclusion, HUD with arrow, bots finish runs, determinism).
+- Next: step 5 (mechanic level-up traits + route choice after the shop).

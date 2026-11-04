@@ -90,6 +90,9 @@
     react_shock: { min: 90, win: 2, v: 0.3, prio: 1, fn: function (t, p, v) { noise(t, 0.2, v, 'bandpass', 4200 * p, 1200, sfxBus); osc('square', 1500 * p, 300 * p, t, 0.16, v * 0.35, sfxBus, 3500); osc('sine', 80, 50, t, 0.18, v * 0.5, sfxBus); } },
     react_void: { min: 150, win: 1, v: 0.34, prio: 1, fn: function (t, p, v) { osc('sawtooth', 600 * p, 60, t, 0.35, v * 0.55, sfxBus, 1400); osc('sine', 70, 28, t + 0.28, 0.4, v, sfxBus); noise(t + 0.3, 0.3, v * 0.7, 'lowpass', 1200, 90, sfxBus); } },
     react_steam: { min: 120, win: 2, v: 0.26, prio: 1, fn: function (t, p, v) { noise(t, 0.5, v, 'highpass', 3000 * p, 7000, sfxBus); osc('sine', 420 * p, 260 * p, t, 0.25, v * 0.25, sfxBus); } },
+    event_start: { min: 400, win: 1, v: 0.26, prio: 2, fn: function (t, p, v) { const n = [392, 523, 784]; for (let i = 0; i < n.length; i++) osc('square', n[i] * p, n[i] * p, t + i * 0.09, 0.14, v * 0.45, sfxBus, 2600); osc('sine', 98, 70, t, 0.35, v * 0.6, sfxBus); } },
+    event_win: { min: 400, win: 1, v: 0.26, prio: 2, fn: function (t, p, v) { const n = [523, 659, 784, 1046]; for (let i = 0; i < n.length; i++) osc('triangle', n[i], n[i], t + i * 0.07, 0.2, v, sfxBus); noise(t + 0.2, 0.1, v * 0.3, 'highpass', 6000, 6000, sfxBus); } },
+    event_fail: { min: 400, win: 1, v: 0.22, prio: 1, fn: function (t, p, v) { osc('sawtooth', 300, 90, t, 0.4, v * 0.5, sfxBus, 900); osc('sine', 120, 50, t + 0.1, 0.35, v * 0.6, sfxBus); } },
     ui_click: { min: 30, win: 3, v: 0.16, fn: function (t, p, v) { osc('square', 1200 * p, 900 * p, t, 0.03, v * 0.6, sfxBus, 3000); } },
     ui_hover: { min: 40, win: 3, v: 0.08, fn: function (t, p, v) { osc('sine', 900 * p, 900 * p, t, 0.025, v, sfxBus); } },
     ui_confirm: { min: 80, win: 2, v: 0.2, fn: function (t, p, v) { osc('sine', 660, 660, t, 0.08, v, sfxBus); osc('sine', 990, 990, t + 0.06, 0.12, v, sfxBus); } },
@@ -244,6 +247,8 @@
     E.on('area:explode', function (e) { sfx(e.r >= 200 ? 'explosion_big' : 'explosion'); });
     E.on('chain:arc', function () { sfx('shock'); });
     E.on('status:apply', function () { sfx('status'); });
+    E.on('event:start', function () { sfx('event_start'); });
+    E.on('event:end', function (e) { sfx(e.success ? 'event_win' : 'event_fail'); });
     E.on('status:react', function (e) { sfx(e.reaction === 'toxic_blast' ? 'react_toxic' : e.reaction === 'superconduct' ? 'react_shock' : 'react_' + e.reaction); });
     E.on('enemy:attack', function () { sfx('telegraph'); });
     E.on('weapon:evolve', function () { sfx('evolve'); });

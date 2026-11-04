@@ -64,6 +64,8 @@
     E.on('projectile:impact', onImpact);
     E.on('chain:arc', onArc);
     E.on('status:react', onReact);
+    E.on('event:start', function (e) { const d = NR.data.waveEvents[e.id], c = d ? d.color : '#FFD43B'; ring(e.x, e.y, 120, c, 0.6, { w: 8 }); burst('star', e.x, e.y, c, 12, { speed: 240 }); });
+    E.on('event:end', function (e) { const d = NR.data.waveEvents[e.id], c = e.success ? (d ? d.color : '#FFD43B') : '#E5484D'; ring(e.x, e.y, e.success ? 150 : 90, c, 0.5, { w: 7 }); burst(e.success ? 'star' : 'death', e.x, e.y, c, e.success ? 20 : 10, { speed: 280 }); });
     E.on('area:explode', onExplode);
     E.on('player:hurt', onHurt);
     E.on('player:dash', onDash);

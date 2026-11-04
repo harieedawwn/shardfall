@@ -328,6 +328,13 @@
     "shop.evolvesNeed": "Needs {item}",
     "shop.catalystFor": "Catalyst: {weapon} → {name}",
     "shop.catalystHave": "Catalyst ✓ {weapon} → {name}",
-    "codex.recipeKnown": "The recipe is known, but the result is still locked."
+    "codex.recipeKnown": "The recipe is known, but the result is still locked.",
+    "event.runner.short": "Chase him! {s}s left",
+    "event.shrine.idle": "Stand in the shrine ({p}%)",
+    "event.shrine.fight": "Elites left: {n}",
+    "event.storm.short": "Dodge the marks, grab the XP · {s}s",
+    "event.win": "{name} cleared!",
+    "event.fail": "{name} failed",
+    "event.escaped": "The gold carrier got away"
   };
 })();

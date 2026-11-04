@@ -328,6 +328,13 @@
     "shop.evolvesNeed": "Cần {item}",
     "shop.catalystFor": "Xúc tác: {weapon} → {name}",
     "shop.catalystHave": "Xúc tác ✓ {weapon} → {name}",
-    "codex.recipeKnown": "Công thức đã rõ, nhưng thành phẩm vẫn chưa được mở khóa."
+    "codex.recipeKnown": "Công thức đã rõ, nhưng thành phẩm vẫn chưa được mở khóa.",
+    "event.runner.short": "Đuổi theo hắn! còn {s}s",
+    "event.shrine.idle": "Đứng trong đền ({p}%)",
+    "event.shrine.fight": "Tinh anh còn lại: {n}",
+    "event.storm.short": "Né vùng báo, nhặt kinh nghiệm · {s}s",
+    "event.win": "Hoàn thành: {name}!",
+    "event.fail": "Thất bại: {name}",
+    "event.escaped": "Kẻ mang vàng đã trốn thoát"
   };
 })();

@@ -1031,6 +1031,67 @@
     }
   }
 
+  // ---------- elite affixes: accent outline colour, a badge with a glyph above the head, the shield arc ----------
+  function affixColor(e, k) { const id = e.affixes && e.affixes[k || 0], d = id && NR.data.affixes && NR.data.affixes[id]; return d ? d.color : null; }
+  function glyph(c, icon, x, y, s) {
+    const ink = NR.config.INK;
+    c.fillStyle = ink; c.strokeStyle = ink; c.lineWidth = Math.max(1.4, s * 0.3); c.lineJoin = 'round'; c.lineCap = 'round';
+    c.beginPath();
+    switch (icon) {
+      case 'shield': c.moveTo(x - s, y - s * 0.8); c.lineTo(x + s, y - s * 0.8); c.lineTo(x + s * 0.8, y + s * 0.2); c.lineTo(x, y + s); c.lineTo(x - s * 0.8, y + s * 0.2); c.closePath(); c.fill(); break;
+      case 'split': c.arc(x - s * 0.55, y, s * 0.55, 0, TAU); c.moveTo(x + s * 1.1, y); c.arc(x + s * 0.55, y, s * 0.55, 0, TAU); c.fill(); break;
+      case 'drop': c.moveTo(x, y - s); c.quadraticCurveTo(x + s, y + s * 0.1, x, y + s); c.quadraticCurveTo(x - s, y + s * 0.1, x, y - s); c.fill(); break;
+      case 'bolt': c.moveTo(x + s * 0.3, y - s); c.lineTo(x - s * 0.6, y + s * 0.1); c.lineTo(x, y + s * 0.1); c.lineTo(x - s * 0.3, y + s); c.lineTo(x + s * 0.6, y - s * 0.1); c.lineTo(x, y - s * 0.1); c.closePath(); c.fill(); break;
+      case 'fang': c.moveTo(x - s, y - s * 0.7); c.lineTo(x - s * 0.15, y - s * 0.7); c.lineTo(x - s * 0.55, y + s * 0.9); c.closePath(); c.moveTo(x + s, y - s * 0.7); c.lineTo(x + s * 0.15, y - s * 0.7); c.lineTo(x + s * 0.55, y + s * 0.9); c.closePath(); c.fill(); break;
+      case 'burst': for (let i = 0; i < 8; i++) { const a = i * TAU / 8, r = i % 2 ? s * 0.45 : s; if (i === 0) c.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r); else c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } c.closePath(); c.fill(); break;
+      default: c.moveTo(x - s * 0.8, y + s); c.lineTo(x - s * 0.8, y - s * 0.1); c.arc(x, y - s * 0.1, s * 0.8, Math.PI, 0); c.lineTo(x + s * 0.8, y + s); c.stroke(); // magnet
+    }
+  }
+  function affixMarks(c, e, x, y, r) {
+    const af = e.affixes, n = af ? af.length : 0, ink = NR.config.INK;
+    if (e.shield > 0 && e.maxShield > 0) {
+      const f = Math.min(1, e.shield / e.maxShield);
+      c.lineWidth = 7; c.strokeStyle = ink; c.beginPath(); c.arc(x, y, r + 13, 0, TAU); c.stroke();
+      c.lineWidth = 4; c.strokeStyle = '#6FD6F2'; c.beginPath(); c.arc(x, y, r + 13, -Math.PI / 2, -Math.PI / 2 + TAU * f); c.stroke();
+    }
+    if (!n) return;
+    const hy = y - r - 24;
+    for (let i = 0; i < n; i++) {
+      const d = NR.data.affixes && NR.data.affixes[af[i]];
+      if (!d) continue;
+      const bx = x + (i - (n - 1) / 2) * 24;
+      c.fillStyle = ink; c.beginPath(); c.arc(bx, hy, 11, 0, TAU); c.fill();
+      c.fillStyle = d.color; c.beginPath(); c.arc(bx, hy, 8.6, 0, TAU); c.fill();
+      glyph(c, d.icon, bx, hy, 5);
+    }
+  }
+  // Gold Runner: orbiting coins and a pulsing ring so it reads as the objective
+  function runnerFlair(c, e, x, y, r) {
+    const pulse = 0.5 + 0.5 * Math.sin(t * 8);
+    c.lineWidth = 5; c.strokeStyle = NR.config.INK; c.beginPath(); c.arc(x, y, r + 9 + pulse * 3, 0, TAU); c.stroke();
+    c.lineWidth = 2.5; c.strokeStyle = '#FFD43B'; c.beginPath(); c.arc(x, y, r + 9 + pulse * 3, 0, TAU); c.stroke();
+    for (let i = 0; i < 3; i++) {
+      const a = t * 3 + i * TAU / 3, cx = x + Math.cos(a) * (r + 17), cy = y + Math.sin(a) * (r + 17);
+      c.fillStyle = NR.config.INK; c.beginPath(); c.arc(cx, cy, 5.4, 0, TAU); c.fill(); c.fillStyle = '#FFE066'; c.beginPath(); c.arc(cx, cy, 3.6, 0, TAU); c.fill();
+    }
+  }
+  // Cursed Shrine: activation ring that fills while you stand in it, stone pillar with a flame
+  function drawEventWorld(c, W) {
+    const ev = W.event;
+    if (!ev || ev.id !== 'cursed_shrine' || !inView(ev.x, ev.y, 200)) return;
+    const d = NR.data.waveEvents.cursed_shrine, col = d.color, ink = NR.config.INK, x = ev.x, y = ev.y, fight = ev.state === 'fight';
+    c.lineWidth = 8; c.strokeStyle = ink; c.beginPath(); c.arc(x, y, ev.r, 0, TAU); c.stroke();
+    c.lineWidth = 4; c.strokeStyle = fight ? '#E5484D' : shade(col, -0.25); c.beginPath(); c.arc(x, y, ev.r, 0, TAU); c.stroke();
+    if (!fight && ev.progress > 0) { c.lineWidth = 6; c.strokeStyle = '#F1E0FF'; c.beginPath(); c.arc(x, y, ev.r, -Math.PI / 2, -Math.PI / 2 + TAU * ev.progress); c.stroke(); }
+    c.fillStyle = ink; c.fillRect(x - 17, y - 12, 34, 30); c.fillRect(x - 11, y - 38, 22, 30);
+    c.fillStyle = '#6B5E7A'; c.fillRect(x - 14, y - 9, 28, 24); c.fillStyle = '#8C86A0'; c.fillRect(x - 8, y - 35, 16, 28);
+    const k = 0.5 + 0.5 * Math.sin(t * 9), fr = fight ? '#E5484D' : col;
+    star(c, x, y - 48 - k * 3, 10 + k * 3, 4, 0.45); c.fillStyle = ink; c.fill();
+    star(c, x, y - 48 - k * 3, 7.5 + k * 3, 4, 0.45); c.fillStyle = fr; c.fill();
+    if (!calm) art_light(x, y - 46, ev.r * 1.2, fr, 0.25 + 0.1 * k);
+  }
+  function art_light(x, y, r, col, a) { const A = NR.fx.art; if (A && A.light) A.light(x, y, r, col, a); }
+
   // ---------- generic or procedural enemy dispatcher ----------
   function drawEnemy(c, e, a, q) {
     const x = e.px + (e.x - e.px) * a + (e.kox || 0), y = e.py + (e.y - e.py) * a + (e.koy || 0), r = e.r || 10;
@@ -1054,7 +1115,8 @@
     // Elite & enrage aura rings
     if (flags.elite) {
       c.lineWidth = 6; c.strokeStyle = NR.config.INK; c.beginPath(); c.arc(x, y, r + 8, 0, TAU); c.stroke();
-      c.lineWidth = 3; c.strokeStyle = pal[3]; c.beginPath(); c.arc(x, y, r + 8, 0, TAU); c.stroke();
+      c.lineWidth = 3; c.strokeStyle = affixColor(e, 0) || pal[3]; c.beginPath(); c.arc(x, y, r + 8, 0, TAU); c.stroke();
+      const c2 = affixColor(e, 1); if (c2) { c.lineWidth = 2; c.strokeStyle = c2; c.beginPath(); c.arc(x, y, r + 12, 0, TAU); c.stroke(); }
     }
     if (flags.enraged) {
       const k = 0.5 + 0.5 * Math.sin(t * 10);
@@ -1088,6 +1150,8 @@
 
     if (ghost < 1) c.globalAlpha = 1;
     if (e.status && (q < 2 || flags.elite || e.isBoss)) statusFx(c, e, x, y, r);
+    if (flags.elite) affixMarks(c, e, x, y, r);
+    if (e.defId === 'treasure_runner') runnerFlair(c, e, x, y, r);
   }
 
   // Flat++ sprite enemy: feet-anchored baked sprite, flips toward its facing, bobs/steps, hit flash and frozen variants
@@ -1108,8 +1172,9 @@
     const ghost = typeof e.alpha === 'number' ? e.alpha : (flags.phased || flags.invisible || flags.cloaked ? 0.42 : 1);
     if (flags.elite) {
       c.lineWidth = 5; c.strokeStyle = NR.config.INK; c.beginPath(); c.ellipse(x, y + r * 0.95, r * 1.45, r * 0.55, 0, 0, TAU); c.stroke();
-      c.lineWidth = 2.5; c.strokeStyle = art.T.elite; c.stroke();
-      art.light(x, y, r * 3.2, art.T.elite, 0.35 + 0.15 * Math.sin(t * 3 + e.id));
+      const ec = affixColor(e, 0) || art.T.elite;
+      c.lineWidth = 2.5; c.strokeStyle = ec; c.stroke();
+      art.light(x, y, r * 3.2, ec, 0.35 + 0.15 * Math.sin(t * 3 + e.id));
     }
     if (ghost < 1) c.globalAlpha = ghost;
     const lvl = dreadLvl;
@@ -1125,6 +1190,7 @@
       c.fillStyle = '#FFFFFF'; c.fillRect(x - 1, hy - 3.5, 2, 4.5); c.fillRect(x - 1, hy + 2, 2, 1.8);
     }
     if (e.status) statusFx(c, e, x, y, r);
+    if (flags.elite) affixMarks(c, e, x, y, r);
   }
 
   // ---------- weapon areas: detailed per weapon/element visuals ----------
@@ -1689,6 +1755,7 @@
     if (F.particles) F.particles.drawUnder(ctx);
     drawPickups(ctx, W, a, p);
     drawAreas(ctx, W, a);
+    drawEventWorld(ctx, W);
     const E = W.enemies;
     for (let i = 0; i < E.length; i++) { const e = E[i]; if (!e.dead && !e.isBoss) drawEnemy(ctx, e, a, q); }
     for (let i = 0; i < E.length; i++) { const e = E[i]; if (!e.dead && e.isBoss) drawEnemy(ctx, e, a, q); }

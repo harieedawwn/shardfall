@@ -1,7 +1,7 @@
 (function () {
   const NR = globalThis.NR = globalThis.NR || {};
   const CLEAR_TIME = 1.5;
-  const RESET_MODULES = ['weapons', 'projectiles', 'combat', 'reactions', 'enemies', 'bosses', 'director', 'items', 'progression', 'shop', 'pickups'];
+  const RESET_MODULES = ['weapons', 'projectiles', 'combat', 'reactions', 'enemies', 'bosses', 'director', 'waveEvents', 'items', 'progression', 'shop', 'pickups'];
   const stateP = { from: '', to: '' };
   const startP = { seed: 0, charId: '', danger: 0, endless: false };
   const endP = { result: '', stats: null };
@@ -18,7 +18,7 @@
     E.on('player:death', function () { deathFlag = true; });
     E.on('player:hurt', function (e) { if (!e.dodged) W().stats.damageTaken += e.amount; });
     E.on('player:dash', function () { W().stats.dashes++; });
-    E.on('enemy:death', function () { W().stats.kills++; });
+    E.on('enemy:death', function (e) { const st = W().stats; st.kills++; if (e.elite) st.elites++; });
     E.on('boss:death', function () { W().stats.bossesKilled++; });
     E.on('status:react', function () { W().stats.reactions++; });
     E.on('damage:dealt', function (e) {
@@ -80,6 +80,7 @@
     w.wave = n; w.zone = NR.director.zoneOf(n);
     w.scale = NR.stats.enemyScale(n, w.danger);
     NR.director.startWave(n);
+    NR.waveEvents.start(n);
   }
 
   function onWaveClear(e) {
@@ -97,7 +98,7 @@
     if (w.state !== 'wave' && w.state !== 'clear') return;
     const intent = NR.input.read();
     const p = w.player;
-    if (w.state === 'wave') NR.director.update(dt);
+    if (w.state === 'wave') { NR.director.update(dt); NR.waveEvents.update(dt); }
     if (p && !p.dead) NR.player.update(dt, intent);
     NR.enemies.update(dt); NR.bosses.update(dt);
     NR.spatial.rebuild(w);

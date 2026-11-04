@@ -49,7 +49,10 @@
       if (st.void && st.void.t > 0) m *= 1 + ST.void.vuln * (st.void.pw || 1) * (e.isBoss ? 0.5 : 1);
     }
     const dealt = Math.max(1, dmg * m);
-    e.hp -= dealt;
+    if (e.shield > 0) { // Shielded elites: the barrier soaks the hit first
+      const ab = Math.min(e.shield, dealt); e.shield -= ab; e.hp -= dealt - ab;
+      if (e.shield <= 0 && e.flags) e.flags.aegis = false;
+    } else e.hp -= dealt;
     if (kx || ky) {
       const km = e.isBoss ? 0.15 : NR.util.clamp(14 / (e.r || 12), 0.4, 1.4);
       e.kbx = (e.kbx || 0) + kx * km; e.kby = (e.kby || 0) + ky * km;

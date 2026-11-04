@@ -18,6 +18,19 @@ module.exports = function (NR) {
     const st = { lastDash: -999, tick: 0, strafe: 1, prevDash: false, reach: 999, reachT: -999 };
     const intent = { mx: 0, my: 0, aim: 0, fire: false, dash: false, pause: false, device: 'kbm' };
     const A = NR.config.ARENA;
+    // telegraphed meteor marks (Shard Storm): steer out of them like a player would
+    const marks = [];
+    NR.events.on('enemy:attack', function (a) { if (a.enemy && a.enemy.defId === 'storm' && marks.length < 24) marks.push({ x: a.x, y: a.y, r: a.r, t: a.time + 0.3 }); });
+    function avoidMarks(p, W, v) {
+      for (let i = marks.length - 1; i >= 0; i--) {
+        const m = marks[i];
+        m.t -= 1 / 60;
+        if (m.t <= 0) { marks.splice(i, 1); continue; }
+        const dx = p.x - m.x, dy = p.y - m.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        if (d < m.r + 70) { const w = 2.2 * (1 - d / (m.r + 70)) + 0.6; v.x += dx / d * w; v.y += dy / d * w; }
+      }
+    }
+    const mv = { x: 0, y: 0 };
 
     // how far the build can hurt: melee/orbit/aura builds must close in, anything with a gun keeps the kiting game
     function reachOf(p) {
@@ -79,6 +92,7 @@ module.exports = function (NR) {
         if (pk) { const d = Math.sqrt(pd) || 1; ax += (pk.x - p.x) / d * 0.7; ay += (pk.y - p.y) / d * 0.7; }
         else if (near) { ax -= (p.x - near.x) / nd * 0.5; ay -= (p.y - near.y) / nd * 0.5; }
       }
+      mv.x = 0; mv.y = 0; avoidMarks(p, W, mv); ax += mv.x; ay += mv.y;
       const m = Math.sqrt(ax * ax + ay * ay);
       if (m > 1) { ax /= m; ay /= m; }
       intent.mx = ax; intent.my = ay;
@@ -128,6 +142,7 @@ module.exports = function (NR) {
         for (let i = 0; i < W.pickups.length; i++) { const k = W.pickups[i], dx = k.x - p.x, dy = k.y - p.y, d2 = dx * dx + dy * dy; if (!k.dead && d2 < pd) { pd = d2; pk = k; } }
         if (pk) { const d = Math.sqrt(pd) || 1; ax += (pk.x - p.x) / d; ay += (pk.y - p.y) / d; }
       }
+      mv.x = 0; mv.y = 0; avoidMarks(p, W, mv); ax += mv.x; ay += mv.y;
       const m = Math.sqrt(ax * ax + ay * ay);
       if (m > 1) { ax /= m; ay /= m; }
       intent.mx = ax; intent.my = ay; intent.aim = aim;

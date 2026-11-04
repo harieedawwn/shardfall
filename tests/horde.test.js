@@ -36,7 +36,7 @@ module.exports = function (H) {
 
   H.test('horde data: SPEC 4 ids, {vi,en} names, distinct silhouettes, costs, boss shape', function () {
     const NR = H.load(), D = NR.data;
-    H.eq(Object.keys(D.enemies), ENEMIES.concat(SPECIALS)); H.eq(Object.keys(D.bosses), BOSSES); H.eq(Object.keys(D.zones), ['scrap', 'frost', 'void']);
+    H.eq(Object.keys(D.enemies), ENEMIES.concat(SPECIALS, ['treasure_runner'])); // + the event-only Gold Runner H.eq(Object.keys(D.bosses), BOSSES); H.eq(Object.keys(D.zones), ['scrap', 'frost', 'void']);
     const seen = {};
     for (const id of ENEMIES) {
       const d = D.enemies[id];
@@ -167,12 +167,10 @@ module.exports = function (H) {
     NR.combat.hitEnemy(kids[0], 1e9, { weaponId: 'pistol' }); tick(NR, 2); H.eq(count(W, 'splitter'), 1, 'children never split');
     const g = NR.enemies.spawn('grunt', 1500, 1200, {}), el = NR.enemies.spawn('grunt', 1600, 1200, { affixes: ['volatile', 'hasty'] });
     ok(el.flags.elite && el.r > g.r * 1.3 && el.hp > g.hp * 2 && el.speed > g.speed * 1.3 && el.affixes.length === 2, 'elite promoted');
-    ok(NR.enemies.spawn('grunt', 1700, 1200, { affixes: ['plated'] }).armor >= 10, 'plated');
     let blast = 0, exploded = 0; NR.events.on('enemy:attack', function (a) { if (a.kind === 'blast') blast = a.time; }); NR.events.on('area:explode', function (e) { if (e.team === 'enemy') exploded++; });
     NR.combat.hitEnemy(el, 1e9, { weaponId: 'pistol' }); tick(NR, 2);
     ok(W.pickups.some(function (k) { return k.type === 'chest'; }), 'elite chest'); ok(blast >= 0.5 && exploded === 0, 'volatile telegraphs first');
     tick(NR, 60); ok(exploded === 1, 'volatile blast lands after the telegraph');
-    const rg = NR.enemies.spawn('grunt', 1800, 1200, { affixes: ['regen'] }); rg.hp = rg.maxHp * 0.5; const h0 = rg.hp; tick(NR, 120); ok(rg.hp > h0, 'regen heals');
     H.eq(NR.__w.bad, []);
   });
 
@@ -266,7 +264,7 @@ module.exports = function (H) {
       NR.events.on('enemy:spawn', function (e) {
         const en = e.enemy; if (en.isBoss) return;
         mix[en.defId] = (mix[en.defId] || 0) + 1; spent += NR.data.enemies[en.defId].aiParams.cost;
-        if (en.flags.elite) { elites++; ok(en.affixes.length === (danger >= 4 ? 2 : 1), 'affix count ' + en.affixes.length); }
+        if (en.flags.elite) { elites++; ok(en.affixes.length === (danger >= 3 || W.wave >= 11 ? 2 : 1), 'affix count ' + en.affixes.length); }
         if (NR.util.dist2(en.x, en.y, p.x, p.y) < 100 * 100) near++;
       });
       NR.events.on('enemy:attack', function (a) {

@@ -45,5 +45,21 @@
   E.swarmer.tags = ['pack']; E.spitter.tags = ['ranged']; E.sniper.tags = ['ranged']; E.lunger.tags = ['charge'];
   E.bomber.tags = ['area']; E.summoner.tags = ['summon']; E.shielder.tags = ['shield']; E.phantom.tags = ['blink'];
   E.medic.tags = ['support']; E.splitter.tags = ['split']; E.brute.tags = ['heavy'];
+  // Event-only enemy (never in wave pools): the Treasure Runner flees from the player carrying a pile of gold.
+  E.treasure_runner = {
+    name: { vi: 'Kẻ Mang Vàng', en: 'Gold Runner' }, shape: 'star', color: '#FFD43B', r: 13, hp: 70, speed: 170, dmg: 0, armor: 0, xp: 8, gold: 0, ai: 'runner',
+    aiParams: { cost: 0, flee: 420, panic: 200 }, contact: false, tags: ['event']
+  };
   NR.data.enemies = E;
+  // Elite affixes: one per elite (two at danger 3+ or wave 11+). Effects are coded in src/sim/enemies.js and combat.js.
+  // color = outline accent, icon = glyph above the elite (drawn by fx/render.js)
+  NR.data.affixes = {
+    shielded: { name: { vi: 'Khiên năng lượng', en: 'Shielded' }, color: '#6FD6F2', icon: 'shield', desc: { vi: 'Có lớp khiên hấp thụ 60% máu tối đa trước khi chịu sát thương.', en: 'Carries a barrier worth 60% of its max HP that soaks damage first.' } },
+    splitter: { name: { vi: 'Phân thân', en: 'Splitter' }, color: '#5FB49C', icon: 'split', desc: { vi: 'Khi chết tách thành 3 con nhỏ hung hãn.', en: 'Bursts into 3 small fast copies on death.' } },
+    toxic: { name: { vi: 'Vệt độc', en: 'Toxic Trail' }, color: '#8BD450', icon: 'drop', desc: { vi: 'Để lại vệt độc gây sát thương trên đường đi.', en: 'Leaves a poison trail that hurts to stand in.' } },
+    hasty: { name: { vi: 'Thần tốc', en: 'Haste' }, color: '#FFD43B', icon: 'bolt', desc: { vi: 'Chạy nhanh hơn 35%.', en: 'Moves 35% faster.' } },
+    vampiric: { name: { vi: 'Hút máu', en: 'Vampiric' }, color: '#E5484D', icon: 'fang', desc: { vi: 'Mỗi đòn trúng bạn hồi 25% máu tối đa của nó.', en: 'Heals 25% of its max HP whenever it hits you.' } },
+    volatile: { name: { vi: 'Nổ tung', en: 'Volatile' }, color: '#FF7A2F', icon: 'burst', desc: { vi: 'Khi chết gây vụ nổ (có báo trước).', en: 'Explodes on death (telegraphed).' } },
+    magnetic: { name: { vi: 'Từ trường', en: 'Magnetic' }, color: '#A25CE0', icon: 'magnet', desc: { vi: 'Kéo bạn lại gần khi ở trong tầm 380 px.', en: 'Drags you toward it inside 380 px.' } }
+  };
 })();

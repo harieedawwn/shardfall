@@ -50,14 +50,16 @@
   function collectAll() { const P = NR.world.get().pickups; for (let i = 0; i < P.length; i++) P[i].magnet = true; }
 
   // chest: a weapon level (40%, when one is upgradable) or an item (luck-boosted rarity); gold if neither is possible
-  function openChest(out) {
+  const TIER = { common: 0, rare: 1, epic: 2, legendary: 3 };
+  // minTier > 0 (shrine reward chests): the item is at least that rarity and the weapon-level shortcut is skipped
+  function openChest(out, minTier) {
     const W = NR.world.get(), p = W.player, M = NR.config.MAX_LEVEL;
     out = out || colP;
     out.kind = 'gold'; out.id = ''; out.value = 0;
     const up = [];
     for (let i = 0; i < p.weapons.length; i++) if (NR.weapons.canAdd(p, p.weapons[i].id)) up.push(p.weapons[i].id);
-    if (up.length && NR.rng.chance(0.4)) { if (giveWeapon(p, up, out)) return out; }
-    const ids = NR.items.roll(1, NR.stats.get(p, 'luck') + 0.3, W.wave + 3);
+    if (!minTier && up.length && NR.rng.chance(0.4)) { if (giveWeapon(p, up, out)) return out; }
+    const ids = NR.items.roll(1, NR.stats.get(p, 'luck') + 0.3, W.wave + 3, minTier ? function (id, d) { return TIER[d.rarity] >= minTier; } : null);
     if (ids.length && NR.items.grant(p, ids[0], 'chest')) { out.kind = 'item'; out.id = ids[0]; out.value = p.items[ids[0]]; return out; }
     if (up.length && giveWeapon(p, up, out)) return out;
     const g = 25 + 5 * W.wave; NR.player.addGold(g); out.value = g;
@@ -77,7 +79,7 @@
     else if (pk.type === 'heart') NR.player.heal(pk.value || 20);
     else if (pk.type === 'magnet') collectAll();
     else if (pk.type === 'nova_bomb') NR.combat.explode(p.x, p.y, 600, (50 + 5 * NR.world.get().wave) * NR.stats.get(p, 'damage'), { team: 'player', element: 'physical', weaponId: null });
-    else if (pk.type === 'chest') openChest(colP); // fills kind/id/value: this payload is the reveal event
+    else if (pk.type === 'chest') openChest(colP, pk.value | 0); // fills kind/id/value: this payload is the reveal event (a chest's own value = minimum item rarity tier)
     NR.events.emit('pickup:collect', colP);
   }
   // merge xp shards into per-cell stacks (cells double until at most MERGE_OVER remain); total value is conserved

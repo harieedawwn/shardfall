@@ -1532,6 +1532,7 @@
     const goldBottom = drawGold(p, W, x1 - (L.touch ? 56 * u : 0), y0);
     drawCombo(x1 - (L.touch ? 56 * u : 0), goldBottom + 8 * u);
     drawBoss(W, cw, y0 + 62 * u, vitalsW);
+    drawEvent(W, cw, ch, y0 + 58 * u);
     drawDash(p, cw, y1);
     if (L.touch) { drawWeaponsRow(p, x0 + 66 * u, y0 + 52 * u); drawSets(p, x0 + 66 * u, y0 + 52 * u + 36 * u); }
     else { drawWeapons(p, x0, y1); drawItems(p, x0, y1 - 58 * u); drawSets(p, x0, y1 - 58 * u - (Object.keys(p.items).length ? 32 : 0) * u - 28 * u); }
@@ -1625,6 +1626,42 @@
     else if (isBoss) { main = upper(t('hud.boss')); col = C.boss; }
     else { main = mmss(W.waveT); if (W.waveT <= 5 && W.waveT > 0 && W.state === 'wave') col = C.hpLow; }
     label(main, x + w / 2, y + 33 * u, 24, col, 'center', true);
+  }
+
+  // mid-wave event: chip with name, objective and progress bar under the wave pill, plus an arrow at the screen edge when its target is off-screen
+  const evP = { x: 0, y: 0 };
+  function drawEvent(W, cw, ch, y) {
+    const ev = W.event, d = ev && NR.data.waveEvents && NR.data.waveEvents[ev.id];
+    if (!ev || !d || W.state === 'clear') return;
+    let msg, f;
+    if (ev.id === 'treasure_runner') { msg = t('event.runner.short', { s: Math.max(0, Math.ceil(ev.t)) }); f = clamp(ev.t / ev.dur, 0, 1); }
+    else if (ev.id === 'cursed_shrine') {
+      if (ev.state === 'idle') { msg = t('event.shrine.idle', { p: Math.round(ev.progress * 100) }); f = ev.progress; }
+      else { msg = t('event.shrine.fight', { n: Math.max(0, Math.round((ev.total || 0) * (1 - ev.progress))) }); f = ev.progress; }
+    } else { msg = t('event.storm.short', { s: Math.max(0, Math.ceil(ev.t)) }); f = clamp(ev.t / ev.dur, 0, 1); }
+    const name = upper(tx(d.name));
+    ctx.font = '700 ' + Math.round(13 * u) + 'px ' + FB;
+    const w = Math.max(220 * u, (ctx.measureText ? ctx.measureText(msg).width : msg.length * 7) + 44 * u), h = 46 * u, x = Math.round((cw - w) / 2);
+    box(x, y, w, h, C.panel, 2.5 * u, 11 * u);
+    ctx.fillStyle = d.color; ctx.fillRect(x + 7 * u, y + 9 * u, 5 * u, h - 18 * u);
+    label(name, x + 20 * u, y + 13 * u, 12, d.color, 'left', true);
+    label(msg, x + 20 * u, y + 29 * u, 13, C.cream, 'left');
+    ctx.fillStyle = C.ink; ctx.fillRect(x + 8 * u, y + h - 6 * u, w - 16 * u, 3 * u);
+    ctx.fillStyle = d.color; ctx.fillRect(x + 8 * u, y + h - 6 * u, (w - 16 * u) * f, 3 * u);
+    // off-screen arrow
+    const R = NR.fx && NR.fx.render, V = R && R.view ? R.view() : null;
+    if (!V || !(V.k > 0) || !NR.camera) return;
+    NR.camera.toScreen(ev.x, ev.y, evP);
+    const sx = (evP.x * V.k + V.ox) / V.dpr, sy = (evP.y * V.k + V.oy) / V.dpr, m = 34 * u;
+    const l = L.l + m, r = cw - L.r - m, tp = L.t + m + 90 * u, b = ch - L.b - m;
+    if (sx >= l && sx <= r && sy >= tp && sy <= b) return;
+    const cx0 = cw / 2, cy0 = ch / 2, dx = sx - cx0, dy = sy - cy0;
+    const k = Math.min(dx > 0 ? (r - cx0) / dx : dx < 0 ? (l - cx0) / dx : Infinity, dy > 0 ? (b - cy0) / dy : dy < 0 ? (tp - cy0) / dy : Infinity);
+    const ax = cx0 + dx * k, ay = cy0 + dy * k, ang = Math.atan2(dy, dx), pulse = settings().reduceFlashing ? 1 : 0.85 + 0.15 * Math.sin(S.time * 8);
+    ctx.save(); ctx.translate(ax, ay); ctx.rotate(ang); ctx.scale(pulse, pulse);
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.moveTo(17 * u, 0); ctx.lineTo(-11 * u, -14 * u); ctx.lineTo(-5 * u, 0); ctx.lineTo(-11 * u, 14 * u); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = d.color; ctx.beginPath(); ctx.moveTo(13 * u, 0); ctx.lineTo(-8 * u, -10 * u); ctx.lineTo(-3 * u, 0); ctx.lineTo(-8 * u, 10 * u); ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
 
   function drawGold(p, W, right, y) {
@@ -1824,6 +1861,16 @@
       S.banner = { l1: l1, l2: z ? upper(tx(z.name)) : '', color: e.isBoss ? C.boss : (pal ? pal[4] : C.panel), dur: 1.8 };
       S.bannerT = S.banner.dur;
       S.lag = S.hp; S.lagHold = 0;
+    });
+    E.on('event:start', function (e) {
+      const d = NR.data.waveEvents[e.id];
+      if (!d) return;
+      S.banner = { l1: upper(tx(d.name)), l2: tx(d.obj), color: d.color, dur: 2.4 }; S.bannerT = S.banner.dur;
+    });
+    E.on('event:end', function (e) {
+      const d = NR.data.waveEvents[e.id];
+      if (!d) return;
+      toast(e.success ? t('event.win', { name: tx(d.name) }) : (e.reason === 'timeout' && e.id === 'treasure_runner' ? t('event.escaped') : t('event.fail', { name: tx(d.name) })), e.success ? C.good : C.hpLow);
     });
     E.on('run:start', function () { S.toasts.length = 0; S.banner = null; S.bannerT = 0; S.hp = 1; S.lag = 1; S.gold = 0; S.bossId = 0; S.combo = 0; S.comboT = 0; S.comboRank = 0; });
     E.on('enemy:death', function () {
