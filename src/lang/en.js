@@ -322,6 +322,12 @@
     "set.need": "{name}: needs {n} weapons of one element ({have}/{n})",
     "end.itemProc": "Item: {name}",
     "end.reaction": "Reaction: {name}",
-    "end.reactions": "Element reactions"
+    "end.reactions": "Element reactions",
+    "shop.evolvesInto": "Evolves → {name}",
+    "shop.evolvesReady": "Ready to evolve → {name}",
+    "shop.evolvesNeed": "Needs {item}",
+    "shop.catalystFor": "Catalyst: {weapon} → {name}",
+    "shop.catalystHave": "Catalyst ✓ {weapon} → {name}",
+    "codex.recipeKnown": "The recipe is known, but the result is still locked."
   };
 })();

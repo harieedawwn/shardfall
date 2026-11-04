@@ -322,6 +322,12 @@
     "set.need": "{name}: cần {n} vũ khí cùng nguyên tố ({have}/{n})",
     "end.itemProc": "Vật phẩm: {name}",
     "end.reaction": "Phản ứng: {name}",
-    "end.reactions": "Phản ứng nguyên tố"
+    "end.reactions": "Phản ứng nguyên tố",
+    "shop.evolvesInto": "Tiến hóa → {name}",
+    "shop.evolvesReady": "Sẵn sàng tiến hóa → {name}",
+    "shop.evolvesNeed": "Cần {item}",
+    "shop.catalystFor": "Xúc tác: {weapon} → {name}",
+    "shop.catalystHave": "Xúc tác ✓ {weapon} → {name}",
+    "codex.recipeKnown": "Công thức đã rõ, nhưng thành phẩm vẫn chưa được mở khóa."
   };
 })();

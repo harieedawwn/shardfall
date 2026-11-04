@@ -15,14 +15,17 @@
   const CHO = { jumps: 3, range: 130, falloff: 0.8, weaponId: null, ox: 0, oy: 0, statusChance: 0, weight: 0, crit: false, first: true };
   const KEYS = ['dmg', 'rate', 'speed', 'range', 'count', 'pierce', 'area', 'crit', 'statusChance', 'knock', 'spread', 'jitter', 'r', 'bounce', 'wbounce', 'blast', 'blastDmg',
     'split', 'homing', 'pull', 'w', 'arc', 'patch', 'spreadFire', 'wave', 'stormArcs', 'aftershock', 'orad', 'ospd', 'breathe', 'jumps', 'jrange', 'falloff', 'stun', 'tick',
-    'freezeEvery', 'plague', 'cloudDmg', 'cloudLife', 'trig', 'arm', 'cluster', 'dbl'];
+    'freezeEvery', 'plague', 'cloudDmg', 'cloudLife', 'trig', 'arm', 'cluster', 'dbl',
+    // evolution behaviours
+    'lay', 'layR', 'layDmg', 'layLife', 'ring', 'linger', 'hole', 'rings', 'heal', 'line', 'chn', 'novaN', 'novaEvery', 'novaDmg', 'trail', 'trailR', 'trailDmg', 'rehit', 'ramp', 'fz',
+    'zapEvery', 'zapMult', 'zapJumps', 'reflect', 'bolts', 'rain', 'pr', 'pd'];
   let sweepT = 0, plagueDepth = 0, inited = false;
 
   function W() { return NR.world.get(); }
   function def(id) { return NR.data.weapons[id]; }
   function find(p, id) { for (let i = 0; i < p.weapons.length; i++) if (p.weapons[i].id === id) return i; return -1; }
   function slots(p) { return Math.round(NR.stats.get(p, 'weaponSlots')); }
-  function rtOf(w) { let r = RT.get(w); if (!r) { r = { sig: '', chk: 0, shots: 0, ang: 0, flip: 1, area: null, aid: 0, patchT: 0 }; RT.set(w, r); } return r; }
+  function rtOf(w) { let r = RT.get(w); if (!r) { r = { sig: '', chk: 0, shots: 0, ang: 0, flip: 1, area: null, aid: 0, patchT: 0, vol: 0, sp: 0, nt: 0, lt: 0, zt: 0, nN: 0, nE: 0, nD: 0, tr: 0, trR: 0, trD: 0, zE: 0, zM: 0, zJ: 0 }; RT.set(w, r); } return r; }
 
   function init() {
     if (inited) return;
@@ -35,12 +38,13 @@
     NR.events.on('enemy:death', function (e) { // Toxic Cloud Lv5 "plague": poisoned kills burst into gas
       const p = W().player, en = e.enemy;
       if (!p || !en || !en.status || !en.status.poison || !(en.status.poison.t > 0) || plagueDepth >= 3) return;
-      const i = find(p, 'toxic_cloud');
+      let i = find(p, 'toxic_cloud');
+      if (i < 0) i = find(p, 'miasma');
       if (i < 0) return;
       resolveInto(p, p.weapons[i], R);
       if (!(R.plague > 0)) return;
       plagueDepth++;
-      XO.team = 'player'; XO.element = 'poison'; XO.weaponId = 'toxic_cloud'; XO.statusChance = 1; XO.knock = 80; XO.crit = false; XO.weight = 0; XO.spread = false;
+      XO.team = 'player'; XO.element = 'poison'; XO.weaponId = p.weapons[i].id; XO.statusChance = 1; XO.knock = 80; XO.crit = false; XO.weight = 0; XO.spread = false;
       NR.combat.explode(e.x, e.y, 70 * Math.sqrt(R.area), R.dmg * 1.3, XO);
       plagueDepth--;
     });
@@ -118,11 +122,13 @@
   function rsize(d, n) { return d.size * Math.min(2.5, Math.sqrt(n.area)); }
 
   // ---- projectile / spread / homing
-  function fireBullets(p, w, i, d, n, a) {
-    const cnt = Math.max(1, n.count), fan = d.kind === 'spread', rng = NR.rng, blast = n.blast > 0;
+  function fireBullets(p, w, i, d, n, a, rt) {
+    let cnt = Math.max(1, n.count), fan = d.kind === 'spread', full = false;
+    const rng = NR.rng, blast = n.blast > 0, cloud = n.cloudDmg > 0;
     const r = rsize(d, n);
+    if (n.ring > 0 && rt && (++rt.vol % n.ring) === 0) { full = true; cnt = Math.max(12, cnt * 2); } // Blizzard Fan: every Nth volley is a full ring
     for (let k = 0; k < cnt; k++) {
-      let ang = cnt > 1 ? a + (k / (cnt - 1) - 0.5) * n.spread : a;
+      let ang = full ? a + k / cnt * TWO_PI : cnt > 1 ? a + (k / (cnt - 1) - 0.5) * n.spread : a;
       if (n.jitter > 0) ang += (rng.next() - 0.5) * 2 * n.jitter;
       const cr = NR.combat.critRoll(p, n.crit);
       const sp = fan ? n.speed * (0.9 + rng.next() * 0.2) : n.speed;
@@ -132,6 +138,10 @@
       b.pierce = n.pierce; b.life = n.range / sp; b.knock = n.knock; b.statusChance = n.statusChance; b.homing = n.homing; b.hr = 420;
       b.bounce = n.bounce; b.wb = n.wbounce; b.split = n.split; b.pullS = d.kind === 'homing' ? n.pull : 0; b.weight = d.hit; b.spread = n.spreadFire;
       if (blast) { b.onEnd = NR.projectiles.END_EXPLODE; b.blastR = n.blast * Math.sqrt(n.area); b.bd = n.blastDmg || 0.6; }
+      if (cloud) { b.onEnd = NR.projectiles.END_CLOUD; b.blastR = (n.blast || 60) * Math.sqrt(n.area); b.cdmg = n.cloudDmg; b.cl = n.cloudLife; b.statusChance = Math.max(0.6, n.statusChance); }
+      if (n.rehit > 0) { b.rehit = n.rehit; }
+      if (n.lay > 0) { b.lay = n.lay; b.layT = n.lay * 0.5; b.layR = n.layR * Math.sqrt(n.area); b.layD = n.dmg * n.layDmg; b.layL = n.layLife; }
+      if (n.fz > 0) b.fz = 1;
       b.shape = d.shape; b.color = d.color; b.size = r; b.trail = d.trail; b.rot = ang;
       NR.projectiles.launch();
     }
@@ -165,6 +175,12 @@
       AO.dmg = 0; AO.life = cone ? 0.11 : 0.12; AO.element = d.element; AO.color = d.color; AO.shape = cone ? 'arc' : 'beam'; AO.weaponId = w.id; AO.visual = true;
       AO.follow = false; AO.aura = false; AO.tick = 0.5; AO.delay = 0; AO.statusChance = 0; AO.knock = 0; AO.freezeEvery = 0;
       NR.combat.createArea(AO);
+      if (!cone && n.linger > 0 && W().areas.length < 150) { // Prism Lance: a laser wall that keeps cutting along the line
+        AO.areaKind = 'beam'; AO.x = p.x; AO.y = p.y; AO.angle = ang; AO.len = len; AO.w = wd; AO.r = wd; AO.dmg = n.dmg * n.linger; AO.tick = 0.15; AO.life = 0.6; AO.delay = 0.05; AO.element = d.element;
+        AO.color = d.color; AO.shape = 'beam'; AO.visual = false; AO.weaponId = w.id; AO.statusChance = n.statusChance; AO.weight = 0; AO.critB = n.crit;
+        NR.combat.createArea(AO);
+      }
+      if (!cone && n.reflect > 0) reflectBeam(p, w, d, n, ang, len);
       if (found > 0) emitImpact(p.x + cs * Math.min(len, Math.sqrt((Q[0].x - p.x) * (Q[0].x - p.x) + (Q[0].y - p.y) * (Q[0].y - p.y))), p.y + sn * Math.min(len, Math.sqrt((Q[0].x - p.x) * (Q[0].x - p.x) + (Q[0].y - p.y) * (Q[0].y - p.y))), d);
       if (n.patch > 0 && (rt.shots++ % 3) === 0) { // Inferno Jet: scorched ground at the tip
         AO.areaKind = 'circle'; AO.x = p.x + cs * len * 0.8; AO.y = p.y + sn * len * 0.8; AO.r = 46 * Math.sqrt(n.area); AO.len = 0; AO.arc = 0; AO.w = 0; AO.angle = 0;
@@ -174,8 +190,46 @@
     }
     emitFire(w, i, d, p, a);
   }
+  // Rail Reflector: if the beam reaches the arena wall it rebounds and sweeps a second segment with the leftover length
+  function reflectBeam(p, w, d, n, ang, range) {
+    const A = NR.config.ARENA, cs = Math.cos(ang), sn = Math.sin(ang);
+    let tx = Infinity, ty = Infinity;
+    if (cs > 1e-6) tx = (A.w - p.x) / cs; else if (cs < -1e-6) tx = -p.x / cs;
+    if (sn > 1e-6) ty = (A.h - p.y) / sn; else if (sn < -1e-6) ty = -p.y / sn;
+    const t = Math.min(tx, ty), vert = tx <= ty; // vert: the beam meets a left/right wall first
+    if (!(t < range) || t < 0) return;
+    const qx = p.x + cs * t, qy = p.y + sn * t, ra = vert ? Math.atan2(sn, -cs) : Math.atan2(-sn, cs), left = range - t, rc = Math.cos(ra), rs = Math.sin(ra);
+    const wd = n.w * Math.sqrt(n.area), found = NR.spatial.line(qx, qy, qx + rc * left, qy + rs * left, wd, Q2);
+    if (found > 1) NR.combat.sortNear(Q2, qx, qy);
+    const m = Math.min(found, n.pierce + 1);
+    for (let j = 0; j < m; j++) {
+      const e = Q2[j];
+      if (e.dead) continue;
+      const cr = NR.combat.critRoll(p, n.crit);
+      HO.weaponId = w.id; HO.element = d.element; HO.crit = cr.crit; HO.kx = rc * n.knock; HO.ky = rs * n.knock; HO.statusChance = n.statusChance; HO.noChain = false; HO.dot = false; HO.weight = d.hit; HO.spread = false;
+      NR.combat.hitEnemy(e, n.dmg * 0.85 * cr.mult, HO);
+    }
+    AO.areaKind = 'beam'; AO.x = qx; AO.y = qy; AO.angle = ra; AO.len = left; AO.arc = 0; AO.w = wd; AO.r = wd; AO.dmg = 0; AO.life = 0.12; AO.element = d.element; AO.color = d.color; AO.shape = 'beam';
+    AO.weaponId = w.id; AO.visual = true; AO.follow = false; AO.aura = false; AO.tick = 0.5; AO.delay = 0; AO.statusChance = 0; AO.knock = 0; AO.freezeEvery = 0;
+    NR.combat.createArea(AO);
+    impP.x = qx; impP.y = qy; impP.element = d.element; impP.surface = 'wall'; NR.events.emit('projectile:impact', impP);
+  }
   const impP = { x: 0, y: 0, r: 6, element: 'physical', team: 'player', surface: 'enemy' };
   function emitImpact(x, y, d) { impP.x = x; impP.y = y; impP.element = d.element; NR.events.emit('projectile:impact', impP); }
+
+  // lightning from the sky onto up to n.bolts random enemies near the player
+  function skyBolts(p, w, d, n) {
+    const found = NR.spatial.circle(p.x, p.y, 430, Q2);
+    if (!found) return;
+    const m = Math.min(n.bolts, found);
+    for (let k = 0; k < m; k++) {
+      const j = k + Math.floor(NR.rng.next() * (found - k)), e = Q2[j]; Q2[j] = Q2[k]; Q2[k] = e;
+      if (e.dead) continue;
+      const cr = NR.combat.critRoll(p, n.crit);
+      CHO.jumps = 1; CHO.range = 110; CHO.falloff = 0.5; CHO.weaponId = w.id; CHO.ox = e.x + 40; CHO.oy = e.y - 320; CHO.statusChance = n.statusChance; CHO.weight = d.hit * 0.5; CHO.crit = cr.crit; CHO.first = true; CHO.element = 'shock';
+      NR.combat.chain(e, n.dmg * 0.95 * cr.mult, CHO);
+    }
+  }
 
   // ---- melee: katana slashes (arc) and maul smash (circle)
   function fireMelee(p, w, i, d, n, a, rt) {
@@ -184,6 +238,14 @@
       const cx = p.x + Math.cos(a) * n.range, cy = p.y + Math.sin(a) * n.range;
       XO.team = 'player'; XO.element = d.element; XO.weaponId = w.id; XO.statusChance = n.statusChance; XO.knock = n.knock; XO.crit = cr.crit; XO.weight = d.hit; XO.spread = false;
       NR.combat.explode(cx, cy, R2, n.dmg * cr.mult, XO);
+      if (n.hole > 0 && W().areas.length < 150) { // Singularity Maul: a black hole that drags enemies in for 1.4 s, then detonates
+        AO.areaKind = 'circle'; AO.x = cx; AO.y = cy; AO.r = R2 * 1.5; AO.dmg = n.dmg * 0.18; AO.tick = 0.25; AO.delay = 0; AO.life = 1.4; AO.element = d.element; AO.statusChance = 0; AO.knock = 0;
+        AO.color = d.color; AO.shape = 'ring'; AO.visual = false; AO.weight = 0; AO.len = 0; AO.arc = 0; AO.w = 0; AO.follow = false; AO.aura = false; AO.weaponId = w.id; AO.critB = 0; AO.freezeEvery = 0; AO.pull = 520;
+        NR.combat.createArea(AO);
+        AO.dmg = n.dmg * 2.2; AO.tick = 5; AO.delay = 1.4; AO.life = 1.75; AO.pull = 0; AO.r = R2 * 1.35; AO.statusChance = n.statusChance; AO.knock = n.knock * 0.4; AO.weight = d.hit;
+        NR.combat.createArea(AO); AO.pull = 0;
+      }
+      if (n.bolts > 0) skyBolts(p, w, d, n); // Skyhammer
       if (n.aftershock > 0) {
         AO.areaKind = 'circle'; AO.x = cx; AO.y = cy; AO.r = R2 * 1.55; AO.dmg = n.dmg * 0.6; AO.tick = 5; AO.delay = 0.32; AO.life = 0.4; AO.element = d.element;
         AO.statusChance = n.statusChance; AO.knock = n.knock * 0.6; AO.color = d.color; AO.shape = 'ring'; AO.visual = false; AO.weight = d.hit * 0.6; AO.len = 0; AO.arc = 0; AO.w = 0;
@@ -248,11 +310,17 @@
     const mine = n.trig > 0, cnt = Math.max(1, n.count);
     const tgt = NR.spatial.nearest(p.x, p.y, n.range, null);
     if (mine && !tgt) return false;
+    if (n.rain > 0) return fireRain(p, w, i, d, n, a, tgt);
     const bs = Math.sqrt(n.area);
+    const lineD = n.line > 0 ? (tgt ? Math.sqrt((tgt.x - p.x) * (tgt.x - p.x) + (tgt.y - p.y) * (tgt.y - p.y)) : n.range * 0.7) : 0;
+    const lineA = n.line > 0 ? (tgt ? Math.atan2(tgt.y - p.y, tgt.x - p.x) : a) : 0;
     for (let k = 0; k < cnt; k++) {
       let tx, ty;
       if (tgt) { tx = tgt.x; ty = tgt.y; } else { tx = p.x + Math.cos(a) * n.range * 0.65; ty = p.y + Math.sin(a) * n.range * 0.65; }
-      if (cnt > 1 || mine) { tx += (NR.rng.next() - 0.5) * 90; ty += (NR.rng.next() - 0.5) * 90; }
+      if (n.line > 0) { // Carpet Bomb: a row of grenades along the line to the target, landing one after another
+        const dk = Math.min(n.range, Math.max(70, lineD * (0.4 + 0.9 * (cnt > 1 ? k / (cnt - 1) : 1))));
+        tx = p.x + Math.cos(lineA) * dk; ty = p.y + Math.sin(lineA) * dk;
+      } else if (cnt > 1 || mine) { tx += (NR.rng.next() - 0.5) * 90; ty += (NR.rng.next() - 0.5) * 90; }
       if (mine) { tx = p.x + (tx - p.x) * 0.6; ty = p.y + (ty - p.y) * 0.6; }
       let dx = tx - p.x, dy = ty - p.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
       if (dist > n.range) { dx *= n.range / dist; dy *= n.range / dist; dist = n.range; }
@@ -261,7 +329,7 @@
       b.shape = d.shape; b.color = d.color; b.size = d.size; b.r = d.size; b.trail = d.trail; b.blastR = n.blast * bs;
       if (mine) {
         const k2 = 3; b.vx = dx / dist * dist * k2; b.vy = dy / dist * dist * k2; b.drag = k2; b.mine = 1; b.arm = n.arm; b.trig = 60 * bs; b.life = 14;
-        b.onEnd = NR.projectiles.END_CLOUD; b.cdmg = n.cloudDmg; b.cl = n.cloudLife; b.dbl = n.dbl; b.bd = 1;
+        b.onEnd = NR.projectiles.END_CLOUD; b.cdmg = n.cloudDmg; b.cl = n.cloudLife; b.dbl = n.dbl; b.bd = 1; b.chn = n.chn;
       } else {
         const sp = n.speed; b.vx = dx / dist * sp; b.vy = dy / dist * sp; b.life = dist / sp; b.ghost = 1; b.bd = 1;
         b.onEnd = n.cluster > 0 ? NR.projectiles.END_CLUSTER : NR.projectiles.END_EXPLODE; b.cn = n.cluster;
@@ -272,10 +340,28 @@
     return true;
   }
 
+  // Phoenix Staff: a meteor shower around the target; each comet streaks in from the sky on its own timer and leaves flames
+  function fireRain(p, w, i, d, n, a, tgt) {
+    const A = NR.config.ARENA, bs = Math.sqrt(n.area), rng = NR.rng, U = NR.util;
+    const cx = tgt ? tgt.x : p.x + Math.cos(a) * n.range * 0.65, cy = tgt ? tgt.y : p.y + Math.sin(a) * n.range * 0.65;
+    for (let k = 0; k < n.rain; k++) {
+      const tx = U.clamp(cx + (rng.next() - 0.5) * 300, 30, A.w - 30), ty = U.clamp(cy + (rng.next() - 0.5) * 300, 30, A.h - 30);
+      const L = 0.5 + k * 0.13, sx = U.clamp(tx - 0.42 * 380, 1, A.w - 1), sy = U.clamp(ty - 0.91 * 380, 1, A.h - 1);
+      const cr = NR.combat.critRoll(p, n.crit), b = NR.projectiles.begin();
+      b.weaponId = w.id; b.x = sx; b.y = sy; b.vx = (tx - sx) / L; b.vy = (ty - sy) / L; b.life = L; b.ghost = 1; b.dmg = n.dmg * cr.mult; b.crit = cr.crit; b.element = d.element;
+      b.statusChance = n.statusChance; b.knock = n.knock; b.weight = d.hit; b.shape = d.shape; b.color = d.color; b.size = d.size; b.r = d.size; b.trail = true; b.blastR = n.blast * bs; b.bd = 1;
+      b.onEnd = NR.projectiles.END_EXPLODE; b.pr = n.pr * bs; b.pd = n.dmg * n.pd;
+      NR.projectiles.launch();
+    }
+    emitFire(w, i, d, p, a);
+    return true;
+  }
+
   // ---- orbiting saws
   function tendOrbit(p, w, d, rt) {
     resolveInto(p, w, R);
-    const cnt = Math.max(1, R.count), sig = w.id + ':' + cnt + ':' + Math.round(R.dmg * 10) + ':' + Math.round(R.orad * R.area) + ':' + Math.round(R.ospd * 10) + ':' + R.breathe + ':' + Math.round(R.rate * 10);
+    rt.zE = R.zapEvery; rt.zM = R.dmg * R.zapMult; rt.zJ = R.zapJumps;
+    const cnt = Math.max(1, R.count), sig = w.id + ':' + cnt + ':' + Math.round(R.dmg * 10) + ':' + Math.round(R.orad * R.area) + ':' + Math.round(R.ospd * 10) + ':' + R.breathe + ':' + Math.round(R.rate * 10) + ':' + R.rings + ':' + R.heal;
     const P = W().projectiles;
     let live = 0, stale = false;
     for (let i = 0; i < P.length; i++) { const b = P[i]; if (b.orb && !b.dead && b.weaponId === w.id) { live++; if (rt.sig !== sig) { b.dead = true; stale = true; } } }
@@ -284,12 +370,26 @@
     rt.sig = sig;
     const r = rsize(d, R);
     for (let k = 0; k < cnt; k++) {
-      const b = NR.projectiles.begin();
-      b.weaponId = w.id; b.x = p.x; b.y = p.y; b.orb = 1; b.oa = k / cnt * TWO_PI + rt.ang; b.orad = R.orad * Math.sqrt(R.area); b.ospd = R.ospd; b.br = R.breathe > 0 ? 0.4 : 0;
+      const b = NR.projectiles.begin(), outer = R.rings > 1 && (k & 1) === 1; // Bloodsaw: odd saws form a wider ring turning the other way
+      b.weaponId = w.id; b.x = p.x; b.y = p.y; b.orb = 1; b.oa = k / cnt * TWO_PI + rt.ang; b.orad = R.orad * Math.sqrt(R.area) * (outer ? 1.5 : 1); b.ospd = outer ? -R.ospd : R.ospd; b.br = R.breathe > 0 ? 0.4 : 0; b.heal = R.heal;
       b.rehit = 1 / Math.max(0.2, R.rate); b.dmg = R.dmg; b.cb = R.crit; b.element = d.element; b.pierce = 99; b.life = 1e9; b.knock = R.knock; b.statusChance = R.statusChance;
       b.weight = d.hit; b.r = r; b.size = r; b.shape = d.shape; b.color = d.color; b.trail = d.trail;
       NR.projectiles.launch();
     }
+  }
+
+  // Thunder Ring: a disc hurls lightning at the nearest enemy on a timer
+  function zapTick(p, w, d, rt, dt) {
+    rt.zt -= dt;
+    if (rt.zt > 0) return;
+    rt.zt = rt.zE;
+    const e = NR.spatial.nearest(p.x, p.y, 340, null);
+    if (!e) return;
+    const P = W().projectiles;
+    let n = 0, pick = null;
+    for (let i = 0; i < P.length; i++) { const b = P[i]; if (b.orb && !b.dead && b.weaponId === w.id) { n++; if (NR.rng.next() * n < 1) pick = b; } }
+    CHO.jumps = rt.zJ; CHO.range = 150; CHO.falloff = 0.75; CHO.weaponId = w.id; CHO.ox = pick ? pick.x : p.x; CHO.oy = pick ? pick.y : p.y; CHO.statusChance = 0.3; CHO.weight = 0; CHO.crit = false; CHO.first = true; CHO.element = 'shock';
+    NR.combat.chain(e, rt.zM, CHO);
   }
 
   // ---- drones
@@ -333,6 +433,7 @@
   // ---- aura: one persistent following circle per weapon
   function tendAura(p, w, d, rt) {
     resolveInto(p, w, R);
+    rt.nN = R.novaN; rt.nE = R.novaEvery; rt.nD = R.dmg * R.novaDmg; rt.tr = R.trail; rt.trR = R.trailR * Math.sqrt(R.area); rt.trD = R.dmg * R.trailDmg;
     let a = rt.area;
     if (!a || a.id !== rt.aid || a.dead || a.kind !== 'area') {
       AO.areaKind = 'circle'; AO.x = p.x; AO.y = p.y; AO.r = R.r * Math.sqrt(R.area); AO.dmg = R.dmg; AO.tick = R.tick; AO.life = 1e9; AO.delay = 0; AO.follow = true;
@@ -343,6 +444,31 @@
       return;
     }
     a.r = R.r * Math.sqrt(R.area); a.dmg = R.dmg; a.tick = R.tick; a.statusChance = R.statusChance; a.freezeEvery = R.freezeEvery; a.critB = R.crit; a.element = d.element; a.color = d.color;
+  }
+
+  // Absolute Zero: every few seconds the ring fires a burst of piercing ice spikes
+  function novaTick(p, w, d, rt, dt) {
+    rt.nt -= dt;
+    if (rt.nt > 0) return;
+    rt.nt = rt.nE;
+    const N = Math.round(rt.nN), r = 11;
+    rt.ang += 0.31;
+    for (let k = 0; k < N; k++) {
+      const ang = k / N * TWO_PI + rt.ang, b = NR.projectiles.begin();
+      b.weaponId = w.id; b.x = p.x + Math.cos(ang) * (p.r + 6); b.y = p.y + Math.sin(ang) * (p.r + 6); b.vx = Math.cos(ang) * 540; b.vy = Math.sin(ang) * 540; b.r = r * 0.7; b.dmg = rt.nD;
+      b.element = d.element; b.pierce = 99; b.life = 0.7; b.knock = 60; b.statusChance = 1; b.weight = 0; b.shape = 'tri'; b.color = d.color; b.size = b.r; b.trail = true; b.rot = ang;
+      NR.projectiles.launch();
+    }
+  }
+  // Miasma: poison clouds dropped behind you while you move
+  const TRAIL = { areaKind: 'circle', team: 'player', weaponId: null, x: 0, y: 0, r: 60, dmg: 0, tick: 0.5, life: 3.2, element: 'poison', statusChance: 0.5, color: '#4DCB7B', shape: 'ring' };
+  function trailTick(p, w, d, rt, dt) {
+    rt.lt -= dt;
+    if (rt.lt > 0) return;
+    rt.lt = 0.45;
+    if (p.vx * p.vx + p.vy * p.vy < 900 || W().areas.length >= 150) return;
+    TRAIL.weaponId = w.id; TRAIL.x = p.x; TRAIL.y = p.y; TRAIL.r = rt.trR; TRAIL.dmg = rt.trD; TRAIL.color = d.color;
+    NR.combat.createArea(TRAIL);
   }
 
   function sweep(p) { // anything that outlived its weapon (sold, evolved) goes away
@@ -361,9 +487,10 @@
       const w = p.weapons[i], d = def(w.id);
       if (!d) continue;
       const rt = rtOf(w), kind = d.kind;
-      if (kind === 'orbit') { if (--rt.chk <= 0) { rt.chk = 12; tendOrbit(p, w, d, rt); } continue; }
+      if (kind === 'orbit') { if (--rt.chk <= 0) { rt.chk = 12; tendOrbit(p, w, d, rt); } if (rt.zE > 0) zapTick(p, w, d, rt, dt); continue; }
       if (kind === 'drone') { tendDrones(p, w, i, d, rt, dt); continue; }
-      if (kind === 'aura') { if (--rt.chk <= 0) { rt.chk = 6; tendAura(p, w, d, rt); } continue; }
+      if (kind === 'aura') { if (--rt.chk <= 0) { rt.chk = 6; tendAura(p, w, d, rt); } if (rt.nN > 0) novaTick(p, w, d, rt, dt); if (rt.tr > 0) trailTick(p, w, d, rt, dt); continue; }
+      if (rt.sp > 0 && !it.fire) rt.sp = Math.max(0, rt.sp - dt * 1.2);
       if (w.cd > 0) w.cd -= dt;
       if (w.cd > 0) continue;
       if (!it.fire && !d.auto) { w.cd = 0; continue; }
@@ -371,7 +498,7 @@
       while (w.cd <= 0 && guard++ < 4) {
         resolveInto(p, w, R);
         let ok = true;
-        if (kind === 'projectile' || kind === 'spread' || kind === 'homing') fireBullets(p, w, i, d, R, a);
+        if (kind === 'projectile' || kind === 'spread' || kind === 'homing') fireBullets(p, w, i, d, R, a, rt);
         else if (kind === 'beam') fireBeam(p, w, i, d, R, a, rt);
         else if (kind === 'melee') fireMelee(p, w, i, d, R, a, rt);
         else if (kind === 'chain') ok = fireChain(p, w, i, d, R, a);
@@ -379,7 +506,10 @@
         else ok = false;
         if (!ok) { w.cd = 0; break; }
         fired = true; rt.flip = -rt.flip;
-        w.cd += 1 / R.rate;
+        if (R.ramp > 0) { // Bullet Hose: spins up the longer you keep firing, falls back when you let go
+          w.cd += 1 / (R.rate * (1 + (R.ramp - 1) * rt.sp));
+          rt.sp = Math.min(1, rt.sp + 1 / (R.rate * 2.2));
+        } else w.cd += 1 / R.rate;
       }
       if (fired && w.cd < 0) w.cd = 0;
     }

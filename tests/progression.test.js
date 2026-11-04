@@ -50,9 +50,9 @@ module.exports = function (H) {
   const dealt = function (e) { return e.maxHp - e.hp; };
 
   // ---------------- registry ----------------
-  test('progression: registry - 30 items, 4 rarities, ~1/3 stat trade-offs, 6 catalysts matching the evolutions, {vi,en} text', function () {
+  test('progression: registry - 36 items, 4 rarities, ~1/3 stat trade-offs, 23 catalysts matching the 23 evolutions, {vi,en} text', function () {
     const NR = boot(), I = NR.data.items, ids = Object.keys(I);
-    eq(ids.length, 30);
+    eq(ids.length, 36);
     const by = { common: 0, rare: 0, epic: 0, legendary: 0 };
     let trade = 0, hooked = 0, cats = 0;
     ids.forEach(function (id) {
@@ -63,11 +63,13 @@ module.exports = function (H) {
       ok(d.cost > 0 && d.maxStack >= 1, id + ' cost/stack');
       if (d.hooks.length) hooked++; else { trade++; const sg = function (m) { return ((m.add || 0) + (m.pct || 0)) * (m.stat === 'dashCooldown' ? -1 : 1); };
         ok(d.mods.some(function (m) { return sg(m) > 0; }) && d.mods.some(function (m) { return sg(m) < 0; }), id + ' trade-off needs a plus and a minus'); }
-      if (d.catalyst) { cats++; ok(d.hooks.length > 0, id + ' catalyst has a behaviour'); }
+      if (d.catalyst) { cats++; ok(d.hooks.length > 0 || d.mods.length > 0, id + ' catalyst has real stats or a behaviour'); }
     });
     ok(by.common > 0 && by.rare > 0 && by.epic > 0 && by.legendary > 0, JSON.stringify(by));
-    ok(trade >= 8 && trade <= 12, 'trade-offs ' + trade + ' of 30'); eq(trade + hooked, 30);
-    eq(cats, 6); eq(NR.data.evolutions.length, 6);
+    ok(trade >= 8 && trade <= 12, 'trade-offs ' + trade + ' of 36'); eq(trade + hooked, 36);
+    eq(cats, 23); eq(NR.data.evolutions.length, 23);
+    eq(new Set(NR.data.evolutions.map(function (e) { return e.catalyst; })).size, 23, 'every evolution has its own catalyst');
+    eq(new Set(NR.data.evolutions.map(function (e) { return e.weapon; })).size, 23, 'one evolution per base weapon');
     NR.data.evolutions.forEach(function (e) { ok(I[e.catalyst] && I[e.catalyst].catalyst, 'evolution catalyst ' + e.catalyst + ' is a catalyst item'); });
     const kinds = {}; ids.forEach(function (id) { I[id].hooks.forEach(function (h) { kinds[h.on] = 1; }); });
     ['kill', 'hit', 'dash', 'hurt', 'wave', 'shot'].forEach(function (k) { ok(kinds[k], 'a hook on ' + k); });
@@ -185,6 +187,34 @@ module.exports = function (H) {
     const p = give(NR, 'cat_tesla_gem', n), seen = chancy(NR, true), a = foe(NR, 500, 500), b = foe(NR, 540, 500); sync(NR);
     near(p.stats.statusPower, 1.2, 'stat'); hitEv(NR, a, 20, { element: 'fire' }); eq(dealt(b), 0, 'only shock arcs');
     hitEv(NR, a, 20, { element: 'shock' }); ok(dealt(b) > 0, 'arc hits a neighbour'); has(seen, 0.25);
+  };
+  SC.cat_detonator = function (NR, n) {
+    const p = give(NR, 'cat_detonator', n), seen = chancy(NR, true), dying = foe(NR, 500, 500), b = foe(NR, 540, 500, 1000); sync(NR);
+    near(p.stats.area, 1 + 0.12 * n, 'stat'); killEv(NR, dying); near(dealt(b), [16, 23, 30][n - 1], 'detonation damage'); has(seen, [0.2, 0.3, 0.4][n - 1]);
+  };
+  SC.cat_spore_sac = function (NR, n) {
+    const p = give(NR, 'cat_spore_sac', n), seen = chancy(NR, true), a = foe(NR, 700, 600);
+    near(p.stats.hpRegen, 0.4 * n, 'stat'); hitEv(NR, a, 20);
+    const A = W(NR).areas; eq(A.length, 1); eq(A[0].element, 'poison'); eq(A[0].weaponId, 'item:cat_spore_sac'); has(seen, [0.06, 0.09, 0.12][n - 1]);
+  };
+  SC.cat_cold_snap = function (NR, n) {
+    const p = give(NR, 'cat_cold_snap', n), amt = [0.15, 0.22, 0.29][n - 1];
+    near(p.stats.critChance, 0.08 + 0.04 * n, 'stat'); near(p.stats.moveSpeed, 1);
+    NR.events.emit('wave:start', { wave: 2, zone: 'scrap', isBoss: false, duration: 30 }); near(p.stats.moveSpeed, 1 + amt, 'wave start buff');
+    tick(NR, 8.2); near(p.stats.moveSpeed, 1, 'buff expires');
+  };
+  SC.cat_capacitor = function (NR, n) {
+    const p = give(NR, 'cat_capacitor', n), a = foe(NR, p.x + 50, p.y), b = foe(NR, p.x - 130, p.y, 100, 'swarmer'); sync(NR); // b is on the far side: out of reach of the stun's own arcs
+    near(p.stats.critDamage, 1.5 + 0.15 * n, 'stat'); dashEv(NR);
+    near(dealt(a), [16, 25, 34][n - 1], 'pulse damage'); ok(a.status.stun && a.status.stun.t > 0, 'stuns'); eq(dealt(b) > 0, n >= 3, 'radius grows per stack (100/120/140)');
+  };
+  SC.cat_rime_core = function (NR, n) {
+    const p = give(NR, 'cat_rime_core', n), a = foe(NR, p.x + 100, p.y); sync(NR);
+    near(p.stats.statusPower, 1.15, 'stat'); hurtEv(NR); near(dealt(a), 26, 'wave damage'); ok(a.status.freeze, 'freezes');
+  };
+  SC.cat_storm_rod = function (NR, n) {
+    const p = give(NR, 'cat_storm_rod', n), b = foe(NR, 540, 500, 1000), d = foe(NR, 500, 500); sync(NR);
+    near(p.stats.area, 1.15, 'stat'); for (let i = 0; i < 6; i++) killEv(NR, d); eq(dealt(b), 0, 'nothing before the 7th kill'); killEv(NR, d); near(dealt(b), 40, '7th kill bursts');
   };
   SC.glass_cannon = function (NR, n) { const p = give(NR, 'glass_cannon', n); near(p.stats.damage, 1.6); eq(p.maxHp, 70); };
   SC.time_dial = function (NR, n) {

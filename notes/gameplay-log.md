@@ -34,3 +34,19 @@ Decisions are logged here instead of asking. Baseline before this pass: 108 test
 - Balance (160 runs): win 40.0% (d0 67.5%, d3 12.5%), reaction:toxic_blast 2.1% of damage, others <1%, no id >35%.
 - Decision: reactions use `explode(..., {silent:true})` (new option, no `area:explode` event) so they do not stack generic explosion fx on top of their own.
 - Next: step 3 (evolutions for every weapon: 17 base weapons still have none).
+
+## Step 3 - Evolutions for every weapon  (DONE)
+- All 23 base weapons now have exactly one evolution (17 new). Table in SPEC 4; evolved defs in `src/data/weapons.js` (E2 block), each with its own shape/colour/size, evolution row = base Lv5 row + new behaviour fields (+ dmgX/rateX only to keep DPS ~2x).
+  New behaviours (weapons.js/projectiles.js): `lay` fire trail (dragonfire), `ring` 360 volley (blizzard_fan), `linger` laser wall (prism_lance), `hole` black hole + delayed detonation (singularity_maul),
+  `rings`+`heal` counter-rotating saws that leech (bloodsaw), `line` row of grenades (carpet_bomb), `chn` chain-reaction mines (plague_mine), `novaN` spike bursts (absolute_zero), `trail` poison clouds while moving (miasma),
+  `rehit` persistent piercing homing orbs (wraith_seeker), `ramp` spin-up (bullet_hose), `cloudDmg` bolts that burst into clouds (hydra_bow), `fz` flash-freeze (glacial_seeker), `zapEvery` lightning from discs (thunder_ring),
+  `reflect` wall rebound (rail_reflector), `bolts` sky lightning (skyhammer), `rain` meteor shower + flames (phoenix_staff).
+- Catalysts: reused 11 existing items thematically (ember_charm, frost_charm, scope_lens, void_shard, vampire_fang, blast_core, venom_vial, static_charm, phoenix_feather, ghost_cloak, quick_fingers) and added 6 `cat_` items with real stats + hooks
+  (`cat_detonator cat_spore_sac cat_cold_snap cat_capacitor` rare, `cat_rime_core cat_storm_rod` epic). `item.catalyst` is now derived from the evolution table; items.js appends the "evolves X" line to descriptions.
+- Fixed while here: Toxic Cloud's "plague" kill-burst looked up only `toxic_cloud`, so miasma would have lost it; it now follows whichever weapon of the line is owned. Singularity detonation area lived shorter than its delay (never fired) - fixed.
+- Visuals: 17 new illustrations in `src/fx/shapes.js` (`NR.fx.shapes.weaponArt`), HUD icon renderer delegates to them, held-weapon gem in the evolution's colour (render.js), distinct projectile shape/colour per evolution.
+- UI: shop weapon cards show "Evolves -> X" / "Ready to evolve" / "Needs <catalyst>" chips, catalyst item cards show "Catalyst: weapon -> X" (tick when you own the weapon); owned-weapon recipe turns "ready" when the catalyst is owned; codex evolution tab lists every recipe from the start (result stays a silhouette).
+- Tests: arsenal (46 weapons, 23 evolutions, every base weapon has one valid evolution that changes behaviour, each evolved weapon sims 20 s in two packs without NaN and deals damage, draws with no banned canvas call, DPS band 1.8-2.5x; orbit/aura evolutions are measured on a closing-in, moving pack because a still player makes them meaningless),
+  progression (36 items, 23 unique catalysts, scenarios for the 6 new items), script-order test tolerant of new files.
+- Balance (160 runs): win 43.1% (d0 73.8%, d3 12.5%), no id >35%; hydra_bow 9.5% and katana 18% are the top watch items for step 7.
+- Next: step 4 (elite affixes + mid-wave events).

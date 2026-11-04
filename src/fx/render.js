@@ -623,6 +623,7 @@
       c.save(); c.translate(hx, hy); c.rotate(p.aim); if (af < 0) c.scale(1, -1); c.scale(1.1, 1.1);
       c.translate(-8, 0);
       drawHeldWeapon(c, HELD_ALIAS[w.id] || w.id, evolved(w.id), rc);
+      evoGem(c, w.id, rc);
       c.fillStyle = p.color || '#5FA8D3'; c.strokeStyle = ink; c.lineWidth = 2;
       c.beginPath(); c.arc(9 - rc, 3, 3.6, 0, TAU); c.fill(); c.stroke();
       if (ts >= 0 && ts < 0.05) { c.fillStyle = '#FFE9A8'; c.strokeStyle = ink; c.lineWidth = 1.6; star(c, 27 - rc, 0, 6, 5, 0.45); c.fill(); c.stroke(); }
@@ -1370,7 +1371,15 @@
     c.lineCap = 'butt';
   }
   const PHYS_SHOT = { pistol: 1, gatling_pistol: 1, scattergun: 1, smg: 1, venom_bow: 1, shredder: 0 };
-  const HELD_ALIAS = { smg: 'pistol', venom_bow: 'lancer', frost_seeker: 'seeker', chakram: 'saw_ring', railgun: 'lancer', thunder_hammer: 'maul', comet_staff: 'grenade' };
+  const HELD_ALIAS = { smg: 'pistol', venom_bow: 'lancer', frost_seeker: 'seeker', chakram: 'saw_ring', railgun: 'lancer', thunder_hammer: 'maul', comet_staff: 'grenade',
+    dragonfire: 'ember_gun', blizzard_fan: 'frost_fan', prism_lance: 'lancer', singularity_maul: 'maul', bloodsaw: 'saw_ring', carpet_bomb: 'grenade', plague_mine: 'toxin_mine', absolute_zero: 'frost_aura',
+    miasma: 'toxic_cloud', wraith_seeker: 'seeker', bullet_hose: 'pistol', hydra_bow: 'lancer', glacial_seeker: 'seeker', thunder_ring: 'saw_ring', rail_reflector: 'lancer', skyhammer: 'maul', phoenix_staff: 'grenade' };
+  // evolutions held by the new-roster aliases get a glowing gem in their own colour so they read as different from the base weapon
+  function evoGem(c, id, recoil) {
+    const d = NR.data.weapons[id];
+    if (!d || !d.evolved || !HELD_ALIAS[id] || !d.color) return;
+    c.save(); c.translate(-recoil, 0); c.fillStyle = d.color; c.strokeStyle = NR.config.INK; c.lineWidth = 1.6; star(c, 17, -5, 4.6, 4, 0.45); c.fill(); c.stroke(); c.restore();
+  }
   function drawBullets(c, W, a, enemy) {
     const S = NR.fx.shapes, P = W.projectiles, tint = pal[4], ink = NR.config.INK;
     for (let i = 0; i < P.length; i++) {

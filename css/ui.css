@@ -209,6 +209,7 @@ small { font-size: 0.82em; font-weight: 600; }
 .wslot.evo { border-top-color: var(--yellow); }
 .evo-h { color: var(--dim); font-size: 0.82em; }
 .evo-h.ready { color: var(--yellow); }
+.chip.evo { color: var(--yellow); border-style: dashed; } .chip.evo.on { border-style: solid; border-color: var(--yellow); } .chip.evo.need { color: var(--dim); }
 .wslot .sell { align-self: flex-start; }
 .ichips { display: flex; flex-wrap: wrap; gap: 10px; }
 .ichip { display: flex; align-items: center; gap: 8px; background: var(--card); border: 3px solid var(--ink); border-left: 8px solid var(--rc); box-shadow: 3px 3px 0 var(--ink2); padding: 4px 6px 4px 8px; }

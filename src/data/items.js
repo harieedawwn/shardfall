@@ -50,6 +50,11 @@
     for (let i = 0; i < hooks.length; i++) for (const k in hooks[i].p) P[k] = hooks[i].p[k];
     return P;
   }
+  function isCatalyst(id) {
+    const ev = NR.data.evolutions || [];
+    for (let i = 0; i < ev.length; i++) if (ev[i].catalyst === id) return true;
+    return false;
+  }
   function evolvesText(id, lang) {
     const ev = NR.data.evolutions || [], W = NR.data.weapons || {};
     for (let i = 0; i < ev.length; i++) {
@@ -66,7 +71,7 @@
   function it(id, rarity, vi, en, cost, d) {
     d = d || {};
     const o = {
-      name: { vi: vi, en: en }, rarity: rarity, cost: cost, catalyst: !!d.cat, maxStack: d.maxStack || STACK[rarity],
+      name: { vi: vi, en: en }, rarity: rarity, cost: cost, catalyst: !!d.cat || isCatalyst(id), maxStack: d.maxStack || STACK[rarity],
       mods: d.mods || [], hooks: d.hooks || [], tradeoff: !(d.hooks && d.hooks.length), tpl: d.tpl || null
     };
     const P = flat(o.hooks), desc = {};
@@ -170,6 +175,38 @@
     cat: true, mods: [{ stat: 'statusPower', pct: 0.2 }],
     hooks: [H('hit', 'shockArc', { chance: 0.25, mult: 0.6 })],
     tpl: { vi: 'Sát thương sét: {chance%} cơ hội phóng tia điện gây {mult%} sát thương.', en: 'Shock damage: {chance%} chance to arc for {mult%} damage.' }
+  });
+
+  // ---- catalysts added with the full evolution roster (rare 4, epic 2): each a stat plus a behaviour ----
+  it('cat_detonator', 'rare', 'Kíp nổ', 'Detonator', 50, {
+    cat: true, mods: [{ stat: 'area', pct: 0.12 }],
+    hooks: [H('kill', 'burst', { chance: S(0.2, 0.1, 0.5), r: 85, dmg: S(16, 7, 37), element: 'physical' })],
+    tpl: { vi: 'Khi hạ gục: {chance%} cơ hội phát nổ bán kính {r} gây {dmg} sát thương. Mỗi cộng dồn: +{chance+%} cơ hội, +{dmg+} sát thương.', en: 'On kill: {chance%} chance to detonate (radius {r}) for {dmg}. Each extra stack: +{chance+%} chance, +{dmg+} damage.' }
+  });
+  it('cat_spore_sac', 'rare', 'Túi bào tử', 'Spore Sac', 50, {
+    cat: true, mods: [{ stat: 'hpRegen', add: 0.4 }],
+    hooks: [H('hit', 'cloud', { chance: S(0.06, 0.03, 0.18), r: 62, dps: 7, life: 2.5, element: 'poison' })],
+    tpl: { vi: 'Khi gây sát thương: {chance%} cơ hội để lại đám mây bào tử độc ({r} bán kính, {life}s). Mỗi cộng dồn: +{chance+%} cơ hội.', en: 'On hit: {chance%} chance to leave a poison spore cloud (radius {r}, {life}s). Each extra stack: +{chance+%} chance.' }
+  });
+  it('cat_cold_snap', 'rare', 'Cú sốc lạnh', 'Cold Snap', 50, {
+    cat: true, mods: [{ stat: 'critChance', add: 0.04 }],
+    hooks: [H('wave', 'buff', { key: 'coldsnap', stat: 'moveSpeed', amount: S(0.15, 0.07, 0.3), dur: 8 })],
+    tpl: { vi: 'Đầu mỗi đợt: +{amount%} tốc độ chạy trong {dur}s. Mỗi cộng dồn: +{amount+%}.', en: 'At wave start: +{amount%} move speed for {dur}s. Each extra stack: +{amount+%}.' }
+  });
+  it('cat_capacitor', 'rare', 'Tụ điện', 'Capacitor', 50, {
+    cat: true, mods: [{ stat: 'critDamage', add: 0.15 }],
+    hooks: [H('dash', 'nova', { r: S(100, 20, 160), dmg: S(16, 9, 34), element: 'shock', status: 'shock' })],
+    tpl: { vi: 'Khi lướt: xung điện bán kính {r} gây {dmg} sát thương và choáng. Mỗi cộng dồn: +{r+} bán kính, +{dmg+} sát thương.', en: 'On dash: a shock pulse (radius {r}) dealing {dmg} and stunning. Each extra stack: +{r+} radius, +{dmg+} damage.' }
+  });
+  it('cat_rime_core', 'epic', 'Lõi sương giá', 'Rime Core', 80, {
+    cat: true, mods: [{ stat: 'statusPower', pct: 0.15 }],
+    hooks: [H('hurt', 'nova', { r: 170, dmg: 26, element: 'ice', status: 'freeze' })],
+    tpl: { vi: 'Khi bị đánh: sóng băng bán kính {r} gây {dmg} sát thương và đóng băng.', en: 'When hurt: a frost wave (radius {r}) dealing {dmg} and freezing.' }
+  });
+  it('cat_storm_rod', 'epic', 'Cột thu lôi', 'Storm Rod', 80, {
+    cat: true, mods: [{ stat: 'area', pct: 0.15 }],
+    hooks: [H('kill', 'everyKill', { every: 7, r: 110, dmg: 40, element: 'shock' })],
+    tpl: { vi: 'Mỗi {every} lần hạ gục: sét nổ bán kính {r} gây {dmg} sát thương.', en: 'Every {every} kills: a lightning burst (radius {r}) dealing {dmg}.' }
   });
 
   // ---- legendary ----

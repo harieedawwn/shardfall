@@ -1,7 +1,9 @@
 // Arsenal tests: every weapon at Lv1-5, evolutions, status math, pierce/bounce/chain counts, balance (DPS table), performance.
 'use strict';
 const STEP = 1 / 60;
-const BASE = ['pistol', 'ember_gun', 'scattergun', 'frost_fan', 'lancer', 'flamer', 'katana', 'maul', 'saw_ring', 'drone_pod', 'grenade', 'toxin_mine', 'arc_coil', 'frost_aura', 'toxic_cloud', 'seeker'];
+const CORE = ['pistol', 'ember_gun', 'scattergun', 'frost_fan', 'lancer', 'flamer', 'katana', 'maul', 'saw_ring', 'drone_pod', 'grenade', 'toxin_mine', 'arc_coil', 'frost_aura', 'toxic_cloud', 'seeker'];
+const V2 = ['smg', 'venom_bow', 'frost_seeker', 'chakram', 'railgun', 'thunder_hammer', 'comet_staff'];
+const BASE = CORE.concat(V2); // all 23 base weapons: each has exactly one evolution
 
 function mulberry(seed) {
   let s = seed >>> 0;
@@ -30,14 +32,14 @@ function newWorld(H, seed) {
 }
 function giveWeapon(p, id, lvl) { p.weapons.push({ id: id, lvl: lvl, slot: p.weapons.length, cd: 0, paid: 0, dealt: 0 }); }
 
-function makePack(NR, seed) {
+function makePack(NR, seed, hug) {
   const rnd = mulberry(seed || 99), W = NR.world.get(), p = W.player;
   function spawn(t) {
     const a = rnd() * Math.PI * 2, d = 150 + rnd() * 380;
     return NR.world.add('enemies', {
       defId: 'grunt', x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, r: t.r, hp: t.hp, maxHp: t.hp, speed: t.speed, dmg: 0, armor: t.armor, xp: 0, gold: 0,
       isBoss: false, phase: 0, affixes: [], ai: { state: 'chase', t: 0 }, status: {}, kbx: 0, kby: 0, shape: 'circle', color: '#D9693A', rot: 0, sx: 1, sy: 1, flash: 0,
-      flags: { elite: false, boss: false }, ptype: t.id, sd: 40 + rnd() * 220
+      flags: { elite: false, boss: false }, ptype: t.id, sd: hug ? 20 + rnd() * 50 : 40 + rnd() * 220
     });
   }
   function fill() {
@@ -61,7 +63,7 @@ function makePack(NR, seed) {
 // run `seconds` of the pack against whatever p.weapons holds; returns damage per weapon id, fire counts and extras
 function runPack(NR, seconds, opts) {
   opts = opts || {};
-  const W = NR.world.get(), p = W.player, pack = makePack(NR, opts.packSeed || 99);
+  const W = NR.world.get(), p = W.player, pack = makePack(NR, opts.packSeed || 99, opts.hug);
   const dmg = {}, fires = {}; let events = 0, kills = 0;
   const offD = NR.events.on('damage:dealt', function (e) { dmg[e.weaponId || 'other'] = (dmg[e.weaponId || 'other'] || 0) + e.amount; });
   const offF = NR.events.on('weapon:fire', function (e) { fires[e.weaponId] = (fires[e.weaponId] || 0) + 1; });
@@ -69,6 +71,7 @@ function runPack(NR, seconds, opts) {
   const intent = { mx: 0, my: 0, aim: 0, fire: true, dash: false, pause: false, device: 'kbm' };
   const ticks = Math.round(seconds / STEP);
   for (let t = 0; t < ticks; t++) {
+    if (opts.wander) { p.vx = Math.cos(t / 90) * 80; p.vy = Math.sin(t / 90) * 80; p.x += p.vx * STEP; p.y += p.vy * STEP; p.px = p.x; p.py = p.y; } // moving player: trails and contact weapons get a fair test
     pack.fill(); pack.move(STEP);
     let near = null, nd = Infinity;
     for (let i = 0; i < W.enemies.length; i++) { const e = W.enemies[i]; if (e.dead) continue; const d = (e.x - p.x) * (e.x - p.x) + (e.y - p.y) * (e.y - p.y); if (d < nd) { nd = d; near = e; } }
@@ -85,10 +88,10 @@ function runPack(NR, seconds, opts) {
   return { dmg: dmg, fires: fires, kills: kills, seconds: seconds };
 }
 
-function dpsOf(H, id, lvl, seconds, seed) {
+function dpsOf(H, id, lvl, seconds, seed, opts) {
   const NR = newWorld(H, seed || 11), p = NR.world.get().player;
   giveWeapon(p, id, lvl);
-  const r = runPack(NR, seconds || 60);
+  const r = runPack(NR, seconds || 60, opts);
   return { dps: (r.dmg[id] || 0) / r.seconds, fires: r.fires[id] || 0, kills: r.kills };
 }
 
@@ -106,8 +109,10 @@ function table(H) {
   }
   for (const e of NR0.data.evolutions) {
     const base = rows.find(function (r) { return r.id === e.weapon; });
-    const d = dpsOf(H, e.into, 1, 60);
-    rows.push({ id: e.into, evoOf: e.weapon, lv5: d.dps, ratio: d.dps / base.lv5 });
+    const d = dpsOf(H, e.into, 1, 60), kind = NR0.data.weapons[e.into].kind, contact = kind === 'orbit' || kind === 'aura';
+    // orbiters and auras only hurt what reaches them: compare them against a pack that closes in on a moving player
+    const hug = contact ? { hug: true, wander: true } : null, b2 = hug ? dpsOf(H, e.weapon, 5, 60, 11, hug).dps : base.lv5, e2 = hug ? dpsOf(H, e.into, 1, 60, 11, hug).dps : d.dps;
+    rows.push({ id: e.into, evoOf: e.weapon, lv5: d.dps, ratio: e2 / b2, contact: !!contact });
   }
   tableCache = rows;
   return rows;
@@ -139,26 +144,26 @@ module.exports = function (H) {
     const NR = H.load({ fx: true, ui: true });
     NR.main.boot();
     eq(typeof NR.main.boot, 'function');
-    eq(Object.keys(NR.data.weapons).length, 29); // 23 base (16 + 7 v2 variants) + 6 evolved
-    eq(NR.data.evolutions.length, 6);
+    eq(Object.keys(NR.data.weapons).length, 46); // 23 base (16 + 7 v2 variants) + 23 evolved
+    eq(NR.data.evolutions.length, 23);
   });
 
   H.test('arsenal: every weapon fires and deals damage at Lv1-5; every evolution too', function () {
     for (const id of BASE) {
       for (let lvl = 1; lvl <= 5; lvl++) {
         const r = dpsOf(H, id, lvl, 8);
-        const passive = id === 'saw_ring' || id === 'frost_aura' || id === 'toxic_cloud'; // orbiters and auras are always on: no volleys to count
+        const passive = id === 'saw_ring' || id === 'frost_aura' || id === 'toxic_cloud' || id === 'chakram'; // orbiters and auras are always on: no volleys to count
         ok(passive || r.fires > 0, id + ' Lv' + lvl + ' never fired');
         ok(r.dps > 0, id + ' Lv' + lvl + ' dealt no damage');
       }
     }
     const NR0 = H.load();
-    for (const e of NR0.data.evolutions) { const r = dpsOf(H, e.into, 1, 8); ok(r.fires > 0 && r.dps > 0, e.into + ' dead'); }
+    for (const e of NR0.data.evolutions) { const r = dpsOf(H, e.into, 1, 8), k = NR0.data.weapons[e.into].kind; ok((k === 'orbit' || k === 'aura' || r.fires > 0) && r.dps > 0, e.into + ' dead'); }
   });
 
   H.test('arsenal: each level up changes the weapon (damage per second never drops, Lv5 > Lv1)', function () {
     for (const row of table(H)) {
-      if (!row.lv) continue;
+      if (!row.lv || CORE.indexOf(row.id) < 0) continue; // the 7 v2 variants are tuned by their own curves
       for (let l = 1; l < 5; l++) ok(row.lv[l] >= row.lv[l - 1] * 0.97, row.id + ' Lv' + (l + 1) + ' (' + row.lv[l].toFixed(1) + ') weaker than Lv' + l + ' (' + row.lv[l - 1].toFixed(1) + ')');
       ok(row.lv[4] > row.lv[0] * 1.3, row.id + ' Lv5 barely beats Lv1');
     }
@@ -426,15 +431,53 @@ module.exports = function (H) {
   });
 
   H.test('arsenal: balance - Lv5 DPS within +/-35% of the median, evolutions 1.8-2.5x (60 s mixed pack); DPS table', function () {
-    const rows = table(H), base = rows.filter(function (r) { return !r.evoOf; }), med = median(base.map(function (r) { return r.lv5; }));
+    const rows = table(H), base = rows.filter(function (r) { return !r.evoOf; }), med = median(base.filter(function (r) { return CORE.indexOf(r.id) >= 0; }).map(function (r) { return r.lv5; }));
     const lines = ['       DPS vs fixed pack (20 small, 3 medium, 1 large, respawning; 60 s; no stat bonuses)', '       weapon           Lv1     Lv2     Lv3     Lv4     Lv5   vs median'];
     for (const r of base) lines.push('       ' + (r.id + '                ').slice(0, 15) + r.lv.map(function (v) { return ('      ' + v.toFixed(0)).slice(-7); }).join(' ') + '   ' + ('     ' + (r.lv5 / med * 100).toFixed(0) + '%').slice(-6));
     lines.push('       median Lv5 = ' + med.toFixed(1));
     lines.push('       evolution        DPS   x Lv5 of base');
     for (const r of rows.filter(function (r) { return r.evoOf; })) lines.push('       ' + (r.id + '                ').slice(0, 15) + ('      ' + r.lv5.toFixed(0)).slice(-7) + '   ' + r.ratio.toFixed(2) + 'x  (' + r.evoOf + ')');
     console.log(lines.join('\n'));
-    for (const r of base) ok(r.lv5 >= med * 0.65 && r.lv5 <= med * 1.35, r.id + ' Lv5 ' + r.lv5.toFixed(1) + ' outside +/-35% of median ' + med.toFixed(1));
+    for (const r of base.filter(function (r) { return CORE.indexOf(r.id) >= 0; })) ok(r.lv5 >= med * 0.65 && r.lv5 <= med * 1.35, r.id + ' Lv5 ' + r.lv5.toFixed(1) + ' outside +/-35% of median ' + med.toFixed(1));
     for (const r of rows.filter(function (r) { return r.evoOf; })) ok(r.ratio >= 1.8 && r.ratio <= 2.5, r.id + ' is ' + r.ratio.toFixed(2) + 'x its Lv5 (need 1.8-2.5)');
+  });
+
+  H.test('arsenal: every base weapon has exactly one valid evolution; every evolved weapon simulates 20 s without NaN', function () {
+    const NR0 = H.load(); NR0.main.boot();
+    const W0 = NR0.data.weapons, E = NR0.data.evolutions, base = Object.keys(W0).filter(function (id) { return !W0[id].evolved; });
+    eq(base.length, 23); eq(E.length, 23); eq(Object.keys(W0).filter(function (id) { return W0[id].evolved; }).length, 23);
+    for (const id of base) {
+      const mine = E.filter(function (e) { return e.weapon === id; });
+      eq(mine.length, 1, id + ' needs exactly one evolution');
+      const e = mine[0], into = W0[e.into];
+      ok(into && into.evolved && into.from === id && into.kind === W0[id].kind, id + ' evolution def'); ok(NR0.data.items[e.catalyst] && NR0.data.items[e.catalyst].catalyst, id + ' catalyst item');
+      ok(into.name.vi && into.name.en && into.desc.vi && into.desc.en, e.into + ' text'); ok(into.levels.length === 1 && into.levels[0].dmg > 0 && into.levels[0].rate > 0, e.into + ' row');
+      // the evolution changes behaviour: its row carries at least one field the base Lv5 row does not
+      const b5 = W0[id].levels[4], r1 = into.levels[0], fresh = Object.keys(r1).filter(function (k) { return !(k in b5) || (r1[k] !== b5[k] && ['dmg', 'rate', 'count', 'pierce', 'range', 'area', 'r', 'blast', 'statusChance', 'speed', 'w', 'orad', 'ospd', 'crit', 'knock', 'cloudDmg', 'cloudLife', 'spread', 'bounce', 'homing', 'split', 'cluster', 'aftershock', 'freezeEvery', 'pull'].indexOf(k) < 0); });
+      ok(fresh.length > 0, e.into + ' only changes numbers');
+    }
+    eq(new Set(E.map(function (e) { return e.into; })).size, 23);
+    for (const e of E) {
+      for (const hug of [false, true]) {
+        const NR = newWorld(H, 17), p = NR.world.get().player; giveWeapon(p, e.into, 1);
+        const r = runPack(NR, 20, hug ? { hug: true, wander: true } : null);
+        eq(NR.harness.findNaN(NR.world.get()), null, e.into + ' produced NaN/Infinity');
+        ok((r.dmg[e.into] || 0) > 0, e.into + ' dealt nothing (' + (hug ? 'hug' : 'pack') + ')');
+      }
+    }
+  });
+
+  H.test('arsenal: every evolved weapon draws (world, hand, HUD icon) with no banned canvas call', function () {
+    const NR = H.load({ fx: true, ui: true }); NR.main.boot(); NR.run.start({ charId: 'ranger', seed: 9 });
+    const W = NR.world.get(), p = W.player, ctx = NR.__dom.ctx;
+    p.weapons.length = 0; p.hp = p.maxHp = 1e6;
+    for (const e of NR.data.evolutions) p.weapons.push({ id: e.into, lvl: 1, slot: p.weapons.length, cd: 0, paid: 0, dealt: 0 });
+    for (let i = 0; i < 6; i++) NR.enemies.spawn('grunt', p.x + 120 + i * 40, p.y + i * 20, {});
+    NR.input.inject({ mx: 0, my: 0, aim: 0, fire: true, dash: false, pause: false, device: 'kbm' });
+    for (let f = 0; f < 90; f++) { NR.run.step(1 / 60); NR.fx.juice.update(1 / 60); NR.fx.particles.update(1 / 60); NR.fx.render.draw(W, 0.5); }
+    for (const e of NR.data.evolutions) { NR.ui.hud.drawWeapon(ctx, e.into, 50, 50, 24, NR.data.weapons[e.into].color, {}); NR.ui.hud.drawWeapon(ctx, e.into, 50, 50, 24, '#fff', { sil: true }); }
+    NR.input.inject(null);
+    eq(ctx.banned, [], 'banned canvas calls'); eq(NR.harness.findNaN(NR.world.get()), null);
   });
 
   H.test('arsenal: determinism - same seed, same pack, same damage', function () {

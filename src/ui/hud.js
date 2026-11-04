@@ -842,6 +842,13 @@
     g.save();
     g.translate(x, y);
     if (!o.cool && !o.noAura) rarityAura(g, def, r, sil);
+    const SH = NR.fx && NR.fx.shapes;
+    if (SH && SH.weaponArt && SH.weaponArt.indexOf(id) >= 0 && SH.drawWeapon) { // evolutions have their own illustration in fx/shapes
+      if (o.rot) g.rotate(o.rot);
+      SH.drawWeapon(g, id, 0, 0, r, { col: col, sil: sil, line: lw, shadow: sh > 0, shX: sh, shY: sh });
+      g.restore();
+      return;
+    }
     if (ICON_ALIAS[id]) id = ICON_ALIAS[id];
     if (o.rot) g.rotate(o.rot);
     if (sh > 0) {

@@ -289,6 +289,22 @@
     if (!owned && have + 1 >= min) return h('span', 'chip set soon el-' + d.element, t('set.completes', { name: name, bonus: tx(S.desc) }));
     return h('span', 'chip set el-' + d.element, t('set.progress', { name: name, n: have + (owned ? 0 : 1), m: min }));
   }
+  // "evolves" badges: on a weapon card the evolution it leads to (and what it still needs), on a catalyst item card every weapon it evolves
+  function evoBadges(kind, id, p) {
+    const ev = NR.data.evolutions || [], out = [];
+    for (let i = 0; i < ev.length; i++) {
+      const e = ev[i], into = tx(NR.data.weapons[e.into].name);
+      if (kind === 'weapon' && e.weapon === id) {
+        const cat = NR.data.items[e.catalyst], has = NR.items.count(p, e.catalyst) > 0;
+        out.push(h('span', 'chip evo' + (has ? ' on' : ''), has ? t('shop.evolvesReady', { name: into }) : t('shop.evolvesInto', { name: into })));
+        if (!has && cat) out.push(h('span', 'chip evo need', t('shop.evolvesNeed', { item: tx(cat.name) })));
+      } else if (kind === 'item' && e.catalyst === id) {
+        const own = p.weapons.some(function (w) { return w.id === e.weapon; });
+        out.push(h('span', 'chip evo' + (own ? ' on' : ''), t(own ? 'shop.catalystHave' : 'shop.catalystFor', { weapon: tx(NR.data.weapons[e.weapon].name), name: into })));
+      }
+    }
+    return out;
+  }
   function itemInfo(d) { return tx(d.desc) || modsText(d.mods); }
   function evoFor(id) { const ev = NR.data.evolutions || []; for (let i = 0; i < ev.length; i++) if (ev[i].weapon === id) return ev[i]; return null; }
   function weaponTip(id, lvl) {
@@ -517,8 +533,8 @@
     body.appendChild(h('div', 'otop', [iconOf(o.kind, o.id, 46), h('div', 'oname', [h('b', 'nm', tx(d.name)),
       o.kind === 'weapon' ? h('small', 'upg', owned ? t('shop.upgrade', { a: owned.lvl, b: Math.min(owned.lvl + 1, NR.config.MAX_LEVEL) }) : t('shop.new')) : (owned === null && NR.items.count(p, o.id) ? h('small', 'upg', t('shop.owned', { n: NR.items.count(p, o.id) })) : null)])]));
     body.appendChild(h('p', 'od', o.kind === 'weapon' ? tx(d.desc) : itemInfo(d)));
-    if (o.kind === 'weapon') { const chips = weaponChips(d, owned ? Math.min(owned.lvl + 1, NR.config.MAX_LEVEL) : 1), st = setTag(d, p, !!owned); if (st) chips.push(st); body.appendChild(h('div', 'chips', chips)); }
-    else if ((d.mods || []).length && tx(d.desc)) body.appendChild(h('div', 'chips', h('span', 'chip', modsText(d.mods))));
+    if (o.kind === 'weapon') { const chips = weaponChips(d, owned ? Math.min(owned.lvl + 1, NR.config.MAX_LEVEL) : 1), st = setTag(d, p, !!owned); if (st) chips.push(st); body.appendChild(h('div', 'chips', chips.concat(d.evolved ? [] : evoBadges('weapon', o.id, p)))); }
+    else { const ch = ((d.mods || []).length && tx(d.desc) ? [h('span', 'chip', modsText(d.mods))] : []).concat(evoBadges('item', o.id, p)); if (ch.length) body.appendChild(h('div', 'chips', ch)); }
     card.appendChild(body);
     if (o.sold) card.appendChild(h('div', 'stamp', t('shop.sold')));
     const f = h('div', 'of');
@@ -550,7 +566,7 @@
     c.appendChild(h('div', 'chips', st
       ? [h('span', 'chip el-' + d.element, t('element.' + d.element)), h('span', 'chip', t('wp.dmg', { n: Math.round(st.dmg * 10) / 10 })), h('span', 'chip', t('wp.rate', { n: st.rate.toFixed(1) }))]
       : weaponChips(d, w.lvl)));
-    if (ev && !d.evolved && NR.data.items[ev.catalyst]) c.appendChild(h('p', 'evo-h' + (w.lvl >= NR.config.MAX_LEVEL ? ' ready' : ''), t('shop.evo', { item: tx(NR.data.items[ev.catalyst].name), name: tx(NR.data.weapons[ev.into].name) })));
+    if (ev && !d.evolved && NR.data.items[ev.catalyst]) c.appendChild(h('p', 'evo-h' + (w.lvl >= NR.config.MAX_LEVEL || NR.items.count(p, ev.catalyst) > 0 ? ' ready' : ''), t('shop.evo', { item: tx(NR.data.items[ev.catalyst].name), name: tx(NR.data.weapons[ev.into].name) })));
     if (p.weapons.length > 1) c.appendChild(confirmBtn('sell', [t('shop.sellShort'), gold(price)], t('shop.sellSure', { n: price }), function () { sell('weapon', i); }, { fk: 'sw' + i }));
     setTip(c, weaponTip(w.id, w.lvl));
     return c;
@@ -886,7 +902,14 @@
       body.appendChild(grid);
       if (D.codexSel) {
         if (found(D.codexTab, D.codexSel)) body.appendChild(codexDetail(D.codexTab, D.codexSel));
-        else body.appendChild(h('section', 'panel cdx-d', [h('div', 'pv-top', [iconOf(D.codexTab, D.codexSel, 72, true), h('div', 'pv-name', [h('h3', 'h', '???')])]), h('p', 'od', t('codex.hidden.' + D.codexTab))]));
+        else {
+          const hid = [h('div', 'pv-top', [iconOf(D.codexTab, D.codexSel, 72, true), h('div', 'pv-name', [h('h3', 'h', '???')])]), h('p', 'od', t('codex.hidden.' + D.codexTab))];
+          if (D.codexTab === 'evolution') { // every recipe is listed from the start; only the evolved weapon stays a silhouette
+            const e = NR.data.evolutions.filter(function (x) { return x.into === D.codexSel; })[0], dl = h('dl', 'facts');
+            if (e) { dl.appendChild(h('dt', '', t('codex.recipe'))); dl.appendChild(h('dd', '', t('codex.recipeFmt', { weapon: tx(NR.data.weapons[e.weapon].name), item: NR.data.items[e.catalyst] ? tx(NR.data.items[e.catalyst].name) : e.catalyst }))); hid.push(dl); hid.push(h('p', 'od', t('codex.recipeKnown'))); }
+          }
+          body.appendChild(h('section', 'panel cdx-d', hid));
+        }
       }
       wrap.appendChild(body);
       wrap.appendChild(foot('', 'LB/RB ' + t('codex.tabs')));

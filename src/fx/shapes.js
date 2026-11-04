@@ -205,7 +205,7 @@
     };
   }
 
-  // ---------- WEAPON ILLUSTRATION PATHS (16 base + 6 evolutions) ----------
+  // ---------- WEAPON ILLUSTRATION PATHS (16 base + 23 evolutions) ----------
   function renderWeaponIllustration(c, id, r, isShadow, opts) {
     const p = makePainter(c, r, isShadow, opts);
     const col = opts.col || null;
@@ -566,6 +566,146 @@
         p.f(dark);
         c.beginPath(); c.arc(0, -r * 0.12, r * 0.08, 0, TAU);
         p.f(light);
+        break;
+      }
+      // ---- evolutions of the remaining weapons (17): each its own silhouette, flat fills, ink outline ----
+      case 'dragonfire': {
+        const fl = col || '#FF4A1C', dk = '#3A1A12', gold = '#FFD43B';
+        c.beginPath(); c.rect(-r * 0.72, -r * 0.26, r * 0.95, r * 0.52); p.fs(dk);
+        c.beginPath(); c.moveTo(r * 0.18, -r * 0.52); c.lineTo(r * 0.72, -r * 0.4); c.lineTo(r * 0.98, -r * 0.1); c.lineTo(r * 0.72, r * 0.4); c.lineTo(r * 0.18, r * 0.52); ctxClose(c); p.fs(fl);
+        starN(c, r * 0.98, 0, r * 0.3, 4, 0.45, 0); p.fs(gold);
+        c.beginPath(); c.arc(-r * 0.4, 0, r * 0.14, 0, TAU); p.fs(gold);
+        c.beginPath(); c.moveTo(r * 0.32, -r * 0.2); c.lineTo(r * 0.6, 0); c.lineTo(r * 0.32, r * 0.2); p.s(dk, p.lw * 0.9);
+        break;
+      }
+      case 'blizzard_fan': {
+        const ice = col || '#D9F4FF', mid = '#7FD3F0', dk = '#27384F';
+        starN(c, 0, 0, r * 0.98, 8, 0.4, 0); p.fs(ice);
+        starN(c, 0, 0, r * 0.58, 8, 0.45, Math.PI / 8); p.fs(mid);
+        c.beginPath(); c.arc(0, 0, r * 0.2, 0, TAU); p.fs(dk);
+        break;
+      }
+      case 'prism_lance': {
+        const pr = col || '#F0A6FF';
+        c.beginPath(); c.rect(-r * 0.88, -r * 0.17, r * 0.62, r * 0.34); p.fs('#3C4B40');
+        c.beginPath(); c.moveTo(-r * 0.28, -r * 0.52); c.lineTo(r * 0.2, 0); c.lineTo(-r * 0.28, r * 0.52); ctxClose(c); p.fs(pr);
+        c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 1.0, -r * 0.42); p.s('#7FD3F0', p.lw * 1.3);
+        c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 1.06, 0); p.s('#FFD43B', p.lw * 1.3);
+        c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 1.0, r * 0.42); p.s('#E86AA6', p.lw * 1.3);
+        break;
+      }
+      case 'singularity_maul': {
+        const pur = col || '#7B3FD0';
+        c.beginPath(); c.moveTo(-r * 0.85, r * 0.8); c.lineTo(r * 0.12, -r * 0.14); p.s('#8C4A3B', p.lw * 2.4);
+        c.beginPath(); c.arc(r * 0.3, -r * 0.3, r * 0.58, 0, TAU); p.fs('#1B1229');
+        c.beginPath(); c.arc(r * 0.3, -r * 0.3, r * 0.4, 0, TAU); p.s(pur, p.lw * 1.5);
+        c.beginPath(); c.arc(r * 0.3, -r * 0.3, r * 0.2, 0, TAU); p.s('#E86AA6', p.lw);
+        c.beginPath(); c.arc(r * 0.3, -r * 0.3, r * 0.08, 0, TAU); p.f('#F1E0FF');
+        break;
+      }
+      case 'bloodsaw': {
+        const red = col || '#E5484D';
+        starN(c, -r * 0.2, r * 0.12, r * 0.74, 10, 0.78, 0); p.fs(red);
+        c.beginPath(); c.arc(-r * 0.2, r * 0.12, r * 0.26, 0, TAU); p.fs('#14121F');
+        starN(c, r * 0.36, -r * 0.3, r * 0.5, 9, 0.76, 0.2); p.fs('#B0262C');
+        c.beginPath(); c.arc(r * 0.36, -r * 0.3, r * 0.14, 0, TAU); p.fs('#F2EFE6');
+        c.beginPath(); c.moveTo(-r * 0.2, r * 0.5); c.lineTo(-r * 0.2, r * 0.82); p.s('#E5484D', p.lw * 1.3);
+        break;
+      }
+      case 'carpet_bomb': {
+        const org = col || '#FF9F1C';
+        for (let i = 0; i < 3; i++) {
+          const x = -r * 0.6 + i * r * 0.6;
+          c.beginPath(); c.ellipse(x, 0, r * 0.28, r * 0.46, 0, 0, TAU); p.fs(i === 1 ? '#FFD43B' : org);
+          c.beginPath(); c.moveTo(x - r * 0.18, -r * 0.5); c.lineTo(x, -r * 0.3); c.lineTo(x + r * 0.18, -r * 0.5); p.s('#3C4B40', p.lw * 1.1);
+          c.beginPath(); c.rect(x - r * 0.1, r * 0.32, r * 0.2, r * 0.22); p.fs('#3C4B40');
+        }
+        break;
+      }
+      case 'plague_mine': {
+        const g = col || '#B6F23A';
+        starN(c, 0, 0, r * 0.96, 8, 0.62, 0); p.fs('#3C4B40');
+        c.beginPath(); c.arc(0, 0, r * 0.52, 0, TAU); p.fs(g);
+        c.beginPath(); c.arc(-r * 0.16, -r * 0.08, r * 0.1, 0, TAU); c.arc(r * 0.16, -r * 0.08, r * 0.1, 0, TAU); p.f('#14121F');
+        c.beginPath(); c.rect(-r * 0.14, r * 0.14, r * 0.28, r * 0.14); p.f('#14121F');
+        break;
+      }
+      case 'absolute_zero': {
+        const ice = col || '#EAF8FF';
+        starN(c, 0, 0, r * 0.98, 6, 0.3, 0); p.fs(ice);
+        starN(c, 0, 0, r * 0.55, 6, 0.55, Math.PI / 6); p.fs('#7FD3F0');
+        c.beginPath(); c.arc(0, 0, r * 0.2, 0, TAU); p.fs('#27384F');
+        break;
+      }
+      case 'miasma': {
+        const g = col || '#4DCB7B';
+        c.beginPath(); c.arc(-r * 0.4, r * 0.14, r * 0.42, 0, TAU); c.arc(r * 0.04, -r * 0.18, r * 0.5, 0, TAU); c.arc(r * 0.46, r * 0.14, r * 0.4, 0, TAU); p.fs(g);
+        c.beginPath(); c.arc(-r * 0.16, -r * 0.14, r * 0.09, 0, TAU); c.arc(r * 0.24, -r * 0.14, r * 0.09, 0, TAU); p.f('#14121F');
+        c.beginPath(); c.moveTo(-r * 0.12, r * 0.1); c.lineTo(0.01, r * 0.2); c.lineTo(r * 0.2, r * 0.1); p.s('#14121F', p.lw * 0.9);
+        c.beginPath(); c.arc(r * 0.6, -r * 0.62, r * 0.1, 0, TAU); p.f('#CDEFA0');
+        break;
+      }
+      case 'wraith_seeker': {
+        const pu = col || '#D9A8FF';
+        c.beginPath(); c.arc(0, -r * 0.1, r * 0.56, Math.PI, 0); c.lineTo(r * 0.56, r * 0.66); c.lineTo(r * 0.28, r * 0.44); c.lineTo(0, r * 0.66); c.lineTo(-r * 0.28, r * 0.44); c.lineTo(-r * 0.56, r * 0.66); ctxClose(c); p.fs(pu);
+        c.beginPath(); c.arc(-r * 0.2, -r * 0.14, r * 0.12, 0, TAU); c.arc(r * 0.2, -r * 0.14, r * 0.12, 0, TAU); p.f('#1B1229');
+        c.beginPath(); c.arc(-r * 0.2, -r * 0.14, r * 0.05, 0, TAU); c.arc(r * 0.2, -r * 0.14, r * 0.05, 0, TAU); p.f('#E86AA6');
+        break;
+      }
+      case 'bullet_hose': {
+        const br = col || '#FFE066';
+        c.beginPath(); c.rect(-r * 0.7, -r * 0.34, r * 0.5, r * 0.68); p.fs('#3C4B40');
+        c.beginPath(); c.rect(-r * 0.2, -r * 0.46, r * 0.95, r * 0.2); c.rect(-r * 0.2, -r * 0.1, r * 1.0, r * 0.2); c.rect(-r * 0.2, r * 0.26, r * 0.95, r * 0.2); p.fs('#8C86A0');
+        c.beginPath(); c.arc(-r * 0.46, r * 0.5, r * 0.3, 0, TAU); p.fs(br);
+        c.beginPath(); c.moveTo(-r * 0.46, r * 0.5); c.lineTo(-r * 0.46, r * 0.8); p.s(br, p.lw * 1.2);
+        c.beginPath(); c.rect(r * 0.7, -r * 0.5, r * 0.14, r * 1.0); p.fs('#14121F');
+        break;
+      }
+      case 'hydra_bow': {
+        const g = col || '#4BE06A';
+        c.beginPath(); c.arc(-r * 0.35, 0, r * 0.85, -1.15, 1.15); p.s('#8C4A3B', p.lw * 2.2);
+        for (let i = -1; i <= 1; i++) {
+          c.beginPath(); c.moveTo(-r * 0.2, i * r * 0.24); c.lineTo(r * 0.55, i * r * 0.34); p.s('#F2EFE6', p.lw);
+          c.beginPath(); c.moveTo(r * 0.55, i * r * 0.34 - r * 0.15); c.lineTo(r * 0.95, i * r * 0.4); c.lineTo(r * 0.55, i * r * 0.34 + r * 0.15); ctxClose(c); p.fs(g);
+        }
+        break;
+      }
+      case 'glacial_seeker': {
+        const ic = col || '#CFF3FF';
+        c.beginPath(); c.moveTo(0, -r * 0.82); c.lineTo(r * 0.42, 0); c.lineTo(0, r * 0.82); c.lineTo(-r * 0.42, 0); ctxClose(c); p.fs(ic);
+        for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + Math.PI / 4; c.beginPath(); c.moveTo(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5); c.lineTo(Math.cos(a) * r * 0.92, Math.sin(a) * r * 0.92); p.s('#7FD3F0', p.lw * 1.5); }
+        c.beginPath(); c.arc(0, 0, r * 0.18, 0, TAU); p.fs('#27384F');
+        break;
+      }
+      case 'thunder_ring': {
+        const y = col || '#FFF27A';
+        c.beginPath(); c.arc(0, 0, r * 0.72, 0, TAU); p.s('#14121F', p.lw * 3.2); c.beginPath(); c.arc(0, 0, r * 0.72, 0, TAU); p.s(y, p.lw * 1.8);
+        for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + Math.PI / 4; starN(c, Math.cos(a) * r * 0.72, Math.sin(a) * r * 0.72, r * 0.3, 4, 0.4, a); p.fs('#FFFFFF'); }
+        c.beginPath(); c.moveTo(r * 0.12, -r * 0.34); c.lineTo(-r * 0.2, 0); c.lineTo(r * 0.04, 0); c.lineTo(-r * 0.12, r * 0.34); p.s('#FFD43B', p.lw * 1.3);
+        break;
+      }
+      case 'rail_reflector': {
+        const cy = col || '#9AF0FF';
+        c.beginPath(); c.rect(-r * 0.9, -r * 0.2, r * 1.2, r * 0.4); p.fs('#3C4B40');
+        c.beginPath(); c.rect(-r * 0.5, -r * 0.1, r * 0.8, r * 0.2); p.fs(cy);
+        c.beginPath(); c.moveTo(r * 0.3, -r * 0.5); c.lineTo(r * 0.62, -r * 0.2); c.lineTo(r * 0.62, r * 0.2); c.lineTo(r * 0.3, r * 0.5); ctxClose(c); p.fs('#8C86A0');
+        c.beginPath(); c.moveTo(r * 0.62, 0); c.lineTo(r * 1.0, -r * 0.5); c.lineTo(r * 0.82, -r * 0.1); p.s(cy, p.lw * 1.3);
+        break;
+      }
+      case 'skyhammer': {
+        const y = col || '#FFE14D';
+        c.beginPath(); c.moveTo(-r * 0.85, r * 0.8); c.lineTo(r * 0.1, -r * 0.1); p.s('#8C4A3B', p.lw * 2.4);
+        c.beginPath(); c.rect(-r * 0.12, -r * 0.82, r * 0.9, r * 0.56); p.fs('#3C4B40');
+        starN(c, r * 0.33, -r * 0.54, r * 0.34, 4, 0.4, Math.PI / 4); p.fs(y);
+        c.beginPath(); c.moveTo(r * 0.7, -r * 0.2); c.lineTo(r * 0.5, r * 0.18); c.lineTo(r * 0.66, r * 0.18); c.lineTo(r * 0.46, r * 0.6); p.s(y, p.lw * 1.3);
+        break;
+      }
+      case 'phoenix_staff': {
+        const o = col || '#FFB300';
+        c.beginPath(); c.moveTo(-r * 0.85, r * 0.85); c.lineTo(r * 0.12, -r * 0.1); p.s('#8C4A3B', p.lw * 2.2);
+        c.beginPath(); c.moveTo(0, -r * 0.1); c.lineTo(-r * 0.46, -r * 0.5); c.lineTo(-r * 0.2, -r * 0.7); c.lineTo(r * 0.1, -r * 0.45); c.lineTo(r * 0.5, -r * 0.9); c.lineTo(r * 0.6, -r * 0.5); c.lineTo(r * 0.98, -r * 0.7); c.lineTo(r * 0.5, -r * 0.1); ctxClose(c); p.fs(o);
+        c.beginPath(); c.arc(r * 0.2, -r * 0.3, r * 0.2, 0, TAU); p.fs('#FFF3A3');
+        c.beginPath(); c.moveTo(r * 0.5, -r * 0.1); c.lineTo(r * 0.7, r * 0.2); c.lineTo(r * 0.3, 0); p.fs('#E8431A');
         break;
       }
       default: {
@@ -1466,6 +1606,8 @@
     lightOf: lightOf,
     path: path,
     drawWeapon: drawWeapon,
+    // ids with their own illustration here (the HUD/UI icon renderer delegates to these)
+    weaponArt: ['dragonfire', 'blizzard_fan', 'prism_lance', 'singularity_maul', 'bloodsaw', 'carpet_bomb', 'plague_mine', 'absolute_zero', 'miasma', 'wraith_seeker', 'bullet_hose', 'hydra_bow', 'glacial_seeker', 'thunder_ring', 'rail_reflector', 'skyhammer', 'phoenix_staff'],
     drawItem: drawItem,
     drawPickup: drawPickup
   };

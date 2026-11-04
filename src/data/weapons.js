@@ -1,4 +1,4 @@
-// Arsenal - weapon and evolution data (Content Registry: 23 weapons, 6 evolutions).
+// Arsenal - weapon and evolution data (Content Registry: 23 weapons, 23 evolutions - every base weapon evolves).
 // Level rows are full objects (every field present). Shared fields read by weapons.resolve:
 //   dmg rate speed range count pierce area crit statusChance knock
 // Kind fields: spread jitter r bounce wbounce blast blastDmg split homing pull (projectile/spread/homing),
@@ -170,6 +170,74 @@
     W[e[2]] = {
       name: { vi: e[4], en: e[5] }, desc: { vi: e[6], en: e[7] }, kind: base.kind, element: e[3], evolved: true, cost: 0, rarity: 'legendary',
       levels: [Object.assign({}, DEF, base.levels[4], e[14])], shape: e[8], color: e[9], size: e[10], trail: e[11], hit: e[12], auto: base.auto, sfx: e[13], from: e[0]
+    };
+    evolutions.push({ weapon: e[0], catalyst: e[1], into: e[2] });
+  });
+  // Evolutions for the remaining 17 weapons: each changes how the weapon behaves (new row fields, see src/sim/weapons.js + projectiles.js),
+  // the numbers are only scaled (dmgX / rateX) to keep the evolution at ~2x the Lv5 DPS of its base (tests/arsenal.test.js).
+  // base, catalyst, id, element, vi, en, descVi, descEn, shape, color, size, hit, sfx, {dmgX, rateX, set}
+  const E2 = [
+    ['ember_gun', 'ember_charm', 'dragonfire', 'fire', 'Hỏa long', 'Dragonfire',
+      'Cầu lửa phun đường lửa cháy dọc đường bay rồi nổ.', 'Fireballs lay a trail of burning ground along their flight, then explode.', 'star', '#FF4A1C', 9, 0.3, 'shoot_heavy',
+      { dmgX: 1.4, rateX: 1.1, set: { count: 3, blast: 78, lay: 0.2, layR: 40, layDmg: 0.2, layLife: 1.5, statusChance: 0.7 } }],
+    ['frost_fan', 'frost_charm', 'blizzard_fan', 'ice', 'Bão băng', 'Blizzard Fan',
+      'Cứ 3 loạt bắn, một loạt phóng vòng mảnh băng 360 độ.', 'Every 3rd volley is a full 360 degree ring of ice shards.', 'star', '#D9F4FF', 6, 0.25, 'shoot_heavy',
+      { dmgX: 1.6, rateX: 1.15, set: { ring: 3, count: 8, pierce: 3, statusChance: 1 } }],
+    ['lancer', 'scope_lens', 'prism_lance', 'physical', 'Giáo lăng kính', 'Prism Lance',
+      'Ba tia laser để lại bức tường tia cứa liên tục trên đường bắn.', 'Three beams that leave a lingering laser wall, cutting everything that stays in the line.', 'beam', '#F0A6FF', 9, 0.4, 'shoot_heavy',
+      { dmgX: 0.86, rateX: 1.05, set: { count: 3, linger: 0.3, w: 20, pierce: 99 } }],
+    ['maul', 'void_shard', 'singularity_maul', 'void', 'Búa kỳ dị', 'Singularity Maul',
+      'Cú đập mở hố đen hút mọi thứ, rồi phát nổ.', 'Each slam opens a black hole that drags enemies in, then detonates.', 'ring', '#7B3FD0', 17, 0.95, 'shoot_heavy',
+      { dmgX: 1.8, rateX: 1.0, set: { hole: 1, aftershock: 0, r: 105 } }],
+    ['saw_ring', 'vampire_fang', 'bloodsaw', 'physical', 'Cưa huyết', 'Bloodsaw',
+      'Hai vòng cưa quay ngược chiều nhau; mỗi nhát cắt hút một chút máu.', 'Two counter-rotating rings of saws; every cut leeches a little health.', 'ring', '#E5484D', 14, 0.15, 'shoot_light',
+      { dmgX: 1.6, rateX: 1.0, set: { rings: 2, heal: 0.7, count: 6, ospd: 4.2 } }],
+    ['grenade', 'blast_core', 'carpet_bomb', 'fire', 'Oanh tạc', 'Carpet Bomb',
+      'Ném cả hàng lựu đạn rải thành đường nổ liên hoàn.', 'Throws a whole row of grenades that blow up in a chain along the line.', 'hex', '#FF9F1C', 9, 0.7, 'shoot_heavy',
+      { dmgX: 2.3, rateX: 1.0, set: { line: 1, count: 5, cluster: 2, blast: 82, range: 520 } }],
+    ['toxin_mine', 'cat_detonator', 'plague_mine', 'poison', 'Mìn dịch hạch', 'Plague Mine',
+      'Mìn phản ứng dây chuyền: một quả nổ kích nổ mọi quả gần đó.', 'Chain-reaction mines: one blast sets off every mine nearby.', 'hex', '#B6F23A', 9, 0.6, 'shoot_heavy',
+      { dmgX: 1.2, rateX: 1.15, set: { count: 4, chn: 1, blast: 90, cloudLife: 5.5 } }],
+    ['frost_aura', 'cat_rime_core', 'absolute_zero', 'ice', 'Độ không tuyệt đối', 'Absolute Zero',
+      'Vòng băng định kỳ bắn ra 10 mũi băng xuyên thấu.', 'The frost ring periodically fires ten piercing ice spikes outward.', 'star', '#EAF8FF', 100, 0.2, 'shoot_heavy',
+      { dmgX: 1.15, rateX: 1.0, set: { novaN: 10, novaEvery: 2.2, novaDmg: 1.7, r: 150, freezeEvery: 2 } }],
+    ['toxic_cloud', 'cat_spore_sac', 'miasma', 'poison', 'Ôn dịch', 'Miasma',
+      'Để lại đám mây độc phía sau lưng khi bạn di chuyển.', 'Leaves lingering poison clouds in your wake as you move.', 'hex', '#4DCB7B', 90, 0.15, 'shoot_light',
+      { dmgX: 1.3, rateX: 1.0, set: { trail: 1, trailR: 64, trailDmg: 2.3, r: 135 } }],
+    ['seeker', 'ghost_cloak', 'wraith_seeker', 'void', 'Hồn truy', 'Wraith Seeker',
+      'Hồn ma xuyên qua kẻ địch, quay lại săn mãi cho đến khi hết giờ.', 'Phantom orbs that pass through enemies and keep hunting until they fade.', 'star', '#D9A8FF', 9, 0.3, 'shoot_light',
+      { dmgX: 0.95, rateX: 1.0, set: { count: 4, rehit: 0.5, pierce: 99, range: 1500, split: 0, pull: 80, homing: 4.5 } }],
+    ['smg', 'quick_fingers', 'bullet_hose', 'physical', 'Mưa đạn', 'Bullet Hose',
+      'Nòng quay nóng dần: giữ cò càng lâu, bắn càng nhanh.', 'The barrel spins up: the longer you hold fire, the faster it shoots.', 'capsule', '#FFE066', 5, 0.08, 'shoot_light',
+      { dmgX: 1.0, rateX: 1.1, set: { ramp: 2.6, count: 3, bounce: 2 } }],
+    ['venom_bow', 'venom_vial', 'hydra_bow', 'poison', 'Nỏ thủy xà', 'Hydra Bow',
+      'Mũi tên độc nổ thành đám mây độc nơi nó dừng lại.', 'Venom bolts burst into a lingering poison cloud where they land.', 'capsule', '#4BE06A', 7, 0.35, 'shoot_heavy',
+      { dmgX: 2.05, rateX: 1.15, set: { cloudDmg: 36, cloudLife: 3.4, blast: 66, bounce: 0, pierce: 2, count: 3 } }],
+    ['frost_seeker', 'cat_cold_snap', 'glacial_seeker', 'ice', 'Băng truy tuyệt đối', 'Glacial Seeker',
+      'Mỗi quả cầu đóng băng ngay lập tức kẻ nó chạm vào.', 'Each orb flash-freezes whatever it touches.', 'star', '#CFF3FF', 9, 0.3, 'shoot_light',
+      { dmgX: 2.0, rateX: 1.05, set: { count: 4, fz: 1, statusChance: 1, split: 1, pierce: 3 } }],
+    ['chakram', 'static_charm', 'thunder_ring', 'shock', 'Vòng sấm', 'Thunder Ring',
+      'Các đĩa điện liên tục phóng sét vào kẻ gần nhất.', 'The discs keep hurling lightning at the nearest enemy.', 'star', '#FFF27A', 13, 0.15, 'shoot_light',
+      { dmgX: 1.7, rateX: 1.0, set: { zapEvery: 0.8, zapMult: 1.3, zapJumps: 3, count: 6, orad: 112 } }],
+    ['railgun', 'cat_capacitor', 'rail_reflector', 'physical', 'Súng ray phản xạ', 'Rail Reflector',
+      'Tia ray dội lại khi chạm tường và quét thêm một lượt.', 'The rail beam rebounds off the arena wall and sweeps a second pass.', 'beam', '#9AF0FF', 9, 0.6, 'shoot_heavy',
+      { dmgX: 1.8, rateX: 1.12, set: { reflect: 1, range: 900 } }],
+    ['thunder_hammer', 'cat_storm_rod', 'skyhammer', 'shock', 'Búa thiên lôi', 'Skyhammer',
+      'Mỗi cú đập triệu hồi sét đánh xuống 5 kẻ địch ngẫu nhiên.', 'Every slam calls lightning down on 5 random enemies.', 'star', '#FFE14D', 17, 0.9, 'shoot_heavy',
+      { dmgX: 1.15, rateX: 1.12, set: { bolts: 5, aftershock: 0 } }],
+    ['comet_staff', 'phoenix_feather', 'phoenix_staff', 'fire', 'Trượng phượng hoàng', 'Phoenix Staff',
+      'Triệu hồi mưa sao chổi rơi quanh mục tiêu, để lại lửa phượng hoàng.', 'Calls a meteor shower around the target and leaves phoenix flames behind.', 'star', '#FFB300', 12, 0.75, 'shoot_heavy',
+      { dmgX: 1.05, rateX: 1.0, set: { rain: 6, cluster: 0, blast: 76, pr: 52, pd: 0.22, count: 1 } }]
+  ];
+  E2.forEach(function (e) {
+    const base = W[e[0]], o = e[13], r5 = base.levels[4];
+    const row = Object.assign({}, DEF, r5, o.set);
+    row.dmg = r5.dmg * o.dmgX; row.rate = r5.rate * o.rateX;
+    if (r5.cloudDmg) row.cloudDmg = (o.set.cloudDmg || r5.cloudDmg) * o.dmgX;
+    if (o.set.cloudDmg && !r5.cloudDmg) row.cloudDmg = o.set.cloudDmg * o.dmgX;
+    W[e[2]] = {
+      name: { vi: e[4], en: e[5] }, desc: { vi: e[6], en: e[7] }, kind: base.kind, element: e[3], evolved: true, cost: 0, rarity: 'legendary',
+      levels: [row], shape: e[8], color: e[9], size: e[10], trail: true, hit: e[11], auto: base.auto, sfx: e[12], from: e[0]
     };
     evolutions.push({ weapon: e[0], catalyst: e[1], into: e[2] });
   });

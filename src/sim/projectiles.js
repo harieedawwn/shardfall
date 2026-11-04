@@ -16,11 +16,20 @@
     team: 'player', weaponId: null, x: 0, y: 0, vx: 0, vy: 0, r: 5, dmg: 1, crit: false, element: 'physical', pierce: 0, hits: null, life: 1,
     knock: 0, statusChance: 0, homing: 0, hr: 0, orb: 0, oa: 0, orad: 0, ospd: 0, rehit: 0, fuse: 0, onEnd: 0, blastR: 0, bd: 0.6, cn: 0,
     bounce: 0, wb: 0, split: 0, pullS: 0, pullT: 0, ghost: 0, mine: 0, arm: 0, trig: 0, drag: 0, weight: 0, spread: 0, cb: -1, br: 0, sig: 0, cl: 0, cdmg: 0, dbl: 0,
+    lay: 0, layT: 0, layR: 0, layD: 0, layL: 0, chn: 0, fz: 0, heal: 0, pr: 0, pd: 0,
     shape: 'circle', color: '#F2EFE6', size: 5, trail: false, rot: 0, sx: 1, sy: 1, flash: 0
   };
 
+  // scratch for the areas projectiles leave behind (fire trails, burning patches)
+  const LO = { areaKind: 'circle', team: 'player', weaponId: null, x: 0, y: 0, r: 30, dmg: 0, tick: 0.4, life: 1.5, element: 'fire', statusChance: 0.5, color: '#FF7A2F', shape: 'ring' };
+  function leave(b, r, dmg, life, el, sc) {
+    if (NR.world.get().areas.length >= 140) return;
+    LO.weaponId = b.weaponId; LO.x = b.x; LO.y = b.y; LO.r = r; LO.dmg = dmg; LO.life = life; LO.element = el; LO.statusChance = sc; LO.color = b.color;
+    NR.combat.createArea(LO);
+  }
+  let healAt = 0;
   const SP = [];
-  function reset() { tmp.length = 0; tmp2.length = 0; HP.length = 0; SP.length = 0; }
+  function reset() { tmp.length = 0; tmp2.length = 0; HP.length = 0; SP.length = 0; healAt = 0; }
   function getHits() { return HP.length ? HP.pop() : []; }
   function putHits(b) {
     if (b._hs) { b._hs.clear(); if (SP.length < 512) SP.push(b._hs); b._hs = null; }
@@ -33,6 +42,7 @@
     P.life = 1; P.knock = 0; P.statusChance = 0; P.homing = 0; P.hr = 0; P.orb = 0; P.oa = 0; P.orad = 0; P.ospd = 0; P.rehit = 0; P.fuse = 0;
     P.onEnd = 0; P.blastR = 0; P.bd = 0.6; P.cn = 0; P.bounce = 0; P.wb = 0; P.split = 0; P.pullS = 0; P.pullT = 0; P.ghost = 0; P.mine = 0; P.arm = 0;
     P.trig = 0; P.drag = 0; P.weight = 0; P.spread = 0; P.cb = -1; P.br = 0; P.sig = 0; P.cl = 0; P.cdmg = 0; P.dbl = 0; P.shape = 'circle'; P.color = '#F2EFE6';
+    P.lay = 0; P.layT = 0; P.layR = 0; P.layD = 0; P.layL = 0; P.chn = 0; P.fz = 0; P.heal = 0; P.pr = 0; P.pd = 0;
     P.size = 5; P.trail = false; P.rot = 0; P.sx = 1; P.sy = 1; P.flash = 0;
   }
 
@@ -105,12 +115,23 @@
     if (oe) {
       EO.team = 'player'; EO.element = b.element; EO.weaponId = b.weaponId; EO.statusChance = b.statusChance; EO.knock = b.knock; EO.crit = b.crit;
       EO.weight = b.weight; EO.spread = !!b.spread;
-      if (oe === END_EXPLODE) NR.combat.explode(b.x, b.y, b.blastR, b.dmg * b.bd, EO);
+      if (oe === END_EXPLODE) {
+        NR.combat.explode(b.x, b.y, b.blastR, b.dmg * b.bd, EO);
+        if (b.pr > 0) leave(b, b.pr, b.pd, 2.4, b.element, 0.5); // Phoenix Staff flames
+      }
       else if (oe === END_CLOUD) {
         NR.combat.explode(b.x, b.y, b.blastR, b.dmg, EO);
         CO.weaponId = b.weaponId; CO.x = b.x; CO.y = b.y; CO.r = b.blastR; CO.dmg = b.cdmg; CO.life = b.cl; CO.element = b.element; CO.statusChance = b.statusChance;
         CO.delay = 0; CO.tick = 0.5; CO.color = b.color;
         NR.combat.createArea(CO);
+        if (b.chn) { // Plague Mine: set off every other mine of the same weapon nearby, one after another
+          const L = NR.world.get().projectiles; let c = 0;
+          for (let i = 0; i < L.length; i++) {
+            const q = L[i];
+            if (q.dead || q === b || !q.mine || q.weaponId !== b.weaponId) continue;
+            if ((q.x - b.x) * (q.x - b.x) + (q.y - b.y) * (q.y - b.y) < 300 * 300) { q.arm = 0; q.life = Math.min(q.life, 0.1 + 0.08 * (++c)); }
+          }
+        }
         if (b.dbl) { CO.delay = 0.55; CO.life = 0.7; CO.tick = 5; CO.dmg = b.dmg * 0.8; CO.r = b.blastR * 1.25; CO.color = b.color; NR.combat.createArea(CO); }
       } else if (oe === END_CLUSTER) {
         NR.combat.explode(b.x, b.y, b.blastR, b.dmg, EO);
@@ -134,6 +155,8 @@
     let dmg = b.dmg;
     if (b.cb >= 0) { const pl2 = NR.world.get().player, c = NR.combat.critRoll(pl2, b.cb); HO.crit = c.crit; dmg *= c.mult; }
     NR.combat.hitEnemy(e, dmg, HO);
+    if (b.fz && !e.dead) NR.combat.applyStatus(e, 'freeze', NR.stats.get(NR.world.get().player, 'statusPower'), dmg, b.weaponId, 0); // Glacial Seeker: flash-freeze
+    if (b.heal > 0 && t >= healAt) { healAt = t + 0.3; NR.player.heal(b.heal, 'saw'); }                                                    // Bloodsaw leech
     if (b.pierce > 0 || b.bounce > 0 || b.rehit > 0) remember(b, e.id, t);
     impact(b, 'enemy');
     if (b.split > 0) {
@@ -184,6 +207,7 @@
         if (b.homing > 0) steer(b, dt, t);
         if (b.drag > 0) { const f = Math.max(0, 1 - b.drag * dt); b.vx *= f; b.vy *= f; }
         b.x += b.vx * dt; b.y += b.vy * dt;
+        if (b.lay > 0) { b.layT -= dt; if (b.layT <= 0) { b.layT += b.lay; leave(b, b.layR, b.layD, b.layL, b.element, 0.5); } } // Dragonfire trail
         if (b.ghost) b.rot += 9 * dt;
         else if (b.rot === 0 && (b.vx !== 0 || b.vy !== 0)) b.rot = Math.atan2(b.vy, b.vx);
         if (b.pullS > 0) {
