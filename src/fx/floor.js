@@ -6,7 +6,7 @@
   const TILE = 160, TAU = Math.PI * 2;
   const decals = [], tele = [];
   const view = { x: 0, y: 0 };
-  let cache = null, cacheZone = '', inited = false;
+  let inited = false;
   // [shape, palette index, shade, rMin, rMax]
   const PROPS = {
     scrap: [['square', 3, -0.25, 14, 24], ['circle', 4, -0.2, 11, 17], ['star', 1, 0.35, 12, 18], ['capsule', 4, -0.35, 18, 28], ['hex', 1, 0.15, 12, 20]],
@@ -30,7 +30,8 @@
   function shade(c, a) { return a ? NR.util.shade(c, a) : c; }
 
   // paints the whole arena onto any 2D context (offscreen cache, or the main canvas when no DOM exists)
-  function paint(c, zone, pal) {
+  // paints the arena (or the x,y,w,h part of it; painters may draw more, the caller clips)
+  function paint(c, zone, pal, rx, ry, rw, rh) {
     const A = NR.config.ARENA, S = NR.fx.shapes, rnd = rngFor('floor:' + zone);
     const ink = NR.config.INK;
     c.fillStyle = pal[0]; c.fillRect(0, 0, A.w, A.h);
@@ -166,18 +167,45 @@
       S.draw(c, d[0], x, y, d[3] + rnd() * (d[4] - d[3]), rnd() * TAU, 1, 1, shade(pal[d[1]], d[2]), 3, false);
     }
   }
-  function ensure(zone, pal) {
-    if (cache && cacheZone === zone) return cache;
-    cacheZone = zone; cache = null;
-    if (typeof document === 'undefined' || !document.createElement) return null;
-    const A = NR.config.ARENA, cv = document.createElement('canvas');
-    cv.width = A.w; cv.height = A.h;
+  // ---------- chunked floor cache ----------
+  // The arena is cached as CHUNK x CHUNK world-px tiles baked at fs = min(render scale, quality cap) device px per
+  // world px (<= 1024 px per side, under the iOS Safari canvas limits). Chunks bake on demand, at most BAKE_PER_FRAME
+  // per frame; an unbaked chunk shows the plain ground colour for that frame.
+  const CHUNK = 512, BAKE_PER_FRAME = 3;
+  let chunks = null, chunkKey = '';
+  function chunkScale() {
+    const R = NR.fx.render, V = R.view ? R.view() : null, art = NR.fx.art;
+    const k = V ? V.k : 1, cap = art ? art.quality().floorMax : 1;
+    return Math.max(0.5, Math.min(cap, Math.round(k * 4) / 4));
+  }
+  function bakeChunk(i, j, zone, pal, fs) {
+    const A = NR.config.ARENA, w = Math.min(CHUNK, A.w - i * CHUNK), h = Math.min(CHUNK, A.h - j * CHUNK);
+    const cv = document.createElement('canvas');
+    cv.width = Math.ceil(w * fs); cv.height = Math.ceil(h * fs);
     const c = cv.getContext('2d');
     if (!c) return null;
-    paint(c, zone, pal);
-    cache = cv;
-    return cache;
+    c.setTransform(fs, 0, 0, fs, -i * CHUNK * fs, -j * CHUNK * fs);
+    c.beginPath(); c.rect(i * CHUNK, j * CHUNK, w, h); c.clip();
+    paint(c, zone, pal, i * CHUNK, j * CHUNK, w, h);
+    return { img: cv, x: i * CHUNK, y: j * CHUNK, w: w, h: h };
   }
+  function drawChunks(ctx, zone, pal, vw, vh) {
+    const A = NR.config.ARENA;
+    if (typeof document === 'undefined' || !document.createElement) { paint(ctx, zone, pal, 0, 0, A.w, A.h); return; }
+    const fs = chunkScale(), key = zone + '|' + fs;
+    const nx = Math.ceil(A.w / CHUNK), ny = Math.ceil(A.h / CHUNK);
+    if (key !== chunkKey || !chunks) { chunkKey = key; chunks = new Array(nx * ny); for (let n = 0; n < chunks.length; n++) chunks[n] = null; }
+    const i0 = Math.max(0, Math.floor(view.x / CHUNK)), j0 = Math.max(0, Math.floor(view.y / CHUNK));
+    const i1 = Math.min(nx - 1, Math.floor((view.x + vw) / CHUNK)), j1 = Math.min(ny - 1, Math.floor((view.y + vh) / CHUNK));
+    let baked = 0;
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      let ch = chunks[j * nx + i];
+      if (!ch && baked < BAKE_PER_FRAME) { ch = chunks[j * nx + i] = bakeChunk(i, j, zone, pal, fs); baked++; }
+      if (ch) ctx.drawImage(ch.img, ch.x, ch.y, ch.w, ch.h);
+      else { ctx.fillStyle = pal[0]; ctx.fillRect(i * CHUNK, j * CHUNK, Math.min(CHUNK, A.w - i * CHUNK), Math.min(CHUNK, A.h - j * CHUNK)); }
+    }
+  }
+  function chunkStats() { let n = 0, maxSide = 0; if (chunks) for (let i = 0; i < chunks.length; i++) if (chunks[i]) { n++; maxSide = Math.max(maxSide, chunks[i].img.width, chunks[i].img.height); } return { baked: n, maxSide: maxSide }; }
 
   // ---------- decals ----------
   function decal(kind, x, y, r, color) {
@@ -270,12 +298,11 @@
   function draw(ctx) {
     const R = NR.fx.render, zone = R.zone(), pal = R.palette(), sz = R.size();
     NR.camera.toWorld(0, 0, view);
-    const img = ensure(zone, pal);
-    if (img) ctx.drawImage(img, 0, 0); else paint(ctx, zone, pal);
+    drawChunks(ctx, zone, pal, sz.w, sz.h);
     drawDecals(ctx, pal, sz.w, sz.h);
     drawTele(ctx, pal);
   }
   function clear() { decals.length = 0; tele.length = 0; }
   NR.fx = NR.fx || {};
-  NR.fx.floor = { init: init, update: update, draw: draw, decal: decal, telegraph: telegraph, clear: clear, decalCount: function () { return decals.length; }, teleCount: function () { return tele.length; } };
+  NR.fx.floor = { init: init, update: update, draw: draw, decal: decal, telegraph: telegraph, clear: clear, decalCount: function () { return decals.length; }, teleCount: function () { return tele.length; }, chunkStats: chunkStats };
 })();

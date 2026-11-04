@@ -12,7 +12,7 @@
       codex: { weapon: {}, item: {}, enemy: {}, boss: {}, evolution: {}, character: {} },
       settings: {
         language: 'vi', master: 0.8, music: 0.6, sfx: 0.8, shake: 100, reduceFlashing: false,
-        damageNumbers: true, autoFire: false, aimAssist: true, showFps: false, fullscreen: false
+        damageNumbers: true, autoFire: false, aimAssist: true, showFps: false, fullscreen: false, quality: 'auto'
       },
       run: null
     };

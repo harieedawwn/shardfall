@@ -2,9 +2,9 @@
   const NR = globalThis.NR = globalThis.NR || {};
   const DEAD = 0.2, ASSIST_ANGLE = 12 * Math.PI / 180, ASSIST_RANGE = 400, AUTOFIRE_RANGE = 520;
   const keys = Object.create(null);
-  const mouse = { sx: 640, sy: 360, left: false, right: false };
+  const mouse = { sx: 640, sy: 360, x: 640, y: 360, left: false, right: false };
   const virt = { mx: 0, my: 0, aim: null, fire: false, dash: false, pause: false, active: false };
-  const pad = { mx: 0, my: 0, ax: 0, ay: 0, fire: false, dash: false, aiming: false, start: false, prevStart: false, connected: false };
+  const pad = { mx: 0, my: 0, ax: 0, ay: 0, fire: false, dash: false, aiming: false, start: false, prevStart: false, connected: false, ult: false };
   const intent = { mx: 0, my: 0, aim: 0, fire: false, dash: false, pause: false, device: 'kbm' };
   const tmp = { x: 0, y: 0 };
   let canvas = null, injected = null, device = 'kbm', pauseReq = false, lastAim = 0, inited = false;
@@ -47,8 +47,10 @@
     }
     g.addEventListener('mouseup', function (e) { if (e.button === 0) mouse.left = false; else if (e.button === 2) mouse.right = false; });
   }
-  // client coords -> canvas pixels (canvas is letterboxed with object-fit: contain)
+  // client coords -> world-view pixels; the renderer owns the screen mapping (DPR, 21:9 frame) when it is loaded
   function mouseXY(e) {
+    const R = NR.fx && NR.fx.render;
+    if (R && R.toView) { R.toView(e.clientX, e.clientY, mouse); mouse.sx = mouse.x; mouse.sy = mouse.y; return; }
     if (!canvas || !canvas.getBoundingClientRect) return;
     const r = canvas.getBoundingClientRect();
     const sc = Math.min(r.width / canvas.width, r.height / canvas.height) || 1;
@@ -65,7 +67,7 @@
   }
   const dzo = { x: 0, y: 0 };
   function pollPad() {
-    pad.mx = 0; pad.my = 0; pad.ax = 0; pad.ay = 0; pad.fire = false; pad.dash = false; pad.aiming = false; pad.connected = false;
+    pad.mx = 0; pad.my = 0; pad.ax = 0; pad.ay = 0; pad.fire = false; pad.dash = false; pad.ult = false; pad.aiming = false; pad.connected = false;
     const nav = globalThis.navigator;
     const pads = nav && nav.getGamepads ? nav.getGamepads() : null;
     if (!pads) return;
@@ -79,6 +81,7 @@
     const pressed = function (i) { return b[i] && (b[i].pressed || b[i].value > 0.5); };
     pad.fire = !!(pressed(7) || am > 0.5);
     pad.dash = !!(pressed(0) || pressed(4) || pressed(5));
+    pad.ult = !!pressed(3);
     pad.start = !!pressed(9);
     if (pad.start && !pad.prevStart) pauseReq = true;
     pad.prevStart = pad.start;
@@ -129,7 +132,7 @@
     lastAim = aim;
     intent.mx = mx; intent.my = my; intent.aim = aim; intent.fire = fire;
     intent.dash = !!(keys.Space || keys.ShiftLeft || keys.ShiftRight || mouse.right || pad.dash || virt.dash);
-    intent.ult = !!(keys.KeyQ || virt.ult);
+    intent.ult = !!(keys.KeyQ || virt.ult || pad.ult);
     intent.pause = pauseReq || virt.pause;
     intent.device = device;
     return intent;

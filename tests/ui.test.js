@@ -13,7 +13,7 @@ module.exports = function (H) {
   const stripCss = function (s) { return s.replace(/\/\*[\s\S]*?\*\//g, ''); };
 
   const NS = ['game', 'common', 'title', 'hint', 'menu', 'select', 'danger', 'levelup', 'shop', 'stats', 'tip', 'stat', 'rarity', 'element', 'kind', 'wp', 'pause',
-    'settings', 'set', 'ctl', 'meta', 'codex', 'victory', 'end', 'hud', 'touch'];
+    'settings', 'set', 'ctl', 'meta', 'codex', 'victory', 'end', 'hud', 'touch', 'rotate'];
 
   // ---- key families built from data (dynamic keys such as t('stat.' + k)) ----
   function families(NR) {
@@ -104,17 +104,20 @@ module.exports = function (H) {
     ok(typeof ctx.document === 'undefined', 'no document was created');
   });
 
+  // SPEC 12 (Flat++): CSS may use static gradients and translucency (overlays, transitions); still banned: blur, filter,
+  // backdrop-filter, blend modes, glow, blurred/spread/inset shadows. UI JS draws on the main canvas: no gradients,
+  // canvas shadows, filters or composite modes there.
   H.test('ui: css/ui.css and src/ui contain no banned visual feature', function () {
     const bad = [];
     const css = stripCss(read(CSS));
-    const rules = [[/gradient/i, 'gradient'], [/blur/i, 'blur'], [/backdrop/i, 'backdrop-filter'], [/\bfilter\b/i, 'filter'], [/opacity/i, 'opacity/translucency'],
-      [/rgba?\s*\(|hsla?\s*\(/i, 'rgba/hsla'], [/#[0-9a-f]{8}\b|#[0-9a-f]{4}\b/i, 'alpha hex'], [/mix-blend|isolation/i, 'blend mode'], [/-webkit-box-reflect|glow/i, 'glow']];
+    const rules = [[/(^|[^-\w])blur\s*\(/i, 'blur'], [/backdrop/i, 'backdrop-filter'], [/(^|[;{\s])filter\s*:/i, 'filter'],
+      [/mix-blend|isolation/i, 'blend mode'], [/-webkit-box-reflect|glow/i, 'glow']];
     rules.forEach(function (r) { if (r[0].test(css)) bad.push('css: ' + r[1]); });
     const re = /(box|text)-shadow\s*:\s*([^;}]+)/g;
     let m;
     while ((m = re.exec(css))) {
       m[2].split(/,(?![^(]*\))/).forEach(function (sh) {
-        const L = (sh.match(/-?\d*\.?\d+(?:px|em|rem)?(?=\s|$)/g) || []).filter(function (x) { return /^-?[\d.]/.test(x); });
+        const L = (sh.replace(/rgba?\([^)]*\)|#[0-9a-fA-F]+|var\([^)]*\)/g, ' ').match(/-?\d*\.?\d+(?:px|em|rem)?(?=\s|$)/g) || []).filter(function (x) { return /^-?[\d.]/.test(x); });
         if (/inset/.test(sh)) bad.push('css: inset shadow ' + sh.trim());
         if (L.length >= 3 && parseFloat(L[2]) !== 0) bad.push('css: shadow blur ' + sh.trim());
         if (L.length >= 4 && parseFloat(L[3]) !== 0) bad.push('css: shadow spread ' + sh.trim());
@@ -123,7 +126,7 @@ module.exports = function (H) {
     ok(/Bahnschrift, "Segoe UI", system-ui/.test(css), 'font stack');
     ok(!/(^|[;{\s])button\s*\{[^}]*appearance:\s*auto/.test(css), 'default button');
     const jsRules = [[/gradient/i, 'gradient'], [/backdrop/i, 'backdrop'], [/blur/i, 'blur'], [/shadowBlur|shadowColor/, 'canvas shadow'], [/\.filter\s*=|style\.filter|filter\s*:/, 'filter'],
-      [/rgba?\s*\(|hsla?\s*\(/i, 'rgba'], [/boxShadow|textShadow/, 'inline shadow'], [/opacity/i, 'opacity'], [/globalCompositeOperation/, 'composite'], [/globalAlpha\s*=\s*(?!1\b)/, 'globalAlpha']];
+      [/boxShadow|textShadow/, 'inline shadow'], [/globalCompositeOperation/, 'composite']];
     for (const f of UI_FILES) { const s = stripJs(read(f)); jsRules.forEach(function (r) { if (r[0].test(s)) bad.push(path.basename(f) + ': ' + r[1]); }); }
     H.eq(bad, [], 'banned features');
   });

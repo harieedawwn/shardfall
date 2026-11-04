@@ -34,6 +34,7 @@
     NR.input.init(canvas);
     initAll(['run', 'meta', 'items', 'pickups', 'enemies', 'bosses', 'director', 'progression', 'shop', 'weapons', 'projectiles', 'combat']);
     if (NR.fx) {
+      initAll(['fx.art']);
       if (canvas && NR.fx.render) NR.fx.render.init(canvas);
       initAll(['fx.particles', 'fx.floor', 'fx.juice', 'fx.audio']);
       if (canvas) {

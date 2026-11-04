@@ -2,14 +2,21 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14121F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Shardfall">
+<meta name="format-detection" content="telephone=no">
 <title>Shardfall</title>
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/ui.css">
 <style>
-html, body { margin: 0; height: 100%; background: #14121F; overflow: hidden; touch-action: none; user-select: none; }
-#game { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; object-fit: contain; background: #14121F; display: block; }
-#ui { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; pointer-events: none; }
-#ui > * { pointer-events: auto; }
+html, body { margin: 0; width: 100%; height: 100%; height: 100dvh; background: #14121F; overflow: hidden; overscroll-behavior: none;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-text-size-adjust: 100%; }
+#game { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: #14121F; display: block; touch-action: none; }
+#ui { position: fixed; left: 0; top: 0; width: 100%; height: 100%; height: 100dvh; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -52,6 +59,7 @@ html, body { margin: 0; height: 100%; background: #14121F; overflow: hidden; tou
 <script src="src/sim/meta.js"></script>
 <script src="src/sim/run.js"></script>
 <script src="src/fx/shapes.js"></script>
+<script src="src/fx/art.js"></script>
 <script src="src/fx/render.js"></script>
 <script src="src/fx/particles.js"></script>
 <script src="src/fx/floor.js"></script>

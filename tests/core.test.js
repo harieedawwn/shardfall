@@ -387,11 +387,16 @@ module.exports = function (H) {
       console.log('       (info) not emitted yet by current modules: ' + missing.join(' '));
     }
   });
-  test('fake canvas: 30 s bot render records zero banned calls', function () {
+  test('fake canvas: 30 s bot render records zero banned calls, no gradient on the main canvas, none after warm-up', function () {
     const NR = H.load({ fx: true }); NR.main.boot(); const s = NR.bot.play({ seconds: 30, seed: 2, render: true });
     const ctx = NR.__dom.ctx; eq(ctx.banned, []); ok(Object.keys(ctx.used.methods).length > 3, 'something was drawn'); ok(s.ticks > 0);
-    const c = NR.fakeCanvas.create(10, 10); c.createLinearGradient(0, 0, 1, 1); c.shadowBlur = 4; c.globalCompositeOperation = 'lighter'; c.filter = 'blur(2px)';
-    eq(c.banned.length, 4, 'fake canvas detects banned features');
+    eq(ctx.gradients, [], 'gradients only on offscreen bake canvases');
+    const FC = require('./fake-canvas'), g0 = FC.gradientTotal();
+    for (let i = 0; i < 120; i++) { NR.run.step(NR.config.STEP); NR.fx.render.draw(NR.world.get(), 1); }
+    eq(FC.gradientTotal(), g0, 'no gradient is created while drawing frames once sprites are baked');
+    const c = NR.fakeCanvas.create(10, 10); c.createLinearGradient(0, 0, 1, 1); c.shadowBlur = 4; c.globalCompositeOperation = 'screen'; c.filter = 'blur(2px)';
+    eq(c.banned.length, 3, 'fake canvas detects banned features'); eq(c.gradients.length, 1, 'gradients recorded');
+    const c3 = NR.fakeCanvas.create(10, 10); c3.globalCompositeOperation = 'lighter'; eq(c3.banned, []); eq(c3.additive.length, 1);
     const c2 = NR.fakeCanvas.create(10, 10); c2.globalCompositeOperation = 'source-over'; c2.fillRect(0, 0, 1, 1); eq(c2.banned, []); eq(c2.used.methods.fillRect, 1);
   });
   test('perf: stress 400 enemies + 600 projectiles averages <= 4 ms per tick', function () {
@@ -420,18 +425,24 @@ module.exports = function (H) {
     }
     return out;
   }
+  // SPEC 12 (Flat++): gradients only in the bake module (offscreen sprites), additive 'lighter' only in src/fx;
+  // shadows/filters/blur/blend modes banned everywhere; CSS shadows never blurred.
+  const BAKE_FILES = ['src/fx/art.js'];
   test('source scan: no banned visual feature in src or css (SPEC 12)', function () {
     const rules = [
-      [/create(Linear|Radial|Conic)Gradient/, 'canvas gradient'], [/shadowBlur|shadowColor/, 'canvas shadow'],
+      [/shadowBlur|shadowColor/, 'canvas shadow'],
       [/\.filter\s*=[^=]|style\.filter|['"]filter['"]|(^|[^-\w.])filter\s*:|backdrop-filter|backdropFilter/m, 'filter'],
-      [/globalCompositeOperation\s*=\s*['"](lighter|screen|plus-lighter|color-dodge)['"]/, 'composite op'],
-      [/(linear|radial|conic)-gradient/, 'css gradient'], [/(^|[^.\w])blur\s*\(/m, 'blur()'], [/mix-blend-mode|mixBlendMode/, 'blend mode']
+      [/globalCompositeOperation\s*=\s*['"](?!lighter['"]|source-over['"])/, 'composite op'],
+      [/(^|[^.\w])blur\s*\(/m, 'blur()'], [/mix-blend-mode|mixBlendMode/, 'blend mode']
     ];
     const bad = [];
     for (const f of codeFiles()) {
-      const t = fs.readFileSync(f, 'utf8');
-      for (const [re, name] of rules) if (re.test(t)) bad.push(path.relative(H.ROOT, f) + ': ' + name);
-      for (const s of shadowViolations(t)) bad.push(path.relative(H.ROOT, f) + ': blurred ' + s);
+      const t = fs.readFileSync(f, 'utf8'), rel = path.relative(H.ROOT, f).split(path.sep).join('/');
+      for (const [re, name] of rules) if (re.test(t)) bad.push(rel + ': ' + name);
+      if (/create(Linear|Radial|Conic)Gradient/.test(t) && BAKE_FILES.indexOf(rel) < 0) bad.push(rel + ': canvas gradient outside the bake module');
+      if (/globalCompositeOperation\s*=\s*['"]lighter/.test(t) && !/^src\/fx\//.test(rel)) bad.push(rel + ': additive blend outside src/fx');
+      if (/\.js$/.test(rel) && /(linear|radial|conic)-gradient/.test(t)) bad.push(rel + ': css gradient from js');
+      for (const s of shadowViolations(t)) bad.push(rel + ': blurred ' + s);
     }
     eq(bad, []);
     const sv = shadowViolations('a{box-shadow:4px 4px 0 #000, 2px 2px 3px red; text-shadow: 1px 1px 0 #fff}');
@@ -460,7 +471,7 @@ module.exports = function (H) {
     eq(list.slice(9, 14), ['i18n', 'save', 'input', 'camera', 'loop'].map(function (n) { return 'src/core/' + n + '.js'; }));
     const sim = ['world', 'player', 'weapons', 'projectiles', 'combat', 'enemies', 'bosses', 'director', 'items', 'progression', 'shop', 'pickups', 'meta', 'run'].map(function (n) { return 'src/sim/' + n + '.js'; });
     eq(list.filter(function (s) { return /^src\/sim\//.test(s); }), sim);
-    eq(list.filter(function (s) { return /^src\/fx\//.test(s); }), ['shapes', 'render', 'particles', 'floor', 'juice', 'audio'].map(function (n) { return 'src/fx/' + n + '.js'; }));
+    eq(list.filter(function (s) { return /^src\/fx\//.test(s); }), ['shapes', 'art', 'render', 'particles', 'floor', 'juice', 'audio'].map(function (n) { return 'src/fx/' + n + '.js'; }));
     eq(list.filter(function (s) { return /^src\/ui\//.test(s); }), ['hud', 'screens', 'touch'].map(function (n) { return 'src/ui/' + n + '.js'; }));
     eq(list[list.length - 1], 'src/main.js'); ok(fs.existsSync(path.join(H.ROOT, '.nojekyll')));
     ok(list.indexOf('src/data/weapons.js') > list.indexOf('src/core/loop.js') && list.indexOf('src/data/meta.js') < list.indexOf('src/sim/world.js'));

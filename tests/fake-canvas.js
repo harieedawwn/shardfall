@@ -1,8 +1,11 @@
 'use strict';
-// No-op 2D context that records which methods/properties were used, and flags banned visual features.
-const BANNED_METHODS = ['createLinearGradient', 'createRadialGradient', 'createConicGradient'];
+// No-op 2D context that records which methods/properties were used, and flags banned visual features (SPEC 12 Flat++).
+// Gradients are not banned per se (sprites are baked with them) but are recorded per context in ctx.gradients, so
+// tests can require zero on the main canvas and no new ones after warm-up. 'lighter' is recorded in ctx.additive.
+const GRADIENT_METHODS = ['createLinearGradient', 'createRadialGradient', 'createConicGradient'];
 const BANNED_PROPS = ['shadowBlur', 'shadowColor', 'filter'];
-const BAD_COMPOSITE = ['lighter', 'screen', 'plus-lighter', 'color-dodge'];
+const OK_COMPOSITE = ['source-over', 'lighter'];
+const all = [];
 const INITIAL = {
   globalAlpha: 1, lineWidth: 1, fillStyle: '#000000', strokeStyle: '#000000', lineJoin: 'miter', lineCap: 'butt',
   font: '10px sans-serif', textAlign: 'start', textBaseline: 'alphabetic', globalCompositeOperation: 'source-over',
@@ -11,15 +14,15 @@ const INITIAL = {
 
 function create(w, h) {
   const used = { methods: {}, props: {} };
-  const banned = [];
+  const banned = [], gradients = [], additive = [];
   const state = Object.assign({}, INITIAL);
   const canvas = { width: w || 1280, height: h || 720, style: {} };
-  const own = { banned: banned, used: used, canvas: canvas };
+  const own = { banned: banned, used: used, canvas: canvas, gradients: gradients, additive: additive };
   const ctx = new Proxy(own, {
     get(t, k) {
       if (typeof k === 'symbol') return undefined;
       if (k in t) return t[k];
-      if (BANNED_METHODS.indexOf(k) >= 0) return function () { banned.push(k); return { addColorStop: function () {} }; };
+      if (GRADIENT_METHODS.indexOf(k) >= 0) return function () { gradients.push(k); return { addColorStop: function () {} }; };
       if (k in state) return state[k];
       return function () {
         used.methods[k] = (used.methods[k] || 0) + 1;
@@ -34,11 +37,12 @@ function create(w, h) {
       used.props[k] = (used.props[k] || 0) + 1;
       state[k] = v;
       if (BANNED_PROPS.indexOf(k) >= 0) banned.push(k + '=' + v);
-      if (k === 'globalCompositeOperation' && BAD_COMPOSITE.indexOf(v) >= 0) banned.push(k + '=' + v);
+      if (k === 'globalCompositeOperation') { if (OK_COMPOSITE.indexOf(v) < 0) banned.push(k + '=' + v); else if (v === 'lighter') additive.push(1); }
       return true;
     }
   });
   canvas.getContext = function () { return ctx; };
+  all.push(own);
   return ctx;
 }
 
@@ -102,4 +106,5 @@ function fakeDom() {
   doc.body.appendChild(canvas); doc.body.appendChild(root);
   return { document: doc, root: root, canvas: canvas, ctx: canvas.getContext('2d') };
 }
-module.exports = { create: create, fakeDom: fakeDom, El: El };
+function gradientTotal() { let n = 0; for (let i = 0; i < all.length; i++) n += all[i].gradients.length; return n; }
+module.exports = { create: create, fakeDom: fakeDom, El: El, all: all, gradientTotal: gradientTotal };

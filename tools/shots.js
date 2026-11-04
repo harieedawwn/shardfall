@@ -113,8 +113,14 @@ function audit() {
           } catch (e) { /* storage blocked */ }
         }, seed);
         if (S.safe) {
-          // emulate notch insets with a CSS variable override read by css/ui.css (env() cannot be faked in Chromium)
-          await page.addInitScript(function (s) { document.documentElement && document.documentElement.style.setProperty('--sim-safe', s.join('px ') + 'px'); window.__simSafe = s; }, S.safe);
+          // emulate notch insets: override the --sa* variables css/ui.css fills from env(safe-area-inset-*)
+          await page.addInitScript(function (s) {
+            const set = function () {
+              const st = document.documentElement.style;
+              st.setProperty('--sat', s[0] + 'px'); st.setProperty('--sar', s[1] + 'px'); st.setProperty('--sab', s[2] + 'px'); st.setProperty('--sal', s[3] + 'px');
+            };
+            if (document.documentElement) set(); else document.addEventListener('readystatechange', set, { once: true });
+          }, S.safe);
         }
         const target = url + (scr === 'stress' ? '?stress=1' : '');
         await page.goto(target);

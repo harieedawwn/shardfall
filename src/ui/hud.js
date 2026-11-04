@@ -5,8 +5,8 @@
   NR.ui = NR.ui || {};
   const FONT = 'Bahnschrift, "Segoe UI", system-ui, sans-serif';
   const C = {
-    ink: '#14121F', ink2: '#0B0A12', panel: '#2A1E3F', cream: '#F2EFE6', mute: '#8C86A0', hp: '#E86AA6', hpLag: '#F2EFE6', hpLow: '#E5484D',
-    xp: '#7FD3F0', gold: '#FFD43B', boss: '#C95B73', dash: '#7FD3F0', good: '#8BD450', slot: '#3B2A58',
+    ink: '#14121F', ink2: '#0B0A12', panel: '#251C38', panelHi: '#3A2E55', track: '#120F1C', cream: '#F6F0DF', mute: '#B8B0CC', hp: '#FF5C8A', hpLag: '#F6F0DF', hpLow: '#FF3D4F',
+    xp: '#6FD6F2', gold: '#FFC23D', boss: '#E0476B', bossPlate: '#3A1730', dash: '#6FD6F2', good: '#8BD450', slot: '#30254A', evoSlot: '#4A3410', ult: '#B57CFF',
     steel: '#7E8B9B', darkMetal: '#353945', brightSteel: '#C4D1DE',
     brass: '#D8A038', darkBrass: '#8B6514', wood: '#8A5229', darkWood: '#5A3215',
     ruby: '#E86AA6', azure: '#7FD3F0', toxic: '#8BD450', void: '#A25CE0', flame: '#FF7A2F'
@@ -1372,7 +1372,7 @@
   const S = {
     hp: 1, lag: 1, lagHold: 0, boss: 1, bossLag: 1, bossHold: 0, bossId: 0,
     gold: 0, goldPop: 0, hurt: 0, banner: null, bannerT: 0, toasts: [], time: 0, evo: 0,
-    combo: 0, comboT: 0, comboRank: 0, comboPop: 0
+    combo: 0, comboT: 0, comboRank: 0, comboPop: 0, bossIntro: 0
   };
   const cache = {};
   function memo(key, sig, fn) { const c = cache[key]; if (c && c.s === sig) return c.v; const v = fn(); cache[key] = { s: sig, v: v }; return v; }
@@ -1382,39 +1382,68 @@
   function settings() { return NR.save ? NR.save.getSettings() : {}; }
   function mmss(sec) { sec = Math.max(0, Math.ceil(sec)); const m = Math.floor(sec / 60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
 
-  function calcScale() {
-    let s = 1;
+  // ---------- layout: CSS px inside the safe area, scaled up on big screens only ----------
+  const FT = '"Shard Title", "Baloo 2", Bahnschrift, "Segoe UI", system-ui, sans-serif';
+  const FB = '"Shard Body", "Be Vietnam Pro", Bahnschrift, "Segoe UI", system-ui, sans-serif';
+  const L = { w: 1280, h: 720, dpr: 1, l: 0, t: 0, r: 0, b: 0, ver: -1, touch: false, compact: false, pad: false };
+  function px(v) { const n = parseFloat(v); return isFinite(n) ? n : 0; }
+  function calcScale() { L.ver = -1; }
+  function layout() {
+    const R = NR.fx && NR.fx.render, V = R && R.view ? R.view() : null;
+    const touch = !!(NR.ui.touch && NR.ui.touch.active && NR.ui.touch.active());
+    if (V && V.ver === L.ver && touch === L.touch) return;
+    L.touch = touch;
+    if (V) { L.w = V.cssW; L.h = V.cssH; L.dpr = V.dpr; L.ver = V.ver; }
+    else if (canvas) { L.w = canvas.width; L.h = canvas.height; L.dpr = 1; }
     try {
-      const r = canvas.getBoundingClientRect(), sc = Math.min(r.width / canvas.width, r.height / canvas.height);
-      if (sc > 0 && isFinite(sc)) s = sc;
-    } catch (e) { /* keep 1 */ }
-    u = clamp(0.8 / s, 1, 1.7);
+      const cs = globalThis.getComputedStyle(globalThis.document.documentElement);
+      L.l = px(cs.getPropertyValue('--sal')); L.t = px(cs.getPropertyValue('--sat')); L.r = px(cs.getPropertyValue('--sar')); L.b = px(cs.getPropertyValue('--sab'));
+    } catch (e) { L.l = L.t = L.r = L.b = 0; }
+    u = clamp(Math.min(L.w / 1280, L.h / 720), 1, 1.6);
+    L.compact = L.h / u < 520;
   }
 
-  // ---------- drawing primitives (opaque, flat, hard shadows) ----------
-  function box(x, y, w, h, fill, b) {
-    b = b === undefined ? 3 * u : b;
-    ctx.fillStyle = C.ink2; ctx.fillRect(x + 3 * u, y + 4 * u, w, h);
-    ctx.fillStyle = C.ink; ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = fill; ctx.fillRect(x + b, y + b, w - 2 * b, h - 2 * b);
+  // ---------- drawing primitives (opaque, flat, hard shadows, outlined text) ----------
+  function rr(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r); ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r); ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r); ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.closePath();
   }
-  function label(str, x, y, size, color, align) {
-    ctx.font = '800 ' + Math.round(size * u) + 'px ' + FONT;
+  function box(x, y, w, h, fill, b, rad) {
+    b = b === undefined ? 2.5 * u : b; rad = rad === undefined ? 8 * u : rad;
+    ctx.fillStyle = C.ink2; rr(x + 2 * u, y + 3 * u, w, h, rad); ctx.fill();
+    ctx.fillStyle = C.ink; rr(x, y, w, h, rad); ctx.fill();
+    ctx.fillStyle = fill; rr(x + b, y + b, w - 2 * b, h - 2 * b, Math.max(0, rad - b)); ctx.fill();
+    ctx.fillStyle = C.panelHi; ctx.fillRect(x + b + rad * 0.6, y + b, w - 2 * b - rad * 1.2, Math.max(1, 1.5 * u));
+  }
+  function label(str, x, y, size, color, align, title) {
+    ctx.font = (title ? '800 ' : '700 ') + Math.round(size * u) + 'px ' + (title ? FT : FB);
     ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size * u * 0.28); ctx.strokeStyle = C.ink;
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size * u * 0.26); ctx.strokeStyle = C.ink;
     ctx.strokeText(str, x, y);
     ctx.fillStyle = color; ctx.fillText(str, x, y);
   }
-  function bar(x, y, w, h, frac, fill, lag, lagColor) {
-    box(x, y, w, h, C.ink);
-    const b = 3 * u, iw = w - 2 * b, ih = h - 2 * b;
+  // pill bar: ink rim, dark track, delayed "lag" fill, value fill with a lighter top band
+  function bar(x, y, w, h, frac, fill, lag, lagColor, hiColor) {
+    const r = h / 2, b = Math.max(2, 2 * u);
+    ctx.fillStyle = C.ink2; rr(x + 2 * u, y + 2.5 * u, w, h, r); ctx.fill();
+    ctx.fillStyle = C.ink; rr(x, y, w, h, r); ctx.fill();
+    ctx.fillStyle = C.track; rr(x + b, y + b, w - 2 * b, h - 2 * b, r - b); ctx.fill();
+    const iw = w - 2 * b, ih = h - 2 * b;
+    ctx.save(); rr(x + b, y + b, iw, ih, r - b); ctx.clip();
     if (lag > frac) { ctx.fillStyle = lagColor; ctx.fillRect(x + b, y + b, Math.round(iw * clamp(lag, 0, 1)), ih); }
-    ctx.fillStyle = fill; ctx.fillRect(x + b, y + b, Math.round(iw * clamp(frac, 0, 1)), ih);
+    const fw = Math.round(iw * clamp(frac, 0, 1));
+    ctx.fillStyle = fill; ctx.fillRect(x + b, y + b, fw, ih);
+    if (hiColor && fw > 0) { ctx.fillStyle = hiColor; ctx.fillRect(x + b, y + b + Math.max(1, ih * 0.14), fw, Math.max(1, ih * 0.22)); }
+    ctx.restore();
   }
+  const hiCache = {};
+  function hi(c) { return hiCache[c] || (hiCache[c] = NR.util.shade(c, 0.45)); }
 
   // ---------- update (real-time dt, every frame) ----------
   function update(dt) {
     if (NR.ui.screens && NR.ui.screens.tick) NR.ui.screens.tick(dt);
+    if (NR.ui.touch && NR.ui.touch.tick) NR.ui.touch.tick();
     S.time += dt;
     const W = NR.world.get(), p = W.player;
     if (S.bannerT > 0) S.bannerT -= dt;
@@ -1436,7 +1465,7 @@
     }
     const b = W.boss;
     if (b && !b.dead && b.maxHp > 0) {
-      if (S.bossId !== b.id) { S.bossId = b.id; S.boss = 1; S.bossLag = 1; S.bossHold = 0; }
+      if (S.bossId !== b.id) { S.bossId = b.id; S.boss = 1; S.bossLag = 1; S.bossHold = 0; S.bossIntro = 2.6; }
       const f = clamp(b.hp / b.maxHp, 0, 1);
       if (f < S.boss - 1e-6) S.bossHold = 0.5;
       S.boss = f;
@@ -1444,6 +1473,7 @@
       else if (S.bossHold > 0) S.bossHold -= dt;
       else S.bossLag = Math.max(f, S.bossLag - 0.4 * dt);
     }
+    if (S.bossIntro > 0) S.bossIntro -= dt;
   }
 
   // ---------- draw ----------
@@ -1455,24 +1485,24 @@
     if (!W) W = NR.world.get();
     const p = W.player;
     if (!p || !visible(W.state)) return;
-    if (frame++ % 20 === 0 && canvas) calcScale();
-    const cw = canvas ? canvas.width : 1280, ch = canvas ? canvas.height : 720;
+    layout();
     ctx.save();
-    if (ctx.setTransform) ctx.setTransform(1, 0, 0, 1, 0, 0);
-    if ('fontStretch' in ctx) ctx.fontStretch = 'condensed';
+    if (ctx.setTransform) ctx.setTransform(L.dpr, 0, 0, L.dpr, 0, 0);
+    ctx.globalAlpha = 1;
     const calm = !!settings().reduceFlashing;
+    const cw = L.w, ch = L.h;
     drawFrameWarn(p, cw, ch, calm);
-    drawVitals(p, W);
-    drawUlt(p, W);
-    drawWave(W, cw);
-    drawGold(p, W, cw);
-    drawCombo(cw);
-    drawBoss(W, cw);
-    drawDash(p, cw, ch);
-    drawWeapons(p, ch);
-    drawItems(p, ch);
+    const x0 = L.l + 12 * u, y0 = L.t + 10 * u, x1 = cw - L.r - 12 * u, y1 = ch - L.b - 10 * u;
+    const vitalsW = drawVitals(p, W, x0, y0);
+    drawWave(W, cw, y0);
+    const goldBottom = drawGold(p, W, x1 - (L.touch ? 56 * u : 0), y0);
+    drawCombo(x1 - (L.touch ? 56 * u : 0), goldBottom + 8 * u);
+    drawBoss(W, cw, y0 + 62 * u, vitalsW);
+    drawDash(p, cw, y1);
+    if (L.touch) drawWeaponsRow(p, x0 + 66 * u, y0 + 52 * u);
+    else { drawWeapons(p, x0, y1); drawItems(p, x0, y1 - 58 * u); }
     drawBanner(cw, ch);
-    drawToasts(cw, ch);
+    drawToasts(cw, y1 - 34 * u);
     ctx.restore();
   }
 
@@ -1481,170 +1511,203 @@
     if (!low && !hit) return;
     let th = (low ? 5 : 0) * u;
     if (low && !calm) th += (Math.sin(S.time * 7) > 0 ? 4 : 0) * u;
-    if (hit) th = 14 * u;
+    if (hit) th = 12 * u;
     ctx.fillStyle = hit ? C.cream : C.hpLow;
     ctx.fillRect(0, 0, cw, th); ctx.fillRect(0, ch - th, cw, th); ctx.fillRect(0, th, th, ch - 2 * th); ctx.fillRect(cw - th, th, th, ch - 2 * th);
   }
 
-  function drawVitals(p, W) {
-    const x = 16 * u, y = 14 * u, w = 236 * u;
-    const low = S.hp <= 0.3;
-    bar(x, y, w, 30 * u, S.hp, low ? C.hpLow : C.hp, S.lag, C.hpLag);
-    const hpTxt = memo('hp', Math.ceil(p.hp) + '/' + p.maxHp, function () { return Math.ceil(p.hp) + ' / ' + p.maxHp; });
-    label(hpTxt, x + w / 2, y + 15 * u + 1, 16, C.cream, 'center');
+  // portrait medallion (ULT ring around it) + level badge + HP pill + XP pill. Returns the cluster width.
+  function drawVitals(p, W, x, y) {
+    const R = 25 * u, cx = x + R, cy = y + R + 1 * u;
+    const chg = clamp((p.ultCharge || 0) / 100, 0, 1), ready = chg >= 1;
+    // medallion
+    ctx.fillStyle = C.ink2; ctx.beginPath(); ctx.arc(cx + 2 * u, cy + 3 * u, R, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = C.track; ctx.beginPath(); ctx.arc(cx, cy, R - 4.5 * u, 0, Math.PI * 2); ctx.fill();
+    // ULT charge ring
+    ctx.lineCap = 'round'; ctx.lineWidth = 4 * u;
+    if (chg > 0) {
+      const pulse = ready && !settings().reduceFlashing ? 0.5 + 0.5 * Math.sin(S.time * 6) : 1;
+      ctx.strokeStyle = ready ? (pulse > 0.5 ? C.gold : C.ult) : C.ult;
+      ctx.beginPath(); ctx.arc(cx, cy, R - 2.25 * u, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * chg); ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+    ctx.fillStyle = C.panel; ctx.beginPath(); ctx.arc(cx, cy, R - 6.5 * u, 0, Math.PI * 2); ctx.fill();
+    drawCharacterIcon(ctx, p.charId, cx, cy + 1 * u, 13 * u, p.color || C.cream, { line: 2 * u, shadow: 1.5 * u });
+    // level badge
+    const bx = cx + R * 0.72, by = cy + R * 0.72, br = 11 * u, pend = p.pending > 0;
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = pend ? C.gold : C.xp; ctx.beginPath(); ctx.arc(bx, by, br - 2.2 * u, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '800 ' + Math.round(13 * u) + 'px ' + FT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.ink;
+    ctx.fillText(String(p.level), bx, by + 1 * u);
+    // HP + XP pills
+    const bxL = x + 2 * R + 8 * u, w = clamp(Math.round((L.w - L.l - L.r) * 0.2), 150 * u, 250 * u), low = S.hp <= 0.3;
+    bar(bxL, y + 2 * u, w, 24 * u, S.hp, low ? C.hpLow : C.hp, S.lag, C.hpLag, hi(low ? C.hpLow : C.hp));
+    const hpTxt = memo('hp', Math.ceil(p.hp) + '/' + p.maxHp, function () { return NR.util.fmt(Math.ceil(p.hp)) + ' / ' + NR.util.fmt(p.maxHp); });
+    label(hpTxt, bxL + w / 2, y + 14.5 * u, 14, C.cream, 'center', true);
     const need = NR.stats.xpNeed(p.level), xf = need > 0 ? p.xp / need : 0;
-    bar(x, y + 38 * u, w, 16 * u, xf, C.xp, 0, C.xp);
-    const lv = memo('lv' + NR.i18n.getLang(), p.level + ':' + p.pending, function () { return upper(t('hud.level', { n: p.level })) + (p.pending > 0 ? '  +' + p.pending : ''); });
-    label(lv, x + w + 10 * u, y + 46 * u, 17, p.pending > 0 ? C.gold : C.cream, 'left');
+    bar(bxL, y + 30 * u, w, 11 * u, xf, C.xp, 0, C.xp, null);
+    if (pend) label('+' + p.pending, bxL + w + 6 * u, y + 35 * u, 13, C.gold, 'left', true);
+    if (ready && !L.touch) {
+      const key = NR.input && NR.world.get() && L.pad ? 'Y' : 'Q';
+      const s = memo('ult' + NR.i18n.getLang(), key, function () { return t('hud.ultReady', { key: key }); });
+      label(s, bxL, y + 52 * u, 12, C.gold, 'left');
+    }
+    return 2 * R + 8 * u + w + 24 * u;
   }
 
-  function drawUlt(p, W) {
-    const x = 16 * u, y = 72 * u, w = 236 * u, h = 14 * u;
-    const chg = clamp((p.ultCharge || 0) / 100, 0, 1);
-    const ready = chg >= 1;
-    const readyCol = Math.sin(S.time * 12) > 0 ? C.gold : C.cream;
-    bar(x, y, w, h, chg, ready ? readyCol : '#A25CE0', 0, '#A25CE0');
-    const txt = ready ? '[Q] ULTIMATE READY!' : 'ULT ' + Math.floor(chg * 100) + '%';
-    label(txt, x + w / 2, y + 7 * u, 11, ready ? C.ink : C.cream, 'center');
-  }
-
-  const RANKS = [
-    { r: '', name: '', col: C.mute, mult: '' },
-    { r: 'D', name: 'DISMANTLE', col: '#8C86A0', mult: 'x1.05' },
-    { r: 'C', name: 'CARNAGE', col: '#5FA8D3', mult: 'x1.10' },
-    { r: 'B', name: 'BRUTAL', col: '#8BD450', mult: 'x1.15' },
-    { r: 'A', name: 'ANARCHY', col: '#FFD43B', mult: 'x1.20' },
-    { r: 'S', name: 'SAVAGE', col: '#FF7A2F', mult: 'x1.25' },
-    { r: 'SSS', name: 'SUPREME', col: '#E86AA6', mult: 'x1.35' }
-  ];
-  function drawCombo(cw) {
+  const RANK_COL = ['', '#B8B0CC', '#4FA8F0', '#8BD450', '#FFC23D', '#FF7A2F', '#FF5C8A'];
+  const RANK_L = ['', 'D', 'C', 'B', 'A', 'S', 'SSS'];
+  const RANK_K = ['', 'hud.combo1', 'hud.combo2', 'hud.combo3', 'hud.combo4', 'hud.combo5', 'hud.combo6'];
+  function drawCombo(right, y) {
     if (!S.combo || S.combo < 3 || S.comboT <= 0) return;
-    const rInfo = RANKS[S.comboRank || 0] || RANKS[1];
-    const w = 144 * u, h = 44 * u, x = cw - 16 * u - w, y = 60 * u;
+    const rk = S.comboRank || 1, col = RANK_COL[rk] || C.mute, lang = NR.i18n.getLang();
+    const name = memo('cn' + lang, rk, function () { return upper(t(RANK_K[rk])); });
+    const hits = memo('ch' + lang, S.combo, function () { return t('hud.hits', { n: S.combo }); });
+    ctx.font = '700 ' + Math.round(12 * u) + 'px ' + FB;
+    const tw = Math.max(ctx.measureText(name).width, ctx.measureText(hits).width);
+    const w = tw + 54 * u, h = 40 * u, x = right - w;
     box(x, y, w, h, C.panel);
-    const pop = S.comboPop > 0 ? 1.25 : 1.0;
-    label(rInfo.r, x + 24 * u, y + 22 * u, 26 * pop, rInfo.col, 'center');
-    label(S.combo + ' HITS', x + 48 * u, y + 14 * u, 14, C.cream, 'left');
-    label(rInfo.name + ' ' + rInfo.mult, x + 48 * u, y + 28 * u, 10, rInfo.col, 'left');
+    const pop = S.comboPop > 0 ? 1.18 : 1.0;
+    label(RANK_L[rk], x + 22 * u, y + h / 2 + 1 * u, (rk === 6 ? 15 : 22) * pop, col, 'center', true);
+    label(hits, x + 42 * u, y + 13 * u, 12, C.cream, 'left');
+    label(name, x + 42 * u, y + 27 * u, 12, col, 'left');
     const f = clamp(S.comboT / 3.2, 0, 1);
-    ctx.fillStyle = rInfo.col;
-    ctx.fillRect(x + 4 * u, y + h - 4 * u, (w - 8 * u) * f, 2.5 * u);
+    ctx.fillStyle = col; ctx.fillRect(x + 8 * u, y + h - 5 * u, (w - 16 * u) * f, 2 * u);
   }
 
-  function drawWave(W, cw) {
-    const w = 210 * u, h = 56 * u, x = Math.round((cw - w) / 2), y = 12 * u;
-    box(x, y, w, h, C.panel);
+  function drawWave(W, cw, y) {
+    const w = 132 * u, h = 50 * u, x = Math.round((cw - w) / 2);
+    box(x, y, w, h, C.panel, 2.5 * u, 12 * u);
     const lang = NR.i18n.getLang(), endless = !!W.endless;
     const ws = memo('wave', lang + ':' + W.wave + ':' + endless, function () {
       return upper(endless ? t('hud.wave', { n: W.wave }) : t('hud.waveOf', { n: W.wave, max: NR.config.WAVES }));
     });
-    label(ws, x + w / 2, y + 17 * u, 15, C.mute, 'center');
+    label(ws, x + w / 2, y + 14 * u, 12, C.mute, 'center');
     let main, col = C.cream;
     const isBoss = !!(W.boss && !W.boss.dead);
     if (W.state === 'clear') { main = upper(t('hud.clear')); col = C.good; }
     else if (isBoss) { main = upper(t('hud.boss')); col = C.boss; }
     else { main = mmss(W.waveT); if (W.waveT <= 5 && W.waveT > 0 && W.state === 'wave') col = C.hpLow; }
-    label(main, x + w / 2, y + 39 * u, 26, col, 'center');
+    label(main, x + w / 2, y + 33 * u, 24, col, 'center', true);
   }
 
-  function drawGold(p, W, cw) {
-    const touch = NR.ui.touch && NR.ui.touch.active && NR.ui.touch.active();
-    const right = cw - 16 * u - (touch ? 62 * u : 0);
-    const pop = S.goldPop > 0 ? 1.18 : 1;
+  function drawGold(p, W, right, y) {
+    const pop = S.goldPop > 0 ? 1.12 : 1;
     const str = memo('gold', p.gold, function () { return NR.util.fmt(p.gold); });
-    const size = 26 * pop;
-    ctx.font = '800 ' + Math.round(size * u) + 'px ' + FONT;
+    ctx.font = '800 ' + Math.round(22 * u) + 'px ' + FT;
     const tw = ctx.measureText ? ctx.measureText(str).width : 40;
-    const w = Math.max(96 * u, tw + 62 * u), x = right - w, y = 14 * u;
-    box(x, y, w, 40 * u, C.panel);
-    drawShape(ctx, 'gold', x + 22 * u, y + 20 * u, 10 * u, C.gold, { line: 2.5 * u, shadow: 2 * u });
-    label(str, right - 14 * u, y + 21 * u, size, C.gold, 'right');
+    const h = 40 * u, w = Math.max(84 * u, tw + 52 * u), x = right - w;
+    box(x, y, w, h, C.panel, 2.5 * u, 20 * u);
+    drawShape(ctx, 'gold', x + 20 * u, y + h / 2, 9.5 * u * pop, C.gold, { line: 2 * u, shadow: 1.5 * u });
+    label(str, right - 14 * u, y + h / 2 + 1 * u, 22 * pop, C.gold, 'right', true);
+    let bottom = y + h;
     if (settings().showFps && NR.loop && NR.loop.fps) {
       const f = Math.round(NR.loop.fps());
-      label('FPS ' + f, right, y + 58 * u, 14, f < 45 ? C.hpLow : C.mute, 'right');
+      label('FPS ' + f, right - 4 * u, bottom + 12 * u, 12, f < 45 ? C.hpLow : C.mute, 'right');
+      bottom += 20 * u;
     }
+    return bottom;
   }
 
-  function drawBoss(W, cw) {
+  function drawBoss(W, cw, y, side) {
     const b = W.boss;
     if (!b || b.dead || !b.maxHp) return;
     const def = NR.data.bosses && NR.data.bosses[b.defId];
-    const w = Math.min(560 * u, cw - 32 * u), h = 24 * u, x = Math.round((cw - w) / 2), y = 92 * u;
-    bar(x, y, w, h, S.boss, C.boss, S.bossLag, C.hpLag);
-    // phase ticks
-    const phases = def && def.phases ? def.phases : [], bw = w - 6 * u;
+    const w = Math.min(560 * u, cw - 2 * Math.max(side, 150 * u) - L.l - L.r), h = 18 * u, x = Math.round((cw - w) / 2), by = y + 22 * u;
+    const nm = def ? upper(tx(def.name)) : upper(t('hud.boss'));
+    const phases = def && def.phases ? def.phases : [];
+    label(nm, x + 4 * u, y + 9 * u, 15, C.cream, 'left', true);
+    const ph = b.phase || 1, tot = phases.length || 1;
+    label(t('hud.phase', { n: ph, max: tot }), x + w - 4 * u, y + 9 * u, 12, C.mute, 'right');
+    bar(x, by, w, h, S.boss, C.boss, S.bossLag, C.hpLag, hi(C.boss));
+    const bw = w - 4 * u;
     for (let i = 1; i < phases.length; i++) {
       const bl = phases[i] && phases[i].below;
       if (typeof bl !== 'number' || bl <= 0 || bl >= 1) continue;
-      const px = Math.round(x + 3 * u + bw * bl);
-      ctx.fillStyle = S.boss < bl ? C.cream : C.ink; ctx.fillRect(px - Math.round(1.5 * u), y + 3 * u, Math.max(3, Math.round(3 * u)), h - 6 * u);
+      const pxl = Math.round(x + 2 * u + bw * bl);
+      ctx.fillStyle = S.boss < bl ? C.cream : C.ink; ctx.fillRect(pxl - Math.round(1.5 * u), by + 2 * u, Math.max(2, Math.round(3 * u)), h - 4 * u);
     }
-    const nm = def ? upper(tx(def.name)) : upper(t('hud.boss'));
-    label(nm, x, y - 11 * u, 17, C.cream, 'left');
-    const ph = b.phase || 1, tot = phases.length || 1;
-    label(t('hud.phase', { n: ph, max: tot }), x + w, y - 11 * u, 14, C.mute, 'right');
-    if (b.flags && b.flags.enraged) label(upper(t('hud.enrage')), x + w / 2, y + h + 12 * u, 15, (Math.sin(S.time * 8) > 0 || settings().reduceFlashing) ? C.hpLow : C.cream, 'center');
+    if (b.flags && b.flags.enraged) label(upper(t('hud.enrage')), x + w / 2, by + h + 12 * u, 13, (Math.sin(S.time * 8) > 0 || settings().reduceFlashing) ? C.hpLow : C.cream, 'center', true);
+    // boss intro card: name plate slides in under the bar for the first seconds
+    if (S.bossIntro > 0 && def) {
+      const k = clamp(Math.min((2.6 - S.bossIntro) / 0.3, S.bossIntro / 0.4), 0, 1);
+      const pw = Math.min(cw - 32 * u, 420 * u), ph2 = 64 * u, pxx = (cw - pw) / 2, pyy = L.h * 0.3 - (1 - k) * 24 * u;
+      ctx.globalAlpha = k;
+      box(pxx, pyy, pw, ph2, C.bossPlate, 3 * u, 10 * u);
+      label(nm, cw / 2, pyy + ph2 * 0.42, 28, C.cream, 'center', true);
+      label(upper(t('hud.boss')), cw / 2, pyy + ph2 * 0.8, 12, C.gold, 'center');
+      ctx.globalAlpha = 1;
+    }
   }
 
-  function drawDash(p, cw, ch) {
+  function drawDash(p, cw, y1) {
     const d = p.dash;
     if (!d || !d.max) return;
-    const pw = 34 * u, ph = 14 * u, gap = 6 * u, n = d.max, total = n * pw + (n - 1) * gap;
+    const pw = 26 * u, ph = 10 * u, gap = 6 * u, n = d.max, total = n * pw + (n - 1) * gap;
     let x = Math.round((cw - total) / 2);
-    const y = ch - 28 * u;
+    const y = y1 - ph;
     const cdT = p.stats && p.stats.dashCooldown ? p.stats.dashCooldown : 1.2;
     for (let i = 0; i < n; i++) {
-      box(x, y, pw, ph, C.ink, 2.5 * u);
-      const iw = pw - 5 * u;
       let f = 0;
       if (i < d.charges) f = 1;
       else if (i === d.charges) f = clamp(1 - d.cd / cdT, 0, 1);
-      if (f > 0) { ctx.fillStyle = i < d.charges ? C.dash : C.mute; ctx.fillRect(x + 2.5 * u, y + 2.5 * u, Math.round(iw * f), ph - 5 * u); }
+      bar(x, y, pw, ph, f, i < d.charges ? C.dash : C.mute, 0, C.mute, null);
       x += pw + gap;
     }
   }
 
   function weaponColor(def) { return (def && def.color) || (def && RCOL[def.rarity]) || C.cream; }
-  function drawWeapons(p, ch) {
-    const sz = 56 * u, gap = 8 * u, x0 = 16 * u, y = ch - 16 * u - sz;
+  function weaponReady(p, i, w, def) {
+    let rate = 1;
+    try { rate = NR.weapons.resolve(p, i).rate || 1; } catch (e) { rate = def && def.levels && def.levels[0] ? def.levels[0].rate || 1 : 1; }
+    return { ready: w.cd > 0 ? clamp(1 - w.cd * rate, 0, 1) : 1, cool: w.cd > 0 && rate <= 5 };
+  }
+  function drawWeapons(p, x0, y1) {
+    const sz = 50 * u, gap = 7 * u, y = y1 - sz;
     const slots = Math.max(p.weapons.length, Math.round(p.stats && p.stats.weaponSlots ? p.stats.weaponSlots : 4));
     for (let i = 0; i < slots; i++) {
       const x = x0 + i * (sz + gap), w = p.weapons[i];
-      if (!w) { box(x, y, sz, sz, C.ink); continue; }
-      const def = NR.data.weapons[w.id], col = weaponColor(def);
-      let rate = 1;
-      try { rate = NR.weapons.resolve(p, i).rate || 1; } catch (e) { rate = def && def.levels && def.levels[0] ? def.levels[0].rate || 1 : 1; }
-      const ready = w.cd > 0 ? clamp(1 - w.cd * rate, 0, 1) : 1;
-      const cool = w.cd > 0 && rate <= 5;
-      box(x, y, sz, sz, C.slot);
-      drawWeaponIcon(ctx, w.id, x + sz / 2, y + sz / 2 - 4 * u, 18 * u, cool ? mute(col) : col, { line: 2.5 * u, shadow: 2.5 * u, cool: cool });
-      // cooldown fill strip along the bottom
-      const bx = x + 3 * u, bw = sz - 6 * u, bh = 8 * u, by = y + sz - 3 * u - bh;
-      ctx.fillStyle = C.ink; ctx.fillRect(bx, by, bw, bh);
-      ctx.fillStyle = cool ? C.mute : col; ctx.fillRect(bx + u, by + u, Math.round((bw - 2 * u) * (cool ? ready : 1)), bh - 2 * u);
-      // level badge
+      if (!w) { box(x, y, sz, sz, C.track, 2.5 * u, 9 * u); continue; }
+      const def = NR.data.weapons[w.id], col = weaponColor(def), r = weaponReady(p, i, w, def);
       const evolved = def && def.evolved;
-      const ls = evolved ? 'EVO' : String(w.lvl);
-      label(ls, x + sz - 6 * u, y + 12 * u, evolved ? 12 : 16, evolved ? C.gold : w.lvl >= NR.config.MAX_LEVEL ? C.gold : C.cream, 'right');
+      box(x, y, sz, sz, evolved ? C.evoSlot : C.slot, 2.5 * u, 9 * u);
+      drawWeaponIcon(ctx, w.id, x + sz / 2, y + sz / 2 - 3 * u, 16 * u, r.cool ? mute(col) : col, { line: 2.2 * u, shadow: 2 * u, cool: r.cool });
+      const bx = x + 6 * u, bw = sz - 12 * u, by = y + sz - 10 * u;
+      ctx.fillStyle = C.ink; ctx.fillRect(bx, by, bw, 4 * u);
+      ctx.fillStyle = r.cool ? C.mute : col; ctx.fillRect(bx, by, Math.round(bw * (r.cool ? r.ready : 1)), 4 * u);
+      const ls = evolved ? '★' : String(w.lvl);
+      label(ls, x + sz - 7 * u, y + 11 * u, 13, evolved || w.lvl >= NR.config.MAX_LEVEL ? C.gold : C.cream, 'right', true);
+    }
+  }
+  // touch: compact row under the vitals, away from both thumbs
+  function drawWeaponsRow(p, x0, y) {
+    const sz = 30 * u, gap = 5 * u;
+    for (let i = 0; i < p.weapons.length; i++) {
+      const w = p.weapons[i], x = x0 + i * (sz + gap), def = NR.data.weapons[w.id], col = weaponColor(def), r = weaponReady(p, i, w, def);
+      box(x, y, sz, sz, def && def.evolved ? C.evoSlot : C.slot, 2 * u, 7 * u);
+      drawWeaponIcon(ctx, w.id, x + sz / 2, y + sz / 2, 10 * u, r.cool ? mute(col) : col, { line: 1.6 * u, shadow: 1.2 * u, cool: r.cool });
+      if (r.cool) { ctx.fillStyle = col; ctx.fillRect(x + 4 * u, y + sz - 6 * u, (sz - 8 * u) * r.ready, 2.5 * u); }
+      label(def && def.evolved ? '★' : String(w.lvl), x + sz - 3 * u, y + 5 * u, 12, C.cream, 'right', true);
     }
   }
   const muteCache = {};
   function mute(hex) { return muteCache[hex] || (muteCache[hex] = NR.util.shade(hex, -0.45)); }
 
-  function drawItems(p, ch) {
+  function drawItems(p, x0, y1) {
     const ids = Object.keys(p.items);
     if (!ids.length) return;
-    const sz = 26 * u, gap = 6 * u, x0 = 16 * u, y = ch - 16 * u - 56 * u - 10 * u - sz;
-    const per = 18;
+    const sz = 26 * u, gap = 5 * u, y = y1 - sz;
+    const per = 14;
     for (let i = 0; i < ids.length && i < per; i++) {
       const id = ids[i], def = NR.data.items[id], x = x0 + i * (sz + gap);
       const col = (def && (def.color || RCOL[def.rarity])) || C.cream;
-      box(x, y, sz, sz, C.ink, 2.5 * u);
-      drawItemIcon(ctx, id, x + sz / 2, y + sz / 2, 9 * u, col, { line: 1.8 * u, shadow: 1.5 * u });
+      box(x, y, sz, sz, C.track, 2 * u, 6 * u);
+      drawItemIcon(ctx, id, x + sz / 2, y + sz / 2, 8.5 * u, col, { line: 1.6 * u, shadow: 1.2 * u });
       const n = p.items[id];
-      if (n > 1) label(String(n), x + sz - 1 * u, y + sz - 3 * u, 11, C.cream, 'right');
+      if (n > 1) label(String(n), x + sz - 1 * u, y + sz - 4 * u, 12, C.cream, 'right', true);
     }
-    if (ids.length > per) label('+' + (ids.length - per), x0 + per * (sz + gap), y + sz / 2, 14, C.mute, 'left');
+    if (ids.length > per) label('+' + (ids.length - per), x0 + per * (sz + gap), y + sz / 2, 13, C.mute, 'left', true);
   }
   function itemShape(def) { const r = def && def.rarity; return r === 'legendary' ? 'star' : r === 'epic' ? 'hex' : r === 'rare' ? 'diamond' : 'circle'; }
 
@@ -1652,22 +1715,25 @@
     const b = S.banner;
     if (!b || S.bannerT <= 0) return;
     const total = b.dur, el = total - S.bannerT, k = el < 0.22 ? el / 0.22 : S.bannerT < 0.25 ? S.bannerT / 0.25 : 1;
-    const h = 84 * u, y = Math.round(ch * 0.26 - h / 2 - (1 - k) * 40 * u);
+    const h = 72 * u, y = Math.round(ch * 0.3 - h / 2), slide = (1 - k) * cw * 0.12;
+    ctx.globalAlpha = clamp(k * 1.4, 0, 1);
     ctx.fillStyle = C.ink2; ctx.fillRect(0, y + 5 * u, cw, h);
     ctx.fillStyle = C.ink; ctx.fillRect(0, y - 3 * u, cw, h + 6 * u);
     ctx.fillStyle = b.color; ctx.fillRect(0, y, cw, h);
-    label(b.l1, cw / 2, y + h * 0.40, 38, C.cream, 'center');
-    if (b.l2) label(b.l2, cw / 2, y + h * 0.78, 17, C.cream, 'center');
+    ctx.fillStyle = C.ink; ctx.fillRect(0, y + h - 6 * u, cw, 2 * u);
+    label(b.l1, cw / 2 - slide, y + h * 0.42, 32, C.cream, 'center', true);
+    if (b.l2) label(b.l2, cw / 2 + slide, y + h * 0.8, 13, C.cream, 'center');
+    ctx.globalAlpha = 1;
   }
-  function drawToasts(cw, ch) {
-    let y = ch - 84 * u;
+  function drawToasts(cw, yb) {
+    let y = yb - 30 * u;
     for (let i = S.toasts.length - 1; i >= 0; i--) {
       const q = S.toasts[i];
-      ctx.font = '800 ' + Math.round(17 * u) + 'px ' + FONT;
-      const tw = ctx.measureText ? ctx.measureText(q.text).width : q.text.length * 8, w = tw + 28 * u, h = 30 * u;
-      box(Math.round((cw - w) / 2), y, w, h, C.panel, 2.5 * u);
-      label(q.text, cw / 2, y + h / 2, 17, q.color || C.cream, 'center');
-      y -= h + 8 * u;
+      ctx.font = '700 ' + Math.round(14 * u) + 'px ' + FB;
+      const tw = ctx.measureText ? ctx.measureText(q.text).width : q.text.length * 8, w = tw + 28 * u, h = 28 * u;
+      box(Math.round((cw - w) / 2), y, w, h, C.panel, 2 * u, 14 * u);
+      label(q.text, cw / 2, y + h / 2, 14, q.color || C.cream, 'center');
+      y -= h + 6 * u;
     }
   }
 
@@ -1704,6 +1770,7 @@
         NR.fx.audio.sfx('confirm', { pitch: 1.1 + newRank * 0.1 });
       }
     });
+    E.on('input:device', function (e) { L.pad = e.device === 'pad'; });
     E.on('player:hurt', function (e) { if (!e.dodged && e.amount > 0) { S.hurt = 0.18; S.lagHold = 0.45; } });
     E.on('player:levelup', function (e) { toast(t('hud.toastLevel', { n: e.level }), C.xp); });
     E.on('weapon:evolve', function (e) { const d = NR.data.weapons[e.into]; toast(t('hud.toastEvolve', { name: d ? tx(d.name) : e.into }), C.gold); });

@@ -96,15 +96,31 @@
     if (globalThis.setTimeout) globalThis.setTimeout(function () { NR.input.setVirtual({ dash: false }); }, wait); else NR.input.setVirtual({ dash: false });
   }
 
+  // called every frame by the HUD: ULT button lights up when the charge is full
+  let ultReady = null;
+  function tick() {
+    if (!on || !ultBtn) return;
+    const W = NR.world.get(), p = W && W.player, r = !!(p && p.ultCharge >= 100);
+    if (r !== ultReady) { ultReady = r; ultBtn.className = 'tbtn ult' + (r ? ' ready' : ''); }
+  }
+  // stop browser gestures that fight the game: long-press menu, pinch/double-tap zoom, text selection, pull-to-refresh
+  function blockGestures() {
+    const d = globalThis.document;
+    if (!d || !d.addEventListener) return;
+    d.addEventListener('contextmenu', function (ev) { if (ev.preventDefault) ev.preventDefault(); });
+    d.addEventListener('gesturestart', function (ev) { if (ev.preventDefault) ev.preventDefault(); });
+    d.addEventListener('dblclick', function (ev) { if (ev.preventDefault) ev.preventDefault(); });
+    d.addEventListener('selectstart', function (ev) { const t = ev.target; if (!(t && t.tagName && /INPUT|TEXTAREA/.test(t.tagName)) && ev.preventDefault) ev.preventDefault(); });
+  }
   function pressUlt(ev) {
     if (ev.preventDefault) ev.preventDefault();
     if (ev.stopPropagation) ev.stopPropagation();
     ultT = now();
-    ultBtn.className = 'tbtn ult down';
+    ultBtn.className = 'tbtn ult down' + (ultReady ? ' ready' : '');
     NR.input.setVirtual({ ult: true });
   }
   function releaseUlt() {
-    ultBtn.className = 'tbtn ult';
+    ultBtn.className = 'tbtn ult' + (ultReady ? ' ready' : '');
     const wait = Math.max(0, 90 - (now() - ultT));
     if (globalThis.setTimeout) globalThis.setTimeout(function () { NR.input.setVirtual({ ult: false }); }, wait); else NR.input.setVirtual({ ult: false });
   }
@@ -112,6 +128,7 @@
   function init(root) {
     if (inited || !root) return;
     inited = true;
+    blockGestures();
     box = el('div', 'touch', root); box.style.display = 'none';
     zoneL = el('div', 'zone zl', box); zoneR = el('div', 'zone zr', box);
     hintL = el('div', 'stk hint hl', box); hintR = el('div', 'stk hint hr', box);
@@ -125,7 +142,7 @@
     dashBtn.addEventListener('pointerdown', pressDash);
     dashBtn.addEventListener('pointerup', releaseDash);
     dashBtn.addEventListener('pointercancel', releaseDash);
-    ultBtn = el('button', 'tbtn ult', box); ultBtn.setAttribute('type', 'button'); ultBtn.setAttribute('aria-label', 'Ultimate');
+    ultBtn = el('button', 'tbtn ult', box); ultBtn.setAttribute('type', 'button'); ultBtn.setAttribute('aria-label', NR.i18n.t('touch.ult'));
     el('span', 'tb-ic', ultBtn);
     ultBtn.addEventListener('pointerdown', pressUlt);
     ultBtn.addEventListener('pointerup', releaseUlt);
@@ -134,7 +151,7 @@
     el('i', '', pauseBtn); el('i', '', pauseBtn);
     pauseBtn.addEventListener('pointerdown', function (ev) { if (ev.preventDefault) ev.preventDefault(); if (ev.stopPropagation) ev.stopPropagation(); NR.input.setVirtual({ pause: true }); });
     NR.events.on('settings:change', function (e) {
-      if (e.key === 'language') { dashBtn.setAttribute('aria-label', NR.i18n.t('touch.dash')); pauseBtn.setAttribute('aria-label', NR.i18n.t('pause.title')); }
+      if (e.key === 'language') { dashBtn.setAttribute('aria-label', NR.i18n.t('touch.dash')); ultBtn.setAttribute('aria-label', NR.i18n.t('touch.ult')); pauseBtn.setAttribute('aria-label', NR.i18n.t('pause.title')); }
     });
     NR.events.on('state:change', function (e) {
       playing = e.to === 'wave' || e.to === 'clear';
@@ -151,5 +168,5 @@
     playing = NR.world && (NR.world.get().state === 'wave' || NR.world.get().state === 'clear');
     sync();
   }
-  NR.ui.touch = { init: init, show: show, hide: hide, active: active };
+  NR.ui.touch = { init: init, show: show, hide: hide, active: active, tick: tick };
 })();

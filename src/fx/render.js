@@ -14,13 +14,61 @@
   let lastFireT = -10, lastFireSlot = 0, lastFireKind = '', lastFireWeapon = '';
 
   function now() { const p = globalThis.performance; return (p && p.now ? p.now() : Date.now()) / 1000; }
+  // ---------- responsive viewport ----------
+  // The canvas covers the real visual viewport at min(devicePixelRatio, quality cap) x renderScale. The visible world keeps
+  // its short side at SHORT (720) world px; the long side follows the screen up to 21:9 (LONG = 1680), beyond that the
+  // world is centred and the sides get a decorative frame. K = device px per world px, (ox, oy) = world rect offset.
+  const SHORT = 720, LONG = 1680;
+  const V = { cssW: 1280, cssH: 720, dpr: 1, bw: 1280, bh: 720, k: 1, ox: 0, oy: 0, worldW: 1280, worldH: 720, portrait: false, ver: 0 };
+  let canvasEl = null, dirty = true, artVer = -1;
+  function fit() {
+    const g = globalThis, vv = g.visualViewport, art = NR.fx.art;
+    let cw0 = vv && vv.width > 0 ? vv.width : g.innerWidth, ch0 = vv && vv.height > 0 ? vv.height : g.innerHeight;
+    if (!(cw0 > 0) || !(ch0 > 0)) { cw0 = NR.config.VIEW.w; ch0 = NR.config.VIEW.h; }
+    const Q = art ? art.quality() : { maxDpr: 1 }, rs = art ? art.renderScale() : 1;
+    const dpr = Math.max(0.5, Math.min(g.devicePixelRatio || 1, Q.maxDpr) * rs);
+    const bw = Math.max(1, Math.round(cw0 * dpr)), bh = Math.max(1, Math.round(ch0 * dpr));
+    if (canvasEl) {
+      if (canvasEl.style) { canvasEl.style.width = cw0 + 'px'; canvasEl.style.height = ch0 + 'px'; canvasEl.style.left = (vv ? vv.offsetLeft || 0 : 0) + 'px'; canvasEl.style.top = (vv ? vv.offsetTop || 0 : 0) + 'px'; }
+      if (canvasEl.width !== bw) canvasEl.width = bw;
+      if (canvasEl.height !== bh) canvasEl.height = bh;
+    }
+    const asp = cw0 / ch0;
+    let vw, vh;
+    if (asp >= 1) { vh = SHORT; vw = Math.min(LONG, SHORT * asp); } else { vw = SHORT; vh = Math.min(LONG, SHORT / asp); }
+    const k = Math.min(bw / vw, bh / vh);
+    V.cssW = cw0; V.cssH = ch0; V.dpr = bw / cw0; V.bw = bw; V.bh = bh; V.k = k;
+    V.ox = Math.round((bw - vw * k) / 2); V.oy = Math.round((bh - vh * k) / 2);
+    V.worldW = vw; V.worldH = vh; V.portrait = asp < 1; V.ver++;
+    cw = vw; ch = vh; sz.w = vw; sz.h = vh;
+    NR.camera.resize(vw, vh);
+    if (art) { art.setScale(k); artVer = art.version(); }
+    dirty = false;
+  }
+  function markDirty() { dirty = true; }
+  // client (CSS px) -> world-view px (what NR.camera.toWorld expects)
+  function toView(clientX, clientY, out) {
+    out = out || {};
+    let left = 0, top = 0;
+    if (canvasEl && canvasEl.getBoundingClientRect) { const r = canvasEl.getBoundingClientRect(); left = r.left; top = r.top; }
+    out.x = ((clientX - left) * V.dpr - V.ox) / V.k;
+    out.y = ((clientY - top) * V.dpr - V.oy) / V.k;
+    return out;
+  }
   function init(canvas) {
+    canvasEl = canvas;
     ctx = canvas.getContext('2d');
     cw = NR.config.VIEW.w; ch = NR.config.VIEW.h;
-    canvas.width = cw; canvas.height = ch; sz.w = cw; sz.h = ch;
-    NR.camera.resize(cw, ch);
+    fit();
+    const g = globalThis;
+    if (g.addEventListener) {
+      g.addEventListener('resize', markDirty);
+      g.addEventListener('orientationchange', markDirty);
+      if (g.visualViewport && g.visualViewport.addEventListener) { g.visualViewport.addEventListener('resize', markDirty); g.visualViewport.addEventListener('scroll', markDirty); }
+    }
     NR.events.on('wave:start', function (e) { setZone(e.zone); });
     NR.events.on('run:start', function () { setZone('scrap'); });
+    NR.events.on('settings:change', function (e) { if (e.key === 'quality') dirty = true; });
     NR.events.on('weapon:fire', function (e) {
       lastFireT = now();
       lastFireSlot = e.slot || 0;
@@ -28,7 +76,7 @@
       lastFireWeapon = e.weaponId || '';
     });
   }
-  function resize(w, h) { cw = w; ch = h; sz.w = w; sz.h = h; NR.camera.resize(w, h); }
+  function resize(w, h) { if (w && h) { cw = w; ch = h; sz.w = w; sz.h = h; NR.camera.resize(w, h); } else dirty = true; }
   function setZone(id) { if (NR.data.zones && NR.data.zones[id]) zone = id; }
   function palette() { const z = NR.data.zones && NR.data.zones[zone]; return z ? z.palette : FALLBACK_PAL; }
   function inView(x, y, m) { return x > view.x - m && x < view.x + cw + m && y > view.y - m && y < view.y + ch + m; }
@@ -1279,12 +1327,18 @@
 
   function draw(W, alpha) {
     if (!ctx || !W) return;
+    const F = NR.fx;
+    if (F.art) { F.art.tickFrame(); if (F.art.version() !== artVer) dirty = true; }
+    if (dirty) fit();
     t = now(); pal = palette();
-    const F = NR.fx, q = F.particles ? F.particles.quality() : 0, a = alpha === undefined ? 1 : alpha;
+    const q = F.particles ? F.particles.quality() : 0, a = alpha === undefined ? 1 : alpha;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = NR.config.INK; ctx.fillRect(0, 0, cw, ch);
+    ctx.fillStyle = NR.config.INK; ctx.fillRect(0, 0, V.bw, V.bh);
+    if (V.ox > 0 || V.oy > 0) drawFrame();
+    ctx.setTransform(V.k, 0, 0, V.k, V.ox, V.oy);
     ctx.save();
+    if (V.ox > 0 || V.oy > 0) { ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.clip(); }
     NR.camera.apply(ctx);
     NR.camera.toWorld(0, 0, view);
     const p = W.player;
@@ -1309,14 +1363,29 @@
     if (p && !p.dead) drawPlayer(ctx, p, a, q);
     if (F.particles) { F.particles.draw(ctx); F.particles.drawTexts(ctx); }
     ctx.restore();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(V.k, 0, 0, V.k, V.ox, V.oy);
     if (F.juice) F.juice.drawOverlay(ctx, cw, ch);
     ctx.save();
+    if (V.ox > 0 || V.oy > 0) { ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.clip(); }
     NR.camera.apply(ctx);
     drawBullets(ctx, W, a, true);
     ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
+  // decorative frame beside a world wider than 21:9 (or above/below it): zone wall colour, ink rails, rivet studs
+  function drawFrame() {
+    const wall = pal[2] || '#1F2822', k = V.k, x1 = V.ox + cw * k, y1 = V.oy + ch * k;
+    ctx.fillStyle = wall;
+    if (V.ox > 0) { ctx.fillRect(0, 0, V.ox, V.bh); ctx.fillRect(x1, 0, V.bw - x1, V.bh); }
+    if (V.oy > 0) { ctx.fillRect(0, 0, V.bw, V.oy); ctx.fillRect(0, y1, V.bw, V.bh - y1); }
+    ctx.fillStyle = NR.config.INK;
+    const rail = Math.max(4, Math.round(6 * k));
+    if (V.ox > 0) { ctx.fillRect(V.ox - rail, 0, rail, V.bh); ctx.fillRect(x1, 0, rail, V.bh); }
+    if (V.oy > 0) { ctx.fillRect(0, V.oy - rail, V.bw, rail); ctx.fillRect(0, y1, V.bw, rail); }
+    ctx.fillStyle = pal[3] || '#C9A24B';
+    const st = Math.round(64 * k), s = Math.max(3, Math.round(5 * k));
+    if (V.ox > 0) for (let y = st / 2; y < V.bh; y += st) { ctx.fillRect(V.ox / 2 - s, y - s, s * 2, s * 2); ctx.fillRect(x1 + (V.bw - x1) / 2 - s, y - s, s * 2, s * 2); }
+  }
   NR.fx = NR.fx || {};
-  NR.fx.render = { init: init, resize: resize, draw: draw, setZone: setZone, palette: palette, zone: function () { return zone; }, size: function () { return sz; } };
+  NR.fx.render = { init: init, resize: resize, fit: fit, toView: toView, view: function () { return V; }, draw: draw, setZone: setZone, palette: palette, zone: function () { return zone; }, size: function () { return sz; } };
 })();

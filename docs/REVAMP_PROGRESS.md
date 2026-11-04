@@ -6,8 +6,14 @@ Nhánh: `revamp/visual`. Đọc file này trước khi làm tiếp.
 - [x] Giai đoạn 0: khảo sát, `tools/baseline-hashes.json` (48 hash), `tools/hash-check.js`, `tools/shots.js`, `tools/fps.js`,
       ảnh `docs/screenshots/before/`, `docs/REVAMP_PLAN.md`.
 
+- [x] Giai đoạn 1: canvas phủ visualViewport + DPR (trần theo chất lượng), thế giới 720 px chiều ngắn tới 21:9 + viền trang trí,
+      `render.toView` cho chuột, HUD canvas theo CSS px + vùng an toàn (`--sat/--sar/--sab/--sal`), cụm nút cảm ứng tròn,
+      màn xoay ngang + tự tạm dừng, sàn chia khối 512 px thế giới (≤1024 px), cài đặt `quality`, chặn cử chỉ trình duyệt,
+      ẩn fullscreen khi không hỗ trợ, ULT trên gamepad = Y, bỏ hệ số "x1.05" giả của combo (không có trong sim).
+      Test Acceptance 12 viết lại (gradient chỉ trong `src/fx/art.js`, 'lighter' chỉ trong src/fx, không tạo gradient sau warm-up).
+
 ## Đang làm
-- Giai đoạn 1: nền tảng responsive.
+- Giai đoạn 2: lát cắt mẫu (scrap, ranger, grunt/swarmer/spitter, pistol, HUD, màn lên cấp).
 
 ## Quyết định đã chốt
 - Font: Baloo 2 ExtraBold (tiêu đề) + Be Vietnam Pro Medium/Bold (nội dung), OFL, subset Latin+Việt, base64 trong `css/fonts.css`.

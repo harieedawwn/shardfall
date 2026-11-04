@@ -649,6 +649,13 @@
   // =====================================================================================================
   // SETTINGS
   // =====================================================================================================
+  // iPhone Safari and most in-app browsers (Zalo, Messenger, Facebook) have no element fullscreen: hide the toggle there
+  function canFullscreen() {
+    const d = globalThis.document, el = d && d.documentElement;
+    if (!el) return true;
+    if (d.fullscreenEnabled === false || d.webkitFullscreenEnabled === false) return false;
+    return !!(el.requestFullscreen || el.webkitRequestFullscreen);
+  }
   function setFullscreen(on) {
     const d = globalThis.document;
     try {
@@ -702,6 +709,14 @@
     row.appendChild(h('p', 'sd', t('set.' + key + 'Tip')));
     return row;
   }
+  function qualityRow() {
+    const cur0 = NR.save.getSettings().quality || 'auto', row = h('div', 'srow tg');
+    row.appendChild(h('label', 'sl-l', t('set.quality')));
+    row.appendChild(seg([{ value: 'auto', label: t('set.qAuto') }, { value: 'low', label: t('set.qLow') }, { value: 'medium', label: t('set.qMedium') }, { value: 'high', label: t('set.qHigh') }],
+      cur0, function (v) { NR.save.setSetting('quality', v); rerender(); }, 'qual'));
+    row.appendChild(h('p', 'sd', t('set.qualityTip')));
+    return row;
+  }
   SCREENS.settings = {
     guard: false,
     back: function () { show(settingsFrom === 'pause' && world().state === 'paused' ? 'pause' : 'title'); },
@@ -722,7 +737,8 @@
       gp.appendChild(toggleRow('autoFire')); gp.appendChild(toggleRow('aimAssist')); gp.appendChild(toggleRow('damageNumbers'));
       pn.appendChild(gp);
       const gf = h('section', 'sset'); gf.appendChild(h('h3', 'h sm', t('set.group.display')));
-      gf.appendChild(sliderRow('shake', 100)); gf.appendChild(toggleRow('reduceFlashing')); gf.appendChild(toggleRow('showFps')); gf.appendChild(toggleRow('fullscreen', setFullscreen));
+      gf.appendChild(qualityRow());
+      gf.appendChild(sliderRow('shake', 100)); gf.appendChild(toggleRow('reduceFlashing')); gf.appendChild(toggleRow('showFps')); if (canFullscreen()) gf.appendChild(toggleRow('fullscreen', setFullscreen));
       pn.appendChild(gf);
       const ct = h('section', 'sset ctl'); ct.appendChild(h('h3', 'h sm', t('set.group.controls')));
       const dl = h('dl', 'keys');
@@ -1141,8 +1157,37 @@
   function cycleTab(d) { const i = CODEX_TABS.indexOf(D.codexTab); D.codexTab = CODEX_TABS[(i + d + CODEX_TABS.length) % CODEX_TABS.length]; D.codexSel = null; rerender(); }
 
   // called every frame from NR.ui.hud.update (real time)
+  // ---------- portrait gate: twin-stick in portrait changes what you can see, so combat pauses behind a rotate card ----------
+  let rotEl = null, rotPaused = false, rotHidden = false, rotLang = '';
+  function isPortrait() {
+    const R = NR.fx && NR.fx.render, V = R && R.view ? R.view() : null;
+    if (V) return V.portrait;
+    const g = globalThis; return !!(g.innerWidth && g.innerHeight && g.innerWidth < g.innerHeight);
+  }
+  function buildRotate() {
+    const touch = input === 'touch' || !!(globalThis.matchMedia && globalThis.matchMedia('(pointer: coarse)').matches);
+    clear(rotEl); rotLang = NR.i18n.getLang() + touch;
+    const card = h('div', 'rot-card', [
+      h('div', 'rot-dev', [h('i', 'rot-btn')]),
+      h('h2', 'h ttl', touch ? t('rotate.title') : upper(t('pause.title'))),
+      h('p', 'sub', touch ? t('rotate.body') : t('rotate.desk'))
+    ]);
+    card.appendChild(btn('big', t('rotate.menu'), function () { rotHidden = true; syncRotate(); }, { fk: 'rot-menu' }));
+    rotEl.appendChild(card);
+  }
+  function syncRotate() {
+    if (!rotEl) return;
+    const W = world(), st = W.state, portrait = isPortrait();
+    if (portrait && (st === 'wave' || st === 'clear')) { rotPaused = true; rotHidden = false; NR.run.togglePause(); return; }
+    if (!portrait) { rotHidden = false; if (rotPaused && st !== 'paused') rotPaused = false; }
+    const on = portrait && rotPaused && st === 'paused' && !rotHidden;
+    if (on && rotLang !== NR.i18n.getLang() + (input === 'touch' || !!(globalThis.matchMedia && globalThis.matchMedia('(pointer: coarse)').matches))) buildRotate();
+    const want = on ? 'rot show' : 'rot';
+    if (rotEl.className !== want) rotEl.className = want;
+  }
   function tick(dt) {
     if (!root) return;
+    syncRotate();
     pollPad(dt);
     // screens that own "back" (Esc / Start in menu screens) consume the pause request so main does not toggle pause
     const st = world().state;
@@ -1169,6 +1214,7 @@
     if (!r) return;
     root = r;
     tipEl = h('div', 'tip'); tipEl.setAttribute('role', 'tooltip'); root.appendChild(tipEl);
+    rotEl = h('div', 'rot'); rotEl.setAttribute('role', 'dialog'); root.appendChild(rotEl);
     const coarse = !!(globalThis.matchMedia && globalThis.matchMedia('(pointer: coarse)').matches);
     input = ''; setInput(coarse ? 'touch' : 'kbm');
     const E = NR.events;

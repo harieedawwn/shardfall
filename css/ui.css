@@ -1,5 +1,9 @@
 /* Owner: UI. Flat, solid, opaque. No gradients, no blur, no glow, no translucency; hard offset shadows only. */
+html {
+  --sat: env(safe-area-inset-top, 0px); --sar: env(safe-area-inset-right, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px);
+}
 #ui {
+  --amber: #FFC23D; --ult: #B57CFF; --panel2: #30254A;
   --ink: #14121F; --ink2: #0B0A12; --bg: #1B1429; --panel: #2A1E3F; --card: #3B2A58; --card2: #4A3670; --line: #5A4685;
   --cream: #F2EFE6; --mute: #B9B0CF; --dim: #8C86A0; --gold: #C9A24B; --yellow: #FFD43B; --pink: #E86AA6; --cyan: #7FD3F0;
   --green: #8BD450; --red: #E5484D; --orange: #D9693A; --off: #3A3550;
@@ -9,6 +13,7 @@
   -webkit-tap-highlight-color: transparent; user-select: none;
 }
 #ui *, #ui *::before, #ui *::after { box-sizing: border-box; }
+#ui > * { pointer-events: auto; }
 #ui > .touch { pointer-events: none; }
 #ui button { appearance: none; -webkit-appearance: none; border-radius: 0; font: inherit; color: inherit; margin: 0; }
 #ui h1, #ui h2, #ui h3, #ui h4, #ui p, #ui dl, #ui dd { margin: 0; }
@@ -300,25 +305,35 @@ small { font-size: 0.82em; font-weight: 600; }
 .dtab .dv, .dtab .dp { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
 .dtab .dp { color: var(--mute); width: 3.5em; }
 
-/* ---------- touch controls ---------- */
-.touch { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; touch-action: none; }
+/* ---------- touch controls (inside the safe area; thumb-reach layout: sticks low, actions on the right edge) ---------- */
+.touch { position: fixed; left: 0; top: 0; width: 100%; height: 100%; touch-action: none; }
 .touch .zone { position: absolute; top: 0; bottom: 0; pointer-events: auto; touch-action: none; }
 .touch .zl { left: 0; width: 50%; }
 .touch .zr { right: 0; width: 50%; }
-.touch .stk { position: absolute; left: 0; top: 0; width: 116px; height: 116px; display: none; border-radius: 50%; background: var(--panel); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink2); pointer-events: none; }
+.touch .stk { position: absolute; left: 0; top: 0; width: 116px; height: 116px; display: none; border-radius: 50%; background: var(--panel); border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink2); pointer-events: none; }
 .touch .stk.live { display: block; }
-.touch .stk.hint { display: block; left: auto; top: auto; bottom: 26px; background: var(--bg); border-style: dashed; border-color: var(--line); box-shadow: none; }
-.touch .stk.hl { left: 28px; }
-.touch .stk.hr { right: 28px; }
-.touch .knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: var(--cream); border: 3px solid var(--ink); box-shadow: 3px 3px 0 var(--ink2); }
-.touch .tbtn { position: absolute; pointer-events: auto; touch-action: none; border: 3px solid var(--ink); background: var(--gold); box-shadow: 4px 4px 0 var(--ink2); padding: 0; }
-.touch .tbtn.down { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink2); background: var(--yellow); }
-.touch .tbtn.dash { right: 18px; bottom: 150px; width: 78px; height: 78px; border-radius: 50%; background: var(--cyan); }
-.touch .tbtn.dash .tb-ic { display: block; width: 28px; height: 28px; margin: 0 auto; background: var(--ink); clip-path: polygon(0 0, 55% 0, 100% 50%, 55% 100%, 0 100%, 45% 50%); }
-.touch .tbtn.ult { right: 24px; bottom: 238px; width: 66px; height: 66px; border-radius: 50%; background: var(--pink); display: flex; align-items: center; justify-content: center; }
-.touch .tbtn.ult .tb-ic { display: block; width: 24px; height: 24px; margin: 0 auto; background: var(--ink); clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
-.touch .tbtn.pause { right: 12px; top: 12px; width: 50px; height: 50px; background: var(--panel); display: flex; align-items: center; justify-content: center; gap: 6px; }
-.touch .tbtn.pause i { display: block; width: 8px; height: 22px; background: var(--cream); }
+.touch .stk.hint { display: block; left: auto; top: auto; bottom: calc(var(--sab) + 18px); width: 96px; height: 96px; background: transparent; border: 3px dashed var(--line); box-shadow: none; }
+.touch .stk.hint::after { content: ""; position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; border: 3px solid var(--line); }
+.touch .stk.hl { left: calc(var(--sal) + 22px); }
+.touch .stk.hr { right: calc(var(--sar) + 104px); }
+.touch .knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: var(--cream); border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink2); }
+#ui .touch .tbtn { position: absolute; pointer-events: auto; touch-action: none; border: 3px solid var(--ink); background: var(--amber); box-shadow: 0 4px 0 var(--ink2); padding: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; -webkit-user-select: none; user-select: none; }
+#ui .touch .tbtn.down { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink2); }
+#ui .touch .tbtn.dash { right: calc(var(--sar) + 18px); bottom: calc(var(--sab) + 26px); width: 72px; height: 72px; background: var(--cyan); }
+#ui .touch .tbtn.dash .tb-ic { display: block; width: 28px; height: 26px; background: var(--ink); clip-path: polygon(0 0, 50% 0, 100% 50%, 50% 100%, 0 100%, 46% 50%); }
+#ui .touch .tbtn.ult { right: calc(var(--sar) + 22px); bottom: calc(var(--sab) + 112px); width: 60px; height: 60px; background: var(--panel2); }
+#ui .touch .tbtn.ult .tb-ic { display: block; width: 26px; height: 26px; background: var(--mute); clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+#ui .touch .tbtn.ult.ready { background: var(--ult); }
+#ui .touch .tbtn.ult.ready .tb-ic { background: var(--ink); }
+#ui .touch .tbtn.pause { right: calc(var(--sar) + 10px); top: calc(var(--sat) + 10px); width: 46px; height: 46px; border-radius: 12px; background: var(--panel); gap: 6px; }
+#ui .touch .tbtn.pause i { display: block; width: 7px; height: 20px; border-radius: 2px; background: var(--cream); }
+@media (max-height: 400px) {
+  #ui .touch .tbtn.dash { width: 64px; height: 64px; bottom: calc(var(--sab) + 18px); }
+  #ui .touch .tbtn.ult { width: 52px; height: 52px; bottom: calc(var(--sab) + 94px); }
+  .touch .stk.hint { width: 84px; height: 84px; bottom: calc(var(--sab) + 14px); }
+  .touch .stk.hr { right: calc(var(--sar) + 96px); }
+}
 
 /* ---------- reduced motion / calm ---------- */
 #ui[data-calm="1"] .decor .sh, #ui[data-calm="1"] .btn.card.up, #ui[data-calm="1"] .scr.enter > * { animation: none; }
@@ -374,7 +389,6 @@ small { font-size: 0.82em; font-weight: 600; }
   .tt-menu { gap: 8px; }
   .btn.big { padding: 0.4em 1em; }
   .panel.pz { flex-direction: row; }
-  .touch .tbtn.dash { bottom: 120px; }
 }
 @media (pointer: coarse) {
   .btn { min-height: 2.9em; }
@@ -382,3 +396,14 @@ small { font-size: 0.82em; font-weight: 600; }
   .foot { display: none; }
 }
 @media (orientation: portrait) and (pointer: coarse) { .rotate { display: block; } }
+
+/* ---------- rotate-to-landscape card (combat paused in portrait) ---------- */
+.rot { position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center; padding: calc(var(--sat) + 20px) calc(var(--sar) + 20px) calc(var(--sab) + 20px) calc(var(--sal) + 20px); background: var(--ink); }
+.rot.show { display: flex; }
+.rot-card { display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 360px; text-align: center; }
+.rot-card .sub { line-height: 1.45; }
+.rot-dev { position: relative; width: 64px; height: 108px; border: 5px solid var(--cream); border-radius: 14px; background: var(--panel); box-shadow: 0 6px 0 var(--ink2); animation: rotdev 2.4s ease-in-out infinite; }
+.rot-dev .rot-btn { position: absolute; left: 50%; bottom: 6px; width: 14px; height: 4px; margin-left: -7px; border-radius: 2px; background: var(--cream); }
+@keyframes rotdev { 0%, 20% { transform: rotate(0deg); } 45%, 75% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+@media (prefers-reduced-motion: reduce) { .rot-dev { animation: none; transform: rotate(-90deg); } }
+#ui[data-calm="1"] .rot-dev { animation: none; transform: rotate(-90deg); }
