@@ -34,7 +34,9 @@
   function paint(c, zone, pal, rx, ry, rw, rh) {
     const A = NR.config.ARENA, S = NR.fx.shapes, rnd = rngFor('floor:' + zone);
     const ink = NR.config.INK;
-    if (zone === 'scrap' && NR.fx.art) { paintScrap(c, pal, rx || 0, ry || 0, rw || A.w, rh || A.h); return; }
+    if (NR.fx.art && zone === 'scrap') { paintScrap(c, pal, rx || 0, ry || 0, rw || A.w, rh || A.h); return; }
+    if (NR.fx.art && zone === 'frost') { paintFrost(c, pal, rx || 0, ry || 0, rw || A.w, rh || A.h); return; }
+    if (NR.fx.art && zone === 'void') { paintVoid(c, pal, rx || 0, ry || 0, rw || A.w, rh || A.h); return; }
     c.fillStyle = pal[0]; c.fillRect(0, 0, A.w, A.h);
 
     if (zone === 'scrap') {
@@ -266,6 +268,142 @@
     c.fillRect(WALL + 3, WALL + 3, A.w - WALL * 2 - 6, 2); c.fillRect(WALL + 3, WALL + 3, 2, A.h - WALL * 2 - 6);
     if (!propCache) propCache = scrapProps();
     for (let i = 0; i < propCache.length; i++) { const pr = propCache[i]; if (pr.x + 50 < rx || pr.x - 50 > rx + rw || pr.y + 50 < ry || pr.y - 50 > ry + rh) continue; drawProp(c, pr, pal); }
+  }
+
+  // ---------- frost: glacier slabs under drifted snow, hairline cracks, ice crystal clusters, icicled rock walls ----------
+  function propList(key, n, band) {
+    const A = NR.config.ARENA, list = [], rnd = rngFor('props:' + key);
+    for (let i = 0; i < n; i++) {
+      const side = (rnd() * 4) | 0, along = rnd(), off = WALL + 16 + rnd() * band;
+      const x = side < 2 ? 60 + along * (A.w - 120) : (side === 2 ? off : A.w - off), y = side < 2 ? (side === 0 ? off : A.h - off) : 60 + along * (A.h - 120);
+      list.push({ k: (rnd() * 4) | 0, x: x, y: y, r: 12 + rnd() * 18, a: rnd() * TAU, s: rnd() });
+    }
+    return list;
+  }
+  const PROPS2 = {};
+  function crystal(c, x, y, r, a, light, mid, dark) {
+    const ink = NR.config.INK;
+    for (let i = 0; i < 3; i++) {
+      const an = a + (i - 1) * 0.55, L = r * (i === 1 ? 1.5 : 1), w = r * 0.32, bx = x + Math.cos(an + Math.PI / 2) * (i - 1) * r * 0.25, by = y;
+      const tx = bx + Math.cos(an - Math.PI / 2) * L, ty = by + Math.sin(an - Math.PI / 2) * L;
+      const nx = Math.cos(an) * w, ny = Math.sin(an) * w;
+      c.beginPath(); c.moveTo(bx - nx, by - ny); c.lineTo(tx - nx * 0.6, ty - ny * 0.6); c.lineTo(tx + Math.cos(an - Math.PI / 2) * w, ty + Math.sin(an - Math.PI / 2) * w); c.lineTo(tx + nx * 0.6, ty + ny * 0.6); c.lineTo(bx + nx, by + ny); c.closePath();
+      c.fillStyle = mid; c.fill(); c.lineWidth = 2; c.strokeStyle = ink; c.stroke();
+      c.beginPath(); c.moveTo(bx - nx * 0.2, by - ny * 0.2); c.lineTo(tx - nx * 0.45, ty - ny * 0.45); c.lineTo(tx + Math.cos(an - Math.PI / 2) * w * 0.7, ty + Math.sin(an - Math.PI / 2) * w * 0.7); c.lineTo(bx + nx * 0.2, by + ny * 0.2); c.closePath();
+      c.fillStyle = light; c.fill();
+      c.beginPath(); c.moveTo(bx + nx * 0.25, by + ny * 0.25); c.lineTo(tx + nx * 0.5, ty + ny * 0.5); c.lineTo(bx + nx, by + ny); c.closePath(); c.fillStyle = dark; c.fill();
+    }
+  }
+  function paintFrost(c, pal, rx, ry, rw, rh) {
+    const A = NR.config.ARENA, art = NR.fx.art, TL = 160;
+    const g0 = art.mix(pal[0], '#1C2533', 0.2), g1 = art.mix(pal[1], '#1C2533', 0.32), seam = NR.util.shade(g0, -0.3);
+    c.fillStyle = seam; c.fillRect(rx, ry, rw, rh);
+    const t0x = Math.floor(rx / TL), t0y = Math.floor(ry / TL), t1x = Math.floor((rx + rw) / TL), t1y = Math.floor((ry + rh) / TL);
+    for (let ty = t0y; ty <= t1y; ty++) for (let tx = t0x; tx <= t1x; tx++) {
+      const x0 = tx * TL, y0 = ty * TL, h = h2(tx, ty, 21), fill = tc(h < 0.35 ? g1 : g0, (h2(tx, ty, 22) - 0.5) * 0.05);
+      // slightly irregular slab (corners nudged), bevel light top-left, shade bottom-right
+      const j = function (k) { return (h2(tx, ty, k) - 0.5) * 10; };
+      c.beginPath(); c.moveTo(x0 + 3 + j(1), y0 + 3 + j(2)); c.lineTo(x0 + TL - 3 + j(3), y0 + 3 + j(4)); c.lineTo(x0 + TL - 3 + j(5), y0 + TL - 3 + j(6)); c.lineTo(x0 + 3 + j(7), y0 + TL - 3 + j(8)); c.closePath();
+      c.fillStyle = fill; c.fill();
+      c.lineWidth = 2; c.strokeStyle = tc(fill, 0.1); c.stroke();
+      // snow lying on the slab
+      if (h2(tx, ty, 23) < 0.55) art.glow(c, x0 + 30 + h2(tx, ty, 24) * 100, y0 + 30 + h2(tx, ty, 25) * 100, 50 + h2(tx, ty, 26) * 50, '#EAF4FB', 0.1);
+      // hairline frost cracks (low contrast)
+      if (h2(tx, ty, 27) < 0.4) {
+        c.strokeStyle = 'rgba(234,244,251,0.13)'; c.lineWidth = 1.3; c.beginPath();
+        let cx = x0 + 20 + h2(tx, ty, 28) * 60, cy = y0 + 20 + h2(tx, ty, 29) * 60; c.moveTo(cx, cy);
+        for (let q = 0; q < 4; q++) { cx += 14 + h2(tx, ty, 30 + q) * 22; cy += (h2(tx, ty, 40 + q) - 0.3) * 30; c.lineTo(cx, cy); if (q === 1) { c.moveTo(cx, cy); c.lineTo(cx - 10, cy + 22); c.moveTo(cx, cy); } }
+        c.stroke();
+      }
+      // sparkle specks
+      c.fillStyle = 'rgba(234,244,251,0.35)';
+      for (let q = 0; q < 4; q++) c.fillRect(x0 + h2(tx, ty, 50 + q) * TL, y0 + h2(tx, ty, 60 + q) * TL, 2, 2);
+      if (h2(tx, ty, 70) < 0.06) art.glow(c, x0 + TL / 2, y0 + TL / 2, 170, '#7FD3F0', 0.08);
+    }
+    // icy rock wall with a snow cap and icicles
+    const wall = art.mix(pal[2], '#0E141E', 0.15), cap = '#DCEAF4';
+    c.fillStyle = wall; c.fillRect(0, 0, A.w, WALL); c.fillRect(0, A.h - WALL, A.w, WALL); c.fillRect(0, 0, WALL, A.h); c.fillRect(A.w - WALL, 0, WALL, A.h);
+    c.fillStyle = 'rgba(220,234,244,0.55)'; c.fillRect(0, 0, A.w, 8); c.fillRect(0, 0, 8, A.h); c.fillRect(A.w - 8, 0, 8, A.h);
+    c.fillStyle = NR.config.INK; c.fillRect(WALL, WALL, A.w - WALL * 2, 3); c.fillRect(WALL, A.h - WALL - 3, A.w - WALL * 2, 3); c.fillRect(WALL, WALL, 3, A.h - WALL * 2); c.fillRect(A.w - WALL - 3, WALL, 3, A.h - WALL * 2);
+    c.fillStyle = cap;
+    for (let x = WALL + 10; x < A.w - WALL; x += 26) { if (x + 30 < rx || x - 30 > rx + rw) continue; const L = 8 + h2(x, 1, 3) * 16; c.beginPath(); c.moveTo(x - 5, WALL + 2); c.lineTo(x, WALL + 2 + L); c.lineTo(x + 5, WALL + 2); c.closePath(); c.fill(); }
+    for (let y = WALL + 10; y < A.h - WALL; y += 26) { if (y + 30 < ry || y - 30 > ry + rh) continue; const L = 6 + h2(y, 2, 3) * 12; c.beginPath(); c.moveTo(WALL + 2, y - 4); c.lineTo(WALL + 2 + L, y); c.lineTo(WALL + 2, y + 4); c.closePath(); c.fill(); c.beginPath(); c.moveTo(A.w - WALL - 2, y - 4); c.lineTo(A.w - WALL - 2 - L, y); c.lineTo(A.w - WALL - 2, y + 4); c.closePath(); c.fill(); }
+    const P = PROPS2.frost || (PROPS2.frost = propList('frost', 60, 80));
+    for (let i = 0; i < P.length; i++) {
+      const pr = P[i]; if (pr.x + 60 < rx || pr.x - 60 > rx + rw || pr.y + 60 < ry || pr.y - 60 > ry + rh) continue;
+      c.fillStyle = 'rgba(11,10,18,0.3)'; c.beginPath(); c.ellipse(pr.x + 3, pr.y + 4, pr.r * 1.1, pr.r * 0.45, 0, 0, TAU); c.fill();
+      if (pr.k < 2) { crystal(c, pr.x, pr.y, pr.r, (pr.s - 0.5) * 0.6, '#EAF8FF', '#8FC1E3', '#4F7FA6'); art.glow(c, pr.x, pr.y - pr.r * 0.6, pr.r * 2.4, '#7FD3F0', 0.1); }
+      else if (pr.k === 2) { // snow-capped rock
+        c.beginPath(); c.moveTo(pr.x - pr.r, pr.y + pr.r * 0.3); c.lineTo(pr.x - pr.r * 0.6, pr.y - pr.r * 0.6); c.lineTo(pr.x + pr.r * 0.3, pr.y - pr.r * 0.8); c.lineTo(pr.x + pr.r, pr.y + pr.r * 0.2); c.lineTo(pr.x + pr.r * 0.2, pr.y + pr.r * 0.6); c.closePath();
+        c.fillStyle = '#4A5A72'; c.fill(); c.lineWidth = 2; c.strokeStyle = NR.config.INK; c.stroke();
+        c.beginPath(); c.moveTo(pr.x - pr.r * 0.65, pr.y - pr.r * 0.5); c.lineTo(pr.x + pr.r * 0.3, pr.y - pr.r * 0.78); c.lineTo(pr.x + pr.r * 0.75, pr.y - pr.r * 0.1); c.quadraticCurveTo(pr.x, pr.y - pr.r * 0.25, pr.x - pr.r * 0.65, pr.y - pr.r * 0.5); c.fillStyle = '#EAF4FB'; c.fill();
+      } else { // frozen barrel
+        c.fillStyle = '#5C6E86'; c.fillRect(pr.x - pr.r * 0.55, pr.y - pr.r * 0.8, pr.r * 1.1, pr.r * 1.4); c.lineWidth = 2; c.strokeStyle = NR.config.INK; c.strokeRect(pr.x - pr.r * 0.55, pr.y - pr.r * 0.8, pr.r * 1.1, pr.r * 1.4);
+        c.fillStyle = '#EAF4FB'; c.fillRect(pr.x - pr.r * 0.55, pr.y - pr.r * 0.8, pr.r * 1.1, pr.r * 0.28);
+        c.fillStyle = '#9FD7EE'; c.fillRect(pr.x + pr.r * 0.1, pr.y - pr.r * 0.5, pr.r * 0.14, pr.r * 0.7);
+      }
+    }
+  }
+
+  // ---------- void: staggered obsidian flagstones, faint rune inlays, glowing rift seams, abyss pits, floating shards ----------
+  function paintVoid(c, pal, rx, ry, rw, rh) {
+    const A = NR.config.ARENA, art = NR.fx.art, TW = 150, TH = 100;
+    const g0 = art.mix(pal[0], '#120C1C', 0.25), g1 = art.mix(pal[1], '#120C1C', 0.35), seam = '#0C0814';
+    c.fillStyle = seam; c.fillRect(rx, ry, rw, rh);
+    const r0 = Math.floor(ry / TH) - 1, r1 = Math.floor((ry + rh) / TH) + 1;
+    for (let row = r0; row <= r1; row++) {
+      const off = (row & 1) * TW / 2, c0 = Math.floor((rx - off) / TW) - 1, c1 = Math.floor((rx + rw - off) / TW) + 1;
+      for (let col = c0; col <= c1; col++) {
+        const x0 = col * TW + off, y0 = row * TH, h = h2(col, row, 81), fill = tc(h < 0.3 ? g1 : g0, (h2(col, row, 82) - 0.5) * 0.06);
+        if (h2(col, row, 83) < 0.05) { // abyss pit: starfield in a dark hole
+          c.fillStyle = '#05030A'; c.fillRect(x0 + 4, y0 + 4, TW - 8, TH - 8);
+          c.fillStyle = 'rgba(241,224,255,0.7)'; for (let q = 0; q < 10; q++) c.fillRect(x0 + 8 + h2(col, row, 90 + q) * (TW - 16), y0 + 8 + h2(col, row, 100 + q) * (TH - 16), 1.6, 1.6);
+          c.strokeStyle = 'rgba(162,92,224,0.5)'; c.lineWidth = 2; c.strokeRect(x0 + 4, y0 + 4, TW - 8, TH - 8);
+          continue;
+        }
+        c.fillStyle = fill; c.fillRect(x0 + 3, y0 + 3, TW - 6, TH - 6);
+        c.fillStyle = 'rgba(200,160,255,0.08)'; c.fillRect(x0 + 3, y0 + 3, TW - 6, 2);
+        c.fillStyle = tc(fill, -0.18); c.fillRect(x0 + 3, y0 + TH - 5, TW - 6, 2);
+        if (h2(col, row, 84) < 0.07) { // faint rune inlay
+          const cx = x0 + TW / 2, cy = y0 + TH / 2;
+          c.strokeStyle = 'rgba(162,92,224,0.15)'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, 18 + h2(col, row, 89) * 10, 0, TAU);
+          c.moveTo(cx, cy - 16); c.lineTo(cx + 12, cy + 10); c.lineTo(cx - 12, cy + 10); c.closePath(); c.stroke();
+        }
+        if (h2(col, row, 85) < 0.14) { // rift seam glowing faintly
+          c.strokeStyle = 'rgba(232,106,166,0.35)'; c.lineWidth = 1.6; c.beginPath();
+          let px = x0 + 10, py = y0 + 20 + h2(col, row, 86) * 60; c.moveTo(px, py);
+          for (let q = 0; q < 5; q++) { px += 22 + h2(col, row, 87 + q) * 8; py += (h2(col, row, 95 + q) - 0.5) * 22; c.lineTo(px, py); }
+          c.stroke();
+          art.glow(c, x0 + TW / 2, y0 + TH / 2, 80, '#E86AA6', 0.06);
+        }
+      }
+    }
+    // ritual circle at the centre (faint)
+    const cx = A.w / 2, cy = A.h / 2;
+    if (rx < cx + 300 && rx + rw > cx - 300 && ry < cy + 300 && ry + rh > cy - 300) {
+      c.strokeStyle = 'rgba(162,92,224,0.18)'; c.lineWidth = 4;
+      c.beginPath(); c.arc(cx, cy, 260, 0, TAU); c.stroke(); c.beginPath(); c.arc(cx, cy, 220, 0, TAU); c.stroke();
+      c.beginPath(); for (let i = 0; i < 7; i++) { const a1 = i / 7 * TAU, a2 = (i + 3) / 7 * TAU; c.moveTo(cx + Math.cos(a1) * 220, cy + Math.sin(a1) * 220); c.lineTo(cx + Math.cos(a2) * 220, cy + Math.sin(a2) * 220); } c.stroke();
+      art.glow(c, cx, cy, 300, '#A25CE0', 0.07);
+    }
+    // abyss edge: dark rim with a violet lip
+    c.fillStyle = '#07040C'; c.fillRect(0, 0, A.w, WALL); c.fillRect(0, A.h - WALL, A.w, WALL); c.fillRect(0, 0, WALL, A.h); c.fillRect(A.w - WALL, 0, WALL, A.h);
+    c.fillStyle = '#8A5BD1'; c.fillRect(WALL, WALL, A.w - WALL * 2, 2); c.fillRect(WALL, A.h - WALL - 2, A.w - WALL * 2, 2); c.fillRect(WALL, WALL, 2, A.h - WALL * 2); c.fillRect(A.w - WALL - 2, WALL, 2, A.h - WALL * 2);
+    const P = PROPS2.void || (PROPS2.void = propList('void', 55, 90));
+    for (let i = 0; i < P.length; i++) {
+      const pr = P[i]; if (pr.x + 60 < rx || pr.x - 60 > rx + rw || pr.y + 60 < ry || pr.y - 60 > ry + rh) continue;
+      c.fillStyle = 'rgba(5,3,10,0.4)'; c.beginPath(); c.ellipse(pr.x + 3, pr.y + 6, pr.r, pr.r * 0.4, 0, 0, TAU); c.fill();
+      if (pr.k < 2) { crystal(c, pr.x, pr.y, pr.r, (pr.s - 0.5) * 0.8, '#F1E0FF', '#8A5BD1', '#4A2A78'); art.glow(c, pr.x, pr.y - pr.r * 0.6, pr.r * 2.6, '#A25CE0', 0.12); }
+      else if (pr.k === 2) { // broken pillar
+        c.fillStyle = '#2E2340'; c.fillRect(pr.x - pr.r * 0.5, pr.y - pr.r * 1.2, pr.r, pr.r * 1.5); c.lineWidth = 2; c.strokeStyle = NR.config.INK; c.strokeRect(pr.x - pr.r * 0.5, pr.y - pr.r * 1.2, pr.r, pr.r * 1.5);
+        c.fillStyle = '#3B2D52'; c.beginPath(); c.moveTo(pr.x - pr.r * 0.5, pr.y - pr.r * 1.2); c.lineTo(pr.x - pr.r * 0.1, pr.y - pr.r * 1.45); c.lineTo(pr.x + pr.r * 0.5, pr.y - pr.r * 1.15); c.closePath(); c.fill(); c.stroke();
+        c.strokeStyle = 'rgba(232,106,166,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(pr.x - pr.r * 0.2, pr.y - pr.r); c.lineTo(pr.x + pr.r * 0.1, pr.y - pr.r * 0.5); c.lineTo(pr.x - pr.r * 0.1, pr.y); c.stroke();
+      } else { // watching pod: a closed eye in fleshy roots
+        c.fillStyle = '#3A1E3A'; c.beginPath(); c.ellipse(pr.x, pr.y, pr.r * 0.9, pr.r * 0.6, 0, 0, TAU); c.fill(); c.lineWidth = 2; c.strokeStyle = NR.config.INK; c.stroke();
+        c.fillStyle = '#E86AA6'; c.beginPath(); c.ellipse(pr.x, pr.y, pr.r * 0.45, pr.r * 0.16, 0, 0, TAU); c.fill();
+        c.fillStyle = '#14121F'; c.beginPath(); c.ellipse(pr.x, pr.y, pr.r * 0.1, pr.r * 0.14, 0, 0, TAU); c.fill();
+      }
+    }
   }
 
   // ---------- chunked floor cache ----------

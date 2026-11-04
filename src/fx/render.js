@@ -1075,25 +1075,138 @@
     if (e.status) statusFx(c, e, x, y, r);
   }
 
+  // ---------- weapon areas: detailed per weapon/element visuals ----------
+  function hsh(n) { n = Math.imul(n ^ (n >>> 15), 2246822519); n = Math.imul(n ^ (n >>> 13), 3266489917); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; }
+  const FLAME = ['#FFF6D8', '#FFE08A', '#FFB347', '#FF7A2F', '#E2452A', '#8A2A22'];
+  function tongue(c, x, y, ang, L, Wd) {
+    const ca = Math.cos(ang), sa = Math.sin(ang), nx = -sa, ny = ca;
+    c.beginPath();
+    c.moveTo(x - ca * L * 0.35 + nx * Wd * 0.2, y - sa * L * 0.35 + ny * Wd * 0.2);
+    c.quadraticCurveTo(x + nx * Wd, y + ny * Wd, x + ca * L * 0.65, y + sa * L * 0.65);
+    c.quadraticCurveTo(x - nx * Wd, y - ny * Wd, x - ca * L * 0.35 - nx * Wd * 0.2, y - sa * L * 0.35 - ny * Wd * 0.2);
+    c.closePath();
+  }
+  // flamethrower: a stream of layered, flickering flame tongues (hot white core near the nozzle -> orange -> red -> smoke)
+  function drawFlames(c, ar, k, evo) {
+    const art = NR.fx.art, L = ar.len * k, A = ar.arc, n = evo ? 22 : 15, seed = ar.id * 977;
+    const life = Math.min(1, (ar.age || 0) / 0.12);
+    for (let i = 0; i < n; i++) {
+      const u = (i + 0.5) / n, h1 = hsh(seed + i * 13), h2 = hsh(seed + i * 29 + 7);
+      const d = L * (0.1 + 0.9 * u) * (0.85 + 0.25 * Math.sin(t * 30 + i));
+      const off = (h1 - 0.5) * A * (0.3 + 0.7 * u);
+      const ang = ar.angle + off + Math.sin(t * 24 + i * 1.7) * 0.06;
+      const x = ar.x + Math.cos(ang) * d, y = ar.y + Math.sin(ang) * d;
+      const size = 6 + u * (evo ? 26 : 20) * (0.7 + h2 * 0.6);
+      const ci = Math.min(FLAME.length - 1, Math.floor(u * 4.2 + h2 * 1.2 + life));
+      if (u > 0.82 && h2 > 0.55) {
+        const img = art.puff('#4A4048'); if (img) { c.globalAlpha = 0.35 * (1 - life * 0.5); c.drawImage(img, x - size, y - size, size * 2, size * 2); c.globalAlpha = 1; }
+        continue;
+      }
+      tongue(c, x, y, ang, size * 2.1, size * 0.62); c.fillStyle = FLAME[Math.min(FLAME.length - 1, ci + 1)]; c.fill();
+      tongue(c, x + Math.cos(ang) * size * 0.2, y + Math.sin(ang) * size * 0.2, ang, size * 1.4, size * 0.36); c.fillStyle = FLAME[ci]; c.fill();
+      if (u < 0.45) { tongue(c, x + Math.cos(ang) * size * 0.3, y + Math.sin(ang) * size * 0.3, ang, size * 0.8, size * 0.18); c.fillStyle = FLAME[0]; c.fill(); }
+    }
+    for (let i = 0; i < 5; i++) { // embers flying off the stream
+      const u = hsh(seed + i * 71 + Math.floor(t * 20)), ang = ar.angle + (hsh(seed + i * 5) - 0.5) * A * 1.2, d = L * (0.3 + 0.8 * u);
+      c.fillStyle = i & 1 ? '#FFE08A' : '#FF9A3D'; c.fillRect(ar.x + Math.cos(ang) * d - 1.5, ar.y + Math.sin(ang) * d - 1.5, 3, 3);
+    }
+    art.light(ar.x + Math.cos(ar.angle) * L * 0.45, ar.y + Math.sin(ar.angle) * L * 0.45, L * 0.7, '#FF8A3D', 0.5);
+  }
+  // beam: tapered energy lance with a white core, element sheath, travelling rings and a flared tip
+  function drawBeam(c, ar, k, col) {
+    const art = NR.fx.art, L = ar.len * k, f = Math.min(1, (ar.age || 0) / Math.max(0.05, ar.life || 0.12)), Wd = Math.max(6, ar.w) * (1 - f * 0.7);
+    c.save(); c.translate(ar.x, ar.y); c.rotate(ar.angle || 0);
+    c.fillStyle = NR.config.INK; c.beginPath(); c.moveTo(0, -Wd * 0.75); c.lineTo(L, -Wd * 0.35); c.lineTo(L + Wd, 0); c.lineTo(L, Wd * 0.35); c.lineTo(0, Wd * 0.75); c.closePath(); c.fill();
+    c.fillStyle = col; c.beginPath(); c.moveTo(0, -Wd * 0.6); c.lineTo(L, -Wd * 0.25); c.lineTo(L + Wd * 0.8, 0); c.lineTo(L, Wd * 0.25); c.lineTo(0, Wd * 0.6); c.closePath(); c.fill();
+    c.fillStyle = '#FFFFFF'; c.fillRect(0, -Wd * 0.18, L, Wd * 0.36);
+    c.strokeStyle = col; c.lineWidth = 2;
+    for (let x = ((t * 900) % 70); x < L; x += 70) { c.beginPath(); c.ellipse(x, 0, Wd * 0.25, Wd * 0.95, 0, 0, TAU); c.stroke(); }
+    c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(L, 0, Wd * 0.7, 0, TAU); c.fill();
+    c.restore();
+    art.light(ar.x + Math.cos(ar.angle) * L, ar.y + Math.sin(ar.angle) * L, Wd * 3, col, 0.6);
+  }
+  // melee slash: sweeping crescent with a bright leading edge, colour body and fading trail + speed streaks
+  function drawSlash(c, ar, col, evo) {
+    const f = Math.min(1, (ar.age || 0) / Math.max(0.05, ar.life || 0.16)), A = ar.arc, R = ar.len;
+    const sweep = Math.min(1, f * 2.2), a0 = ar.angle - A / 2, a1 = a0 + A * sweep, ri = R * 0.68;
+    if (a1 <= a0) return;
+    const fade = f > 0.55 ? 1 - (f - 0.55) / 0.45 : 1;
+    c.globalAlpha = fade;
+    c.beginPath(); c.arc(ar.x, ar.y, R, a0, a1); c.arc(ar.x, ar.y, ri, a1, a0, true); c.closePath();
+    c.fillStyle = NR.config.INK; c.fill();
+    c.beginPath(); c.arc(ar.x, ar.y, R - 2, Math.max(a0, a1 - A * 0.85), a1); c.arc(ar.x, ar.y, ri + 4, a1, Math.max(a0, a1 - A * 0.85), true); c.closePath();
+    c.fillStyle = col; c.fill();
+    c.beginPath(); c.arc(ar.x, ar.y, R - 3, Math.max(a0, a1 - A * 0.5), a1); c.arc(ar.x, ar.y, R - 9, a1, Math.max(a0, a1 - A * 0.5), true); c.closePath();
+    c.fillStyle = '#FFFFFF'; c.fill();
+    c.strokeStyle = evo ? '#FFF3A3' : '#F6F0DF'; c.lineWidth = 2;
+    for (let i = 0; i < 3; i++) { const an = a1 - 0.12 - i * 0.18; if (an < a0) break; c.beginPath(); c.moveTo(ar.x + Math.cos(an) * (R + 6), ar.y + Math.sin(an) * (R + 6)); c.lineTo(ar.x + Math.cos(an - 0.25) * (R + 14 + i * 4), ar.y + Math.sin(an - 0.25) * (R + 14 + i * 4)); c.stroke(); }
+    c.globalAlpha = 1;
+    if (evo) NR.fx.art.light(ar.x + Math.cos(a1) * R, ar.y + Math.sin(a1) * R, 40, col, 0.6 * fade);
+  }
+  // auras and lingering fields
+  function drawFrostAura(c, ar) {
+    const R = ar.r, n = Math.max(8, Math.round(R / 12));
+    c.globalAlpha = 0.14; c.fillStyle = '#BFE9F7'; c.beginPath(); c.arc(ar.x, ar.y, R, 0, TAU); c.fill(); c.globalAlpha = 1;
+    c.lineWidth = 3; c.strokeStyle = NR.config.INK; c.beginPath(); c.arc(ar.x, ar.y, R, 0, TAU); c.stroke();
+    c.lineWidth = 1.5; c.strokeStyle = '#BFE9F7'; c.stroke();
+    for (let i = 0; i < n; i++) {
+      const an = t * 0.6 + i * TAU / n, x = ar.x + Math.cos(an) * R, y = ar.y + Math.sin(an) * R, s = 5 + (i % 3) * 2;
+      c.save(); c.translate(x, y); c.rotate(an);
+      c.fillStyle = NR.config.INK; c.beginPath(); c.moveTo(-s - 2, 0); c.lineTo(0, -s * 0.5 - 2); c.lineTo(s + 2, 0); c.lineTo(0, s * 0.5 + 2); c.closePath(); c.fill();
+      c.fillStyle = i & 1 ? '#EAF8FF' : '#7FD3F0'; c.beginPath(); c.moveTo(-s, 0); c.lineTo(0, -s * 0.5); c.lineTo(s, 0); c.lineTo(0, s * 0.5); c.closePath(); c.fill();
+      c.restore();
+    }
+    for (let i = 0; i < 10; i++) { const h = hsh(ar.id * 31 + i), an = h * TAU + t * 0.3, d = R * ((h * 7 + t * 0.25) % 1); c.fillStyle = '#EAF8FF'; c.fillRect(ar.x + Math.cos(an) * d - 1, ar.y + Math.sin(an) * d - 1, 2.5, 2.5); }
+  }
+  function drawCloud(c, ar, col, dense) {
+    const art = NR.fx.art, R = ar.r, n = dense ? 9 : 6, img = art.puff(col), dark = art.puff(NR.fx.shapes.darkOf(col));
+    if (!img) return;
+    const fade = ar.life < 1e8 ? Math.min(1, (ar.life - (ar.age || 0)) / 0.6, (ar.age || 0) / 0.25) : 1;
+    for (let i = 0; i < n; i++) {
+      const h = hsh(ar.id * 17 + i), an = h * TAU + t * (0.25 + h * 0.3) * (i & 1 ? 1 : -1), d = R * (0.2 + 0.65 * hsh(ar.id * 5 + i * 3));
+      const s = R * (0.45 + 0.25 * h) * (1 + 0.08 * Math.sin(t * 2 + i));
+      c.globalAlpha = 0.55 * fade; c.drawImage(i % 3 ? img : dark, ar.x + Math.cos(an) * d - s, ar.y + Math.sin(an) * d - s, s * 2, s * 2);
+    }
+    c.globalAlpha = 1;
+    for (let i = 0; i < 6; i++) { const h = hsh(ar.id * 41 + i), ph = (t * 0.6 + h) % 1, an = h * TAU, d = R * 0.7 * h; c.fillStyle = col; c.beginPath(); c.arc(ar.x + Math.cos(an) * d, ar.y + Math.sin(an) * d - ph * 20, 2.5 * (1 - ph) + 1, 0, TAU); c.fill(); }
+  }
+  function drawFirePatch(c, ar) {
+    const R = ar.r, fade = Math.min(1, (ar.life - (ar.age || 0)) / 0.5);
+    c.globalAlpha = 0.4 * fade; c.fillStyle = '#3A1A14'; c.beginPath(); c.arc(ar.x, ar.y, R, 0, TAU); c.fill(); c.globalAlpha = fade;
+    for (let i = 0; i < 6; i++) {
+      const h = hsh(ar.id * 13 + i), an = h * TAU, d = R * 0.65 * hsh(ar.id * 7 + i), x = ar.x + Math.cos(an) * d, y = ar.y + Math.sin(an) * d;
+      const s = 6 + 6 * (0.5 + 0.5 * Math.sin(t * 14 + i * 2));
+      tongue(c, x, y - s * 0.5, -Math.PI / 2, s * 2.2, s * 0.6); c.fillStyle = '#FF7A2F'; c.fill();
+      tongue(c, x, y - s * 0.4, -Math.PI / 2, s * 1.3, s * 0.32); c.fillStyle = '#FFE08A'; c.fill();
+    }
+    c.globalAlpha = 1;
+    NR.fx.art.light(ar.x, ar.y, R * 1.3, '#FF7A2F', 0.35 * fade);
+  }
+  function drawRingField(c, ar, col, enemy) {
+    const R = (ar.r || 20) * (1 - Math.pow(1 - Math.min(1, (ar.age || 0) / 0.15), 3));
+    c.globalAlpha = enemy ? 0.24 : 0.14; c.fillStyle = col; c.beginPath(); c.arc(ar.x, ar.y, R, 0, TAU); c.fill(); c.globalAlpha = 1;
+    c.lineWidth = 5; c.strokeStyle = NR.config.INK; c.beginPath(); c.arc(ar.x, ar.y, R, 0, TAU); c.stroke();
+    c.lineWidth = 2.5; c.strokeStyle = col; c.stroke();
+  }
   function drawAreas(c, W, a) {
+    const WD = NR.data.weapons;
     for (let i = 0; i < W.areas.length; i++) {
       const ar = W.areas[i]; if (ar.dead) continue;
-      const col = ar.color || pal[5], k = 1 - Math.pow(1 - Math.min(1, (ar.age || 0) / 0.15), 3), enemy = ar.team === 'enemy';
       if (!inView(ar.x, ar.y, (ar.len || ar.r || 60) + 80)) continue;
-      c.fillStyle = enemy ? pal[4] : col; c.strokeStyle = enemy ? pal[4] : col; c.lineWidth = 3; c.lineJoin = 'round';
+      const enemy = ar.team === 'enemy', d = ar.weaponId && WD[ar.weaponId], kind = d ? d.kind : '', evo = !!(d && d.evolved);
+      const col = enemy ? NR.fx.art.T.tele : (ar.color || pal[5]), el = ar.element;
+      const k = 1 - Math.pow(1 - Math.min(1, (ar.age || 0) / 0.08), 3);
       if (ar.len > 0 && ar.arc > 0) {
-        const a0 = (ar.angle || 0) - ar.arc / 2, a1 = (ar.angle || 0) + ar.arc / 2, R = ar.len * k;
-        c.globalAlpha = enemy ? 0.26 : 0.2; c.beginPath(); c.moveTo(ar.x, ar.y); c.arc(ar.x, ar.y, R, a0, a1); c.closePath(); c.fill();
-        c.globalAlpha = 1; c.beginPath(); c.moveTo(ar.x, ar.y); c.arc(ar.x, ar.y, R, a0, a1); c.closePath(); c.stroke();
-      } else if (ar.len > 0 && ar.w > 0) {
-        c.save(); c.translate(ar.x, ar.y); c.rotate(ar.angle || 0);
-        c.globalAlpha = enemy ? 0.26 : 0.22; c.fillRect(0, -ar.w / 2, ar.len * k, ar.w);
-        c.globalAlpha = 1; c.strokeRect(0, -ar.w / 2, ar.len * k, ar.w); c.restore();
-      } else {
-        const R = (ar.r || 20) * k;
-        c.globalAlpha = enemy ? 0.26 : 0.18; c.beginPath(); c.arc(ar.x, ar.y, R, 0, TAU); c.fill();
-        c.globalAlpha = 1; c.beginPath(); c.arc(ar.x, ar.y, R, 0, TAU); c.stroke();
-      }
+        if (kind === 'melee') drawSlash(c, ar, col, evo);
+        else if (el === 'fire') drawFlames(c, ar, k, evo);
+        else drawSlash(c, ar, col, evo);
+      } else if (ar.len > 0) drawBeam(c, ar, k, col);
+      else if (enemy) drawRingField(c, ar, col, true);
+      else if (ar.aura && el === 'ice') drawFrostAura(c, ar);
+      else if (el === 'poison') drawCloud(c, ar, '#8BD450', !!ar.aura);
+      else if (el === 'fire' && ar.life > 0.6) drawFirePatch(c, ar);
+      else if (ar.aura) drawCloud(c, ar, col, true);
+      else drawRingField(c, ar, col, false);
     }
     c.globalAlpha = 1;
   }

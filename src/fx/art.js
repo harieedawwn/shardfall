@@ -184,9 +184,10 @@
     if (x + r < vx0 || x - r > vx1 || y + r < vy0 || y - r > vy1) return;
     lx[ln] = x; ly[ln] = y; lr[ln] = r; la[ln] = a === undefined ? 1 : a; lc[ln] = color; ln++;
   }
+  const BLOOM = 0.5; // global additive strength: lights accent, they do not wash the scene
   function flushLights(ctx) {
     if (!ln) return;
-    const k = reduced ? 0.6 : 1;
+    const k = (reduced ? 0.6 : 1) * BLOOM;
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < ln; i++) {
       const img = lightSprite(lc[i]);

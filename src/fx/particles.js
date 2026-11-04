@@ -162,7 +162,7 @@
     const r = en.r || 10, col = en.color || '#F2EFE6', boss = e.isBoss;
     if (boss) return;
     burst('death', e.x, e.y, col, 5 + r * 0.55, { size: 3 + r * 0.2, speed: 140 + r * 4 });
-    glow(e.x, e.y, col, r * 4, 0.22); smoke(e.x, e.y, NR.fx.shapes.darkOf(col), 2 + r * 0.12, r * 1.4, 50, 0.7);
+    glow(e.x, e.y, col, r * 2.2, 0.16); smoke(e.x, e.y, NR.fx.shapes.darkOf(col), 2 + r * 0.12, r * 1.4, 50, 0.7);
     embers(e.x, e.y, NR.fx.shapes.lightOf(col), 3 + r * 0.2, 180 + r * 5);
     burst('debris', e.x, e.y, col, 2 + r * 0.18, { size: 3 + r * 0.12, speed: 90 + r * 2 });
     if (r >= 14 || e.elite) ring(e.x, e.y, r * 2.2 + (e.elite ? 20 : 0), e.elite ? NR.fx.render.palette()[3] : col, 0.3);
@@ -177,7 +177,7 @@
   function onDamage(e) {
     const t = e.target, col = elColor(e.element), amt = e.amount;
     burst('hit', e.x, e.y, col, e.crit ? 6 : 3, { speed: 260 });
-    if (amt > 0) glow(e.x, e.y, col, e.crit ? 46 : 26, 0.1);
+    if (e.crit) glow(e.x, e.y, col, 34, 0.08);
     if (t && t.color && !e.killed) burst('chip', e.x, e.y, t.color, e.crit ? 4 : 2, { speed: 120, size: 3 });
     if (settings().damageNumbers) {
       const tid = t ? t.id : 0, shown = Math.max(1, Math.round(amt));
@@ -209,7 +209,7 @@
     const ca = Math.cos(e.angle), sa = Math.sin(e.angle);
     if (k === 'melee') { swipe(e.x + ca * 10, e.y + sa * 10, col, 70, e.angle, 0.16); return; }
     flash(e.x + ca * 22, e.y + sa * 22, col, heavy ? 13 : 9, e.angle, 0.07);
-    glow(e.x + ca * 24, e.y + sa * 24, '#FFC86B', heavy ? 70 : 44, 0.06);
+    if (heavy) glow(e.x + ca * 24, e.y + sa * 24, '#FFC86B', 44, 0.05);
     if (heavy) smoke(e.x + ca * 26, e.y + sa * 26, '#8C8698', 2, 9, 60, 0.5);
     spark(e.x + ca * 24, e.y + sa * 24, col, heavy ? 3 : 1, e.angle, 0.7);
   }
@@ -223,8 +223,8 @@
   function onExplode(e) {
     const col = e.team === 'enemy' ? NR.fx.render.palette()[4] : elColor(e.element), r = e.r;
     ring(e.x, e.y, r, col, 0.4, { w: Math.min(16, 5 + r * 0.04) });
-    glow(e.x, e.y, '#FFB45A', r * 2.4, 0.32); glow(e.x, e.y, col, r * 1.6, 0.5);
-    smoke(e.x, e.y, '#3A3440', Math.min(9, 3 + r / 25), r * 0.6, 60 + r * 0.5, 1.1);
+    glow(e.x, e.y, '#FFB45A', r * 1.5, 0.25);
+    smoke(e.x, e.y, '#5A5260', Math.min(6, 2 + r / 30), r * 0.42, 60 + r * 0.5, 0.9);
     embers(e.x, e.y, '#FFC86B', Math.min(18, 5 + r / 10), 200 + r * 1.5);
     if (r > 60) ring(e.x, e.y, r * 0.6, '#F2EFE6', 0.28, { w: 5 });
     burst('death', e.x, e.y, col, Math.min(26, 6 + r / 8), { speed: 120 + r, size: 4 + r * 0.02 });
@@ -354,7 +354,7 @@
       if (p.k === PUFF) {
         const f = p.t / p.life, img = art.puff(p.color); if (!img) continue;
         const s = p.size + (p.size1 - p.size) * (1 - (1 - f) * (1 - f));
-        ctx.globalAlpha = Math.max(0, (f < 0.15 ? f / 0.15 : 1 - (f - 0.15) / 0.85) * 0.85);
+        ctx.globalAlpha = Math.max(0, (f < 0.15 ? f / 0.15 : 1 - (f - 0.15) / 0.85) * 0.5);
         ctx.drawImage(img, p.x - s, p.y - s, s * 2, s * 2);
       } else if (p.k === GLOW) { const f = p.t / p.life; art.light(p.x, p.y, p.size * (0.7 + f * 0.5), p.color, 1 - f); }
       else if (p.k === EMBER) { const f = p.t / p.life; art.light(p.x, p.y, 12 * (1 - f) + 4, p.color, 0.8 * (1 - f)); }
