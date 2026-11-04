@@ -38,6 +38,7 @@
       if (e.r >= 200) hitStop(0.04);
       if (e.r >= 400) screenFlash('#FFFFFF', 0.45, 0.22);
     });
+    E.on('status:react', function (e) { shake(e.reaction === 'implosion' || e.reaction === 'shatter' ? 0.16 : 0.08); if (e.reaction === 'implosion') hitStop(0.04); });
     E.on('weapon:fire', function (e) { if (e.kind === 'thrown') shake(0.02); });
     E.on('pickup:collect', function (e) { if (e.type === 'chest') shake(0.1); });
     E.on('boss:phase', function (e) { if (e.phase > 0) { shake(0.5, true); hitStop(0.08); } });

@@ -101,7 +101,7 @@
     for (let i = 0; i < KEYS.length; i++) out[KEYS[i]] = 0;
     for (const k in L) out[k] = L[k];
     out.dmg = L.dmg * S.damage; out.rate = L.rate * S.attackSpeed; out.speed = L.speed * S.projSpeed; out.range = L.range * S.range;
-    out.count = L.count + Math.round(S.projectiles); out.pierce = L.pierce >= 99 ? L.pierce : L.pierce + Math.round(S.pierce);
+    out.count = L.count + Math.round(S.projectiles); out.pierce = L.pierce >= 99 ? L.pierce : L.pierce + Math.round(S.pierce) + (NR.reactions && NR.reactions.setActive(p, 'physical') ? 1 : 0);
     out.area = L.area * S.area; out.knock = L.knock * S.knockback;
     return out;
   }

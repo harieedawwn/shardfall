@@ -11,7 +11,7 @@
     void: { dur: 4, vuln: 0.2 }
   };
   const STATUS_OF = { fire: 'burn', ice: 'chill', shock: 'shock', poison: 'poison', void: 'void' };
-  const TICK = 0.5, FROZEN_VULN = 1.25, SLOW_CAP = 0.6, BOSS_SLOW_CAP = 0.4;
+  const TICK = 0.5, FROZEN_VULN = 1.25, ICE_SET_VULN = 0.25, SLOW_CAP = 0.6, BOSS_SLOW_CAP = 0.4;
   const NO = {};
 
   const crit = { crit: false, mult: 1 };
@@ -45,7 +45,7 @@
     const st = e.status;
     let m = dot ? 1 : NR.stats.armorMult(e.armor || 0);
     if (st) {
-      if (st.frozen && st.frozen.t > 0) m *= FROZEN_VULN;
+      if (st.frozen && st.frozen.t > 0) m *= FROZEN_VULN + (NR.reactions && NR.reactions.setActive(W().player, 'ice') ? ICE_SET_VULN : 0);
       if (st.void && st.void.t > 0) m *= 1 + ST.void.vuln * (st.void.pw || 1) * (e.isBoss ? 0.5 : 1);
     }
     const dealt = Math.max(1, dmg * m);
@@ -62,10 +62,13 @@
     NR.events.emit('damage:dealt', dmgP);
     if (killed) {
       NR.enemies.kill(e, wid);
-    } else if (sChance > 0 && !o.noStatus) {
-      const p = W().player, pw = p ? NR.stats.get(p, 'statusPower') : 1;
-      const s = STATUS_OF[el];
-      if (s && NR.rng.chance(Math.min(1, sChance * pw))) applyStatus(e, s, pw, dmg, wid, (noChain ? 1 : 0) | (sp ? 2 : 0));
+    } else {
+      if (!dot && st && NR.reactions) NR.reactions.check(e, el, dmg, wid);
+      if (sChance > 0 && !o.noStatus && !e.dead) {
+        const p = W().player, pw = p ? NR.stats.get(p, 'statusPower') : 1;
+        const s = STATUS_OF[el];
+        if (s && NR.rng.chance(Math.min(1, sChance * pw))) applyStatus(e, s, pw, dmg, wid, (noChain ? 1 : 0) | (sp ? 2 : 0));
+      }
     }
     if (!dot && wid) {
       const p = W().player, ls = p ? NR.stats.get(p, 'lifesteal') : 0;
@@ -96,7 +99,7 @@
     } else if (status === 'poison') {
       const o = s.poison || (s.poison = { t: 0, dps: 0, acc: 0, src: null, stacks: 0 });
       if (o.t <= 0) o.stacks = 0;
-      o.stacks = Math.min(ST.poison.max, o.stacks + 1); stacks = o.stacks;
+      o.stacks = Math.min(ST.poison.max + (NR.reactions && NR.reactions.setActive(W().player, 'poison') ? 1 : 0), o.stacks + 1); stacks = o.stacks;
       const dps = srcDmg * ST.poison.dot * power;
       o.dps = o.t > 0 ? Math.max(o.dps, dps) : dps; o.t = ST.poison.dur * power; o.src = wid || o.src;
     } else if (status === 'chill' || status === 'freeze') {
@@ -168,6 +171,7 @@
       const p = W().player;
       if (p && !p.dead && NR.util.dist2(x, y, p.x, p.y) <= (r + p.r) * (r + p.r)) { damagePlayer(dmg, 0, {}); n = 1; }
     }
+    if (o.silent) return n;
     exP.x = x; exP.y = y; exP.r = r; exP.element = el; exP.team = team; exP.weaponId = o.weaponId || null;
     NR.events.emit('area:explode', exP);
     return n;
@@ -194,7 +198,7 @@
 
   function chain(e, dmg, o) {
     o = o || NO;
-    const jumps = o.jumps === undefined ? 3 : o.jumps, range = o.range || 120, fall = o.falloff === undefined ? 0.5 : o.falloff;
+    const jumps = (o.jumps === undefined ? 3 : o.jumps) + (NR.reactions && NR.reactions.setActive(W().player, 'shock') ? 1 : 0), range = o.range || 120, fall = o.falloff === undefined ? 0.5 : o.falloff;
     const wid = o.weaponId || null, el = o.element || 'shock';
     const vis = grab(), near = grab();
     vis.length = 0;
@@ -232,7 +236,7 @@
   function pull(e, x, y, strength) {
     const dx = x - e.x, dy = y - e.y, d = Math.sqrt(dx * dx + dy * dy);
     if (d < 14) return;
-    const k = strength * (e.isBoss ? 0.1 : 1) / d;
+    const k = strength * (e.isBoss ? 0.1 : 1) * (NR.reactions && NR.reactions.setActive(W().player, 'void') ? 1.5 : 1) / d;
     e.kbx = (e.kbx || 0) + dx * k; e.kby = (e.kby || 0) + dy * k;
   }
 

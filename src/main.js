@@ -32,7 +32,7 @@
     const canvas = hasDom ? document.getElementById('game') : null;
     const root = hasDom ? document.getElementById('ui') : null;
     NR.input.init(canvas);
-    initAll(['run', 'meta', 'items', 'pickups', 'enemies', 'bosses', 'director', 'progression', 'shop', 'weapons', 'projectiles', 'combat']);
+    initAll(['run', 'meta', 'items', 'pickups', 'enemies', 'bosses', 'director', 'progression', 'shop', 'weapons', 'projectiles', 'combat', 'reactions']);
     if (NR.fx) {
       initAll(['fx.art']);
       if (canvas && NR.fx.render) NR.fx.render.init(canvas);

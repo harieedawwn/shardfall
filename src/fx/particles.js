@@ -63,6 +63,7 @@
     E.on('weapon:evolve', function () { const p = NR.world.get().player; if (p) { ring(p.x, p.y, 110, '#FFD43B', 0.5); burst('star', p.x, p.y, '#FFD43B', 14, { speed: 220 }); } });
     E.on('projectile:impact', onImpact);
     E.on('chain:arc', onArc);
+    E.on('status:react', onReact);
     E.on('area:explode', onExplode);
     E.on('player:hurt', onHurt);
     E.on('player:dash', onDash);
@@ -219,6 +220,36 @@
     else if (e.surface === 'player') burst('hit', e.x, e.y, col, 4, { speed: 220 });
     else if (e.surface === 'expire') burst('spark', e.x, e.y, col, 2, { speed: 90 });
     else if (e.surface === 'enemy' && e.team === 'player') { burst(e.element === 'ice' ? 'star' : 'spark', e.x, e.y, col, 3, { speed: 200 }); if (e.element === 'fire') embers(e.x, e.y, '#FFB347', 2, 120); }
+  }
+  // reactions: one distinct burst per reaction (flat shapes only) plus the reaction's name floating up from the target
+  function onReact(e) {
+    const d = NR.data.reactions && NR.data.reactions[e.reaction], col = d ? d.color : '#F2EFE6', r = e.r || 90, x = e.x, y = e.y;
+    switch (e.reaction) {
+      case 'shatter':
+        burst('star', x, y, '#BFE9F7', 18, { speed: 340, size: 5 }); burst('chip', x, y, '#F2EFE6', 10, { speed: 260, size: 4 });
+        ring(x, y, r, col, 0.35, { w: 8 }); ring(x, y, r * 0.55, '#FFFFFF', 0.22, { w: 4 });
+        for (let k = 0; k < 6; k++) { const a = k * TAU / 6 + rnd() * 0.4; bolt([{ x: x, y: y }, { x: x + Math.cos(a) * r * 0.6, y: y + Math.sin(a) * r * 0.6 }, { x: x + Math.cos(a + 0.2) * r, y: y + Math.sin(a + 0.2) * r }], '#EAF4FB', 0.16); }
+        break;
+      case 'toxic_blast':
+        smoke(x, y, '#6FA83A', 7, r * 0.5, 70, 1.1); burst('drop', x, y, col, 14, { speed: 220, size: 4, vy: -40 });
+        ring(x, y, r, col, 0.4, { w: 9 }); ring(x, y, r * 0.5, '#CDEFA0', 0.28, { w: 5 });
+        break;
+      case 'superconduct':
+        for (let k = 0; k < 7; k++) { const a = rnd() * TAU; bolt([{ x: x, y: y }, { x: x + Math.cos(a) * r * 0.5, y: y + Math.sin(a) * r * 0.5 }, { x: x + Math.cos(a + 0.4) * r, y: y + Math.sin(a + 0.4) * r }], k % 2 ? '#FFFFFF' : col, 0.24); }
+        ring(x, y, r * 0.5, col, 0.3, { w: 6 }); burst('spark', x, y, col, 12, { speed: 360 });
+        break;
+      case 'implosion':
+        burst('death', x, y, '#2A1E3F', 16, { speed: -230, size: 5, life: 0.5 }); burst('star', x, y, col, 10, { speed: -200 });
+        ring(x, y, r, col, 0.45, { w: 10 }); ring(x, y, r * 0.35, '#F1E0FF', 0.3, { w: 8 }); glow(x, y, col, r * 0.8, 0.22);
+        break;
+      default: // steam
+        smoke(x, y, '#DCE8F2', 8, r * 0.55, 45, 1.2); burst('drop', x, y, '#FFFFFF', 8, { speed: 120, size: 3, vy: -50 });
+        ring(x, y, r, col, 0.4, { w: 6 });
+    }
+    if (d && settings().damageNumbers !== false) {
+      const nm = NR.i18n.text(d.name), up = (function () { try { return nm.toLocaleUpperCase(NR.i18n.getLang()); } catch (er) { return nm.toUpperCase(); } })();
+      text(x, y - (e.target ? e.target.r : 10) - 22, up, col, 17, 0, 0, true);
+    }
   }
   function onArc(e) { bolt(e.points, elColor(e.element), 0.2); }
   function onExplode(e) {

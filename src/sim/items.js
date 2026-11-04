@@ -184,7 +184,7 @@
     const f = function () { const p = W().player; if (p) checkEvolutions(p); };
     E.on('weapon:gain', f); E.on('item:gain', f);
     E.on('enemy:death', function (e) { fire('kill', e); });
-    E.on('damage:dealt', function (e) { if (!(typeof e.weaponId === 'string' && e.weaponId.indexOf('item:') === 0)) fire('hit', e); });
+    E.on('damage:dealt', function (e) { if (!(typeof e.weaponId === 'string' && (e.weaponId.indexOf('item:') === 0 || e.weaponId.indexOf('reaction:') === 0))) fire('hit', e); });
     E.on('player:dash', function (e) { fire('dash', e); });
     E.on('player:hurt', function (e) {
       if (e.dodged) { fire('dodge', e); return; }

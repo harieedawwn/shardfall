@@ -1526,8 +1526,8 @@
     drawCombo(x1 - (L.touch ? 56 * u : 0), goldBottom + 8 * u);
     drawBoss(W, cw, y0 + 62 * u, vitalsW);
     drawDash(p, cw, y1);
-    if (L.touch) drawWeaponsRow(p, x0 + 66 * u, y0 + 52 * u);
-    else { drawWeapons(p, x0, y1); drawItems(p, x0, y1 - 58 * u); }
+    if (L.touch) { drawWeaponsRow(p, x0 + 66 * u, y0 + 52 * u); drawSets(p, x0 + 66 * u, y0 + 52 * u + 36 * u); }
+    else { drawWeapons(p, x0, y1); drawItems(p, x0, y1 - 58 * u); drawSets(p, x0, y1 - 58 * u - (Object.keys(p.items).length ? 32 : 0) * u - 28 * u); }
     drawBanner(cw, ch);
     drawAlerts(p, W, cw, ch);
     drawToasts(cw, y1 - 34 * u);
@@ -1717,6 +1717,24 @@
       drawWeaponIcon(ctx, w.id, x + sz / 2, y + sz / 2, 10 * u, r.cool ? mute(col) : col, { line: 1.6 * u, shadow: 1.2 * u, cool: r.cool });
       if (r.cool) { ctx.fillStyle = col; ctx.fillRect(x + 4 * u, y + sz - 6 * u, (sz - 8 * u) * r.ready, 2.5 * u); }
       label(def && def.evolved ? '★' : String(w.lvl), x + sz - 3 * u, y + 5 * u, 12, C.cream, 'right', true);
+    }
+  }
+  // element set progress: pills for elements with 2+ weapons (or an active set). Active = coloured fill + the bonus text
+  function drawSets(p, x0, y) {
+    if (!NR.reactions || !NR.reactions.sets) return;
+    const list = NR.reactions.sets(p), min = NR.data.setMin || 3;
+    let x = x0, shown = 0;
+    for (let i = 0; i < list.length && shown < 2; i++) {
+      const q = list[i];
+      if (q.count < 2 && !q.active) continue;
+      const def = NR.data.sets[q.element], col = NR.config.ELEMENT_COLORS[q.element] || C.cream;
+      const head = upper(tx(def.name)) + ' ' + Math.min(q.count, min) + '/' + min, txt = q.active ? head + ' · ' + tx(def.desc) : head;
+      ctx.font = '800 ' + Math.round(12 * u) + 'px ' + FB;
+      const w = (ctx.measureText ? ctx.measureText(txt).width : txt.length * 7) + 26 * u, h = 22 * u;
+      box(x, y, w, h, q.active ? C.panel : C.track, 2 * u, 8 * u);
+      ctx.fillStyle = q.active ? col : C.mute; ctx.fillRect(x + 7 * u, y + h / 2 - 4 * u, 8 * u, 8 * u);
+      label(txt, x + 20 * u, y + h / 2 + 0.5 * u, 12, q.active ? col : C.mute, 'left');
+      y -= 0; x += w + 8 * u; shown++;
     }
   }
   const muteCache = {};

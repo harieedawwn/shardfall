@@ -280,6 +280,15 @@
     }
     return out;
   }
+  // element set progress on a weapon card: "Fire Set 2/3", or what buying it would complete
+  function setTag(d, p, owned) {
+    const R = NR.reactions, S = NR.data.sets && NR.data.sets[d.element];
+    if (!R || !S) return null;
+    const min = NR.data.setMin || 3, have = R.setCount(p, d.element), name = tx(S.name);
+    if (have >= min) return h('span', 'chip set on el-' + d.element, t('set.active', { name: name }));
+    if (!owned && have + 1 >= min) return h('span', 'chip set soon el-' + d.element, t('set.completes', { name: name, bonus: tx(S.desc) }));
+    return h('span', 'chip set el-' + d.element, t('set.progress', { name: name, n: have + (owned ? 0 : 1), m: min }));
+  }
   function itemInfo(d) { return tx(d.desc) || modsText(d.mods); }
   function evoFor(id) { const ev = NR.data.evolutions || []; for (let i = 0; i < ev.length; i++) if (ev[i].weapon === id) return ev[i]; return null; }
   function weaponTip(id, lvl) {
@@ -508,7 +517,7 @@
     body.appendChild(h('div', 'otop', [iconOf(o.kind, o.id, 46), h('div', 'oname', [h('b', 'nm', tx(d.name)),
       o.kind === 'weapon' ? h('small', 'upg', owned ? t('shop.upgrade', { a: owned.lvl, b: Math.min(owned.lvl + 1, NR.config.MAX_LEVEL) }) : t('shop.new')) : (owned === null && NR.items.count(p, o.id) ? h('small', 'upg', t('shop.owned', { n: NR.items.count(p, o.id) })) : null)])]));
     body.appendChild(h('p', 'od', o.kind === 'weapon' ? tx(d.desc) : itemInfo(d)));
-    if (o.kind === 'weapon') body.appendChild(h('div', 'chips', weaponChips(d, owned ? Math.min(owned.lvl + 1, NR.config.MAX_LEVEL) : 1)));
+    if (o.kind === 'weapon') { const chips = weaponChips(d, owned ? Math.min(owned.lvl + 1, NR.config.MAX_LEVEL) : 1), st = setTag(d, p, !!owned); if (st) chips.push(st); body.appendChild(h('div', 'chips', chips)); }
     else if ((d.mods || []).length && tx(d.desc)) body.appendChild(h('div', 'chips', h('span', 'chip', modsText(d.mods))));
     card.appendChild(body);
     if (o.sold) card.appendChild(h('div', 'stamp', t('shop.sold')));
@@ -938,12 +947,14 @@
       if (!rows.length) R.appendChild(h('p', 'none', t('end.noDamage')));
       const tb = h('table', 'dtab'); const tbody = h('tbody');
       rows.forEach(function (r) {
-        const d = NR.data.weapons[r[0]];
+        const d = NR.data.weapons[r[0]], pre = r[0].indexOf(':') > 0 ? r[0].split(':') : null;
+        const alt = pre && pre[0] === 'item' ? NR.data.items[pre[1]] : pre && pre[0] === 'reaction' ? NR.data.reactions[pre[1]] : null;
+        const nameStr = d ? tx(d.name) : alt ? t(pre[0] === 'item' ? 'end.itemProc' : 'end.reaction', { name: tx(alt.name) }) : t('end.other');
         const fill = h('i', '', '');
         fill.style.width = Math.max(2, Math.round(r[1] / top * 100)) + '%';
-        fill.style.background = (d && d.color) || '#C9A24B';
+        fill.style.background = (d && d.color) || (alt && alt.color) || '#C9A24B';
         tbody.appendChild(h('tr', '', [
-          h('td', 'dn', [d ? iconOf('weapon', r[0], 26) : null, h('span', '', d ? tx(d.name) : t('end.other'))]),
+          h('td', 'dn', [d ? iconOf('weapon', r[0], 26) : (pre && pre[0] === 'item' && alt ? iconOf('item', pre[1], 26) : null), h('span', '', nameStr)]),
           h('td', 'db', h('span', 'dbar', fill)),
           h('td', 'dv', num(Math.round(r[1]))), h('td', 'dp', total > 0 ? Math.round(r[1] / total * 100) + '%' : '0%')
         ]));

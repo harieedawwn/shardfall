@@ -40,6 +40,8 @@ Contract for six parallel builders (**Core, Arsenal, Horde, Progression, FX, UI*
 - **Items legendary (4)**: `glass_cannon` big damage, less maxHp; `time_dial` dash slows enemies briefly; `golden_skull` goldGain+luck; `echo_stone` kills release a free shockwave.
 - **Upgrade stat keys (20 cards × 4 rarities)**: `maxHp hpRegen armor dodge moveSpeed dashCharges dashCooldown damage attackSpeed critChance critDamage area range projectiles pierce pickupRange xpGain goldGain luck statusPower`.
 - **Enemies (12)**: `grunt` walker, baseline; `swarmer` tiny fast packs; `spitter` keeps range, slow shots; `brute` slow, tanky; `bomber` runs in, fuse blast; `lunger` telegraphed line dash; `sniper` far, long telegraph, fast shot; `shielder` frontal shield blocks bullets; `summoner` stays back, spawns `swarmer`; `splitter` splits in two on death; `medic` heals allies; `phantom` blinks untargetable then strikes.
+- **Element reactions (5, `NR.data.reactions`)**: a non-DoT hit of one element on an enemy already carrying another status triggers one reaction (first matching row; per-enemy cooldown `cd`; max 5 per tick; reaction hits never react or proc items). `shatter` (physical/shock on frozen: area blast, consumes freeze); `toxic_blast` (fire+poison: gas burst spreading poison); `superconduct` (shock on chill: 6 jumps, 190 px); `implosion` (void+fire: pulls then blasts); `steam` (fire on chill / ice on burn: 3 s slowing cloud). Damage is attributed to `reaction:<id>`.
+- **Element sets (`NR.data.sets`, `NR.data.setMin = 3`)**: 3+ weapons of one element (evolved count) activate: physical +1 pierce; fire burning kills spread burn; ice +25% damage vs frozen; shock +1 chain jump; poison +1 max stack; void pull ×1.5.
 - **Affixes (4)**: `hasty` faster; `plated` damage reduction; `volatile` death blast; `regen` heals over time. Elites carry 1 (2 at danger ≥4) and drop a `chest`.
 - **Bosses (3)**: `scrap_titan` (scrap, 2 phases: stomp rings, bolt volleys, summons grunts); `frost_warden` (frost, 3: spike fans, freeze nova, charge); `void_maw` (void, 3: pull vortex, orb spirals, enraged + phantoms).
 - **Pickups (6)**: `xp_shard` XP; `gold` Gold; `heart` heal; `magnet` pulls all pickups; `nova_bomb` screen-wide blast; `chest` item or Gold burst.
@@ -96,6 +98,7 @@ Contract for six parallel builders (**Core, Arsenal, Horde, Progression, FX, UI*
 | `projectile:impact` | x,y,r,element,team,surface(wall/enemy/player/expire) | projectiles | fx.particles, fx.floor, fx.audio |
 | `damage:dealt` | weaponId,target,isBoss,amount,crit,element,x,y,killed | combat | run, items, fx.juice, fx.particles, fx.audio |
 | `status:apply` | target,status,stacks,x,y | combat | fx.particles, fx.audio |
+| `status:react` | reaction,target,x,y,element,r | reactions | run, fx.particles, fx.audio, fx.juice |
 | `chain:arc` | points[{x,y}],element | combat | fx.particles, fx.audio |
 | `area:explode` | x,y,r,element,team,weaponId | combat | fx.particles, fx.floor, fx.juice, fx.audio |
 | `player:hurt` | amount,hp,srcId,dodged,revived,x,y | player | items, run, fx.juice, fx.particles, fx.audio, ui.hud |
@@ -150,6 +153,7 @@ Each data file sets `NR.data.<name> = {id: def}` (insertion order = display orde
 | `NR.main` | `boot()`: init modules, wire loop callbacks (`step=run.step`, `frame` calls `fx.*.update`, `ui.hud.update`, `NR.input.consumePause`→`run.togglePause`), show menu; `?stress=1` spawns the 400/600/1500 scenario |
 | `NR.weapons` | `reset()`; `update(dt)`: cooldowns, orbits, drones, auras; `add(p,weaponId)→{ok,slot,level,reason}`; `canAdd(p,weaponId)→bool`; `remove(p,slot)→weaponId`; `evolve(p,slot,intoId)`; `def(id)→def`; `resolve(p,slot)→numbers` final stats for tooltips |
 | `NR.projectiles` | `reset()`; `spawn(opts)→proj/null`: any team; `update(dt)`; `clearHostile()` |
+| `NR.reactions` | `init()`; `reset()`; `check(e,element,hit,weaponId)→id/''`: called by `combat.hitEnemy`; `setCount(p,element)→n`; `setActive(p,element)→bool`; `sets(p)→[{element,count,active}]` |
 | `NR.combat` | `reset()`; `hitEnemy(e,dmg,opts{weaponId,element,crit,kx,ky,statusChance,noChain})→dealt`; `damagePlayer(amount,srcId,opts)→bool`: dodge, armor, i-frames; `critRoll(p,bonus)→{crit,mult}`; `applyStatus(e,status,power,srcDmg)`; `explode(x,y,r,dmg,opts{team,element,weaponId,knock})→n`; `createArea(opts)→area`; `chain(e,dmg,opts)→n`; `pull(e,x,y,strength)`; `update(dt)`: areas, DoTs, knockback |
 | `NR.enemies` | `reset()`; `spawn(defId,x,y,opts{hpMult,dmgMult,speedMult,affixes})→enemy/null`; `update(dt)`; `kill(e,weaponId)`: emits death, routes bosses; `applyAffix(e,id)`; `dissolveAll()`; `def(id)→def`; `alive()→n` |
 | `NR.bosses` | `reset()`; `spawn(bossId,opts)→boss`; `update(dt)`: phases, patterns; `kill(b)`; `def(id)→def` |
@@ -182,7 +186,7 @@ Each data file sets `NR.data.<name> = {id: def}` (insertion order = display orde
 - **Draw order**: 1 floor + decals + telegraphs → 2 shadows pass → 3 pickups → 4 enemies/boss → 5 areas (arc, beam, cloud, rings) → 6 drones, orbit blades → 7 enemy projectiles → 8 player projectiles → 9 player (+afterimages) → 10 particles/debris/rings → 11 damage numbers. HUD/menus are DOM above the canvas.
 - `globalAlpha` stays 1 except the final fade of particles/decals; never stack translucent shapes to fake glow. UI: solid panels, 3 px ink borders, `box-shadow: Npx Npx 0 <color>` only (blur 0), `text-shadow: Npx Npx 0` only, system bold font stack with Vietnamese support.
 - **Banned** (canvas and CSS, in src and css): `createLinearGradient`, `createRadialGradient`, `createConicGradient`, `shadowBlur`, `shadowColor`, `ctx.filter`, `globalCompositeOperation` of `lighter/screen/plus-lighter/color-dodge`, CSS `linear/radial/conic/repeating-*-gradient`, `blur()`, `filter`, `backdrop-filter`, `mix-blend-mode`, any box-shadow/text-shadow with blur radius >0.
-- **Audio** (WebAudio only, no samples): oscillator (square/saw/tri) + noise-buffer voices with ADSR, ≤32 voices; buses master/music/sfx from settings. SFX ids: `shoot_light shoot_heavy shoot_beam swing hit crit kill kill_big hurt dodge dash pickup_xp pickup_gold pickup_heart pickup_special explode chain freeze burn levelup evolve buy deny boss_roar wave_start wave_clear ui_click ui_open victory defeat`. Music (step-sequenced loops): `menu zone_scrap zone_frost zone_void boss shop victory`.
+- **Audio** (WebAudio only, no samples): oscillator (square/saw/tri) + noise-buffer voices with ADSR, ≤32 voices; buses master/music/sfx from settings. SFX ids: `react_shatter react_toxic react_shock react_void react_steam shoot_light shoot_heavy shoot_beam swing hit crit kill kill_big hurt dodge dash pickup_xp pickup_gold pickup_heart pickup_special explode chain freeze burn levelup evolve buy deny boss_roar wave_start wave_clear ui_click ui_open victory defeat`. Music (step-sequenced loops): `menu zone_scrap zone_frost zone_void boss shop victory`.
 ## 13 Performance
 - Target 60 FPS on an integrated GPU with 400 enemies, 600 projectiles, 1500 particles (`CAPS`). Budget per frame: sim ≤6 ms, render ≤8 ms.
 - Pool all entities and particles (`NR.pool`); no per-tick allocation of objects/arrays/closures in sim loops; spatial grid for all proximity queries; reusable `out` arrays.
@@ -191,7 +195,7 @@ Each data file sets `NR.data.<name> = {id: def}` (insertion order = display orde
 - `node tests/run.js`: runs `tests/{core,arsenal,horde,progression,fx,ui}.test.js`, prints pass/fail, exit 1 on any failure.
 - `node tests/run.js --sim <seconds> --seed <n> --char <id> --danger <n>`: headless bot run, prints JSON `{state,wave,kills,ticks,msPerTick,damageByWeapon,hash}`; exit 1 on exception.
 - `tests/harness.js` loads files in §6 order via `vm` with no DOM; fx tests use `NR.fakeCanvas`, ui tests use `fakeDom()`. `tests/bot.js` kites, aims at nearest, dashes when hit, takes first card, buys best affordable.
-- Each owner tests own modules: formulas, schema validation of own data (ids vs §4, `{vi,en}` present), event payloads vs §8, API signatures vs §10. Core adds the determinism, banned-feature scan and perf tests.
+- `tests/reactions.test.js` covers reactions and sets. Each owner tests own modules: formulas, schema validation of own data (ids vs §4, `{vi,en}` present), event payloads vs §8, API signatures vs §10. Core adds the determinism, banned-feature scan and perf tests.
 ## 15 Acceptance
 1. Double-click `index.html` (file://): boots to menu, no console errors, no network requests, no `type="module"`, all paths relative; `.nojekyll` present (GitHub Pages ready).
 2. `node tests/run.js` exits 0 with all six suites.

@@ -1,7 +1,7 @@
 (function () {
   const NR = globalThis.NR = globalThis.NR || {};
   const CLEAR_TIME = 1.5;
-  const RESET_MODULES = ['weapons', 'projectiles', 'combat', 'enemies', 'bosses', 'director', 'items', 'progression', 'shop', 'pickups'];
+  const RESET_MODULES = ['weapons', 'projectiles', 'combat', 'reactions', 'enemies', 'bosses', 'director', 'items', 'progression', 'shop', 'pickups'];
   const stateP = { from: '', to: '' };
   const startP = { seed: 0, charId: '', danger: 0, endless: false };
   const endP = { result: '', stats: null };
@@ -20,6 +20,7 @@
     E.on('player:dash', function () { W().stats.dashes++; });
     E.on('enemy:death', function () { W().stats.kills++; });
     E.on('boss:death', function () { W().stats.bossesKilled++; });
+    E.on('status:react', function () { W().stats.reactions++; });
     E.on('damage:dealt', function (e) {
       const d = W().stats.damageByWeapon, id = e.weaponId || 'other';
       d[id] = (d[id] || 0) + e.amount;

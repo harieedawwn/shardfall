@@ -471,10 +471,15 @@ module.exports = function (H) {
     const core1 = ['config', 'util', 'rng', 'events', 'stats', 'spatial', 'pool'].map(function (n) { return 'src/core/' + n + '.js'; });
     eq(list.slice(0, 7), core1); eq(list.slice(7, 9), ['src/lang/vi.js', 'src/lang/en.js']);
     eq(list.slice(9, 14), ['i18n', 'save', 'input', 'camera', 'loop'].map(function (n) { return 'src/core/' + n + '.js'; }));
-    const sim = ['world', 'player', 'weapons', 'projectiles', 'combat', 'enemies', 'bosses', 'director', 'items', 'progression', 'shop', 'pickups', 'meta', 'run'].map(function (n) { return 'src/sim/' + n + '.js'; });
-    eq(list.filter(function (s) { return /^src\/sim\//.test(s); }), sim);
-    eq(list.filter(function (s) { return /^src\/fx\//.test(s); }), ['shapes', 'art', 'actors', 'render', 'title', 'particles', 'floor', 'juice', 'audio'].map(function (n) { return 'src/fx/' + n + '.js'; }));
-    eq(list.filter(function (s) { return /^src\/ui\//.test(s); }), ['hud', 'screens', 'touch'].map(function (n) { return 'src/ui/' + n + '.js'; }));
+    // new files may be added anywhere in their group; the files SPEC 6 names must keep their relative order
+    const sub = function (re, names, dir) {
+      const exp = names.map(function (n) { return dir + n + '.js'; }), got = list.filter(function (s) { return re.test(s) && exp.indexOf(s) >= 0; });
+      eq(got, exp);
+    };
+    sub(/^src\/sim\//, ['world', 'player', 'weapons', 'projectiles', 'combat', 'enemies', 'bosses', 'director', 'items', 'progression', 'shop', 'pickups', 'meta', 'run'], 'src/sim/');
+    sub(/^src\/fx\//, ['shapes', 'art', 'actors', 'render', 'title', 'particles', 'floor', 'juice', 'audio'], 'src/fx/');
+    sub(/^src\/ui\//, ['hud', 'screens', 'touch'], 'src/ui/');
+    ok(list.indexOf('src/sim/reactions.js') > list.indexOf('src/sim/combat.js'), 'reactions after combat');
     eq(list[list.length - 1], 'src/main.js'); ok(fs.existsSync(path.join(H.ROOT, '.nojekyll')));
     ok(list.indexOf('src/data/weapons.js') > list.indexOf('src/core/loop.js') && list.indexOf('src/data/meta.js') < list.indexOf('src/sim/world.js'));
   });

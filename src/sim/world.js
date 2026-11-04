@@ -28,7 +28,7 @@
       enemies: [], projectiles: [], areas: [], pickups: [], drones: [], boss: null,
       shop: { offers: [], rerolls: 0 }, levelup: { cards: [], level: 0, rerolls: 0 },
       scale: NR.stats.enemyScale(1, danger),
-      stats: { kills: 0, goldEarned: 0, damageTaken: 0, dashes: 0, bossesKilled: 0, shardsEarned: 0, damageByWeapon: {} }
+      stats: { kills: 0, goldEarned: 0, damageTaken: 0, dashes: 0, bossesKilled: 0, shardsEarned: 0, reactions: 0, damageByWeapon: {} }
     };
   }
   // new world; the previous W object is abandoned (always re-read NR.world.get())

@@ -314,6 +314,14 @@
     "hud.breakFree": "GRABBED! DASH TO BREAK FREE",
     "hud.bossHint": "Glowing gold core = weak point. Unload on it then!",
     "hud.barrier": "Barrier! Hold fire until the core opens",
-    "title.kicker": "When the sky shatters"
+    "title.kicker": "When the sky shatters",
+    "set.label": "SET",
+    "set.progress": "{name} {n}/{m}",
+    "set.completes": "Completes {name}: {bonus}",
+    "set.active": "{name} active",
+    "set.need": "{name}: needs {n} weapons of one element ({have}/{n})",
+    "end.itemProc": "Item: {name}",
+    "end.reaction": "Reaction: {name}",
+    "end.reactions": "Element reactions"
   };
 })();

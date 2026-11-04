@@ -85,6 +85,11 @@
     wave_clear: { min: 500, win: 1, v: 0.22, fn: function (t, p, v) { const n = [523, 659, 784, 1046]; for (let i = 0; i < n.length; i++) osc('triangle', n[i], n[i], t + i * 0.08, 0.2, v, sfxBus); } },
     player_death: { min: 800, win: 1, v: 0.4, prio: 2, fn: function (t, p, v) { osc('sawtooth', 420, 28, t, 1, v, sfxBus, 1200); noise(t, 0.8, v * 0.7, 'lowpass', 1600, 100, sfxBus); } },
     evolve: { min: 400, win: 1, v: 0.28, prio: 2, fn: function (t, p, v) { osc('sawtooth', 200, 1200, t, 0.5, v * 0.5, sfxBus, 3000); const n = [784, 1046, 1568]; for (let i = 0; i < n.length; i++) osc('square', n[i], n[i], t + 0.4 + i * 0.07, 0.2, v * 0.4, sfxBus, 3000); } },
+    react_shatter: { min: 90, win: 2, v: 0.3, prio: 1, fn: function (t, p, v) { noise(t, 0.02, v, 'highpass', 6500, 6500, sfxBus); osc('triangle', 2400 * p, 700 * p, t, 0.22, v * 0.5, sfxBus); osc('triangle', 3100 * p, 1200 * p, t + 0.02, 0.18, v * 0.35, sfxBus); noise(t + 0.03, 0.16, v * 0.5, 'bandpass', 5000, 2500, sfxBus); } },
+    react_toxic: { min: 90, win: 2, v: 0.3, prio: 1, fn: function (t, p, v) { osc('sine', 130 * p, 55, t, 0.3, v, sfxBus); noise(t, 0.34, v * 0.8, 'lowpass', 900, 160, sfxBus); osc('sawtooth', 200 * p, 90, t + 0.04, 0.18, v * 0.3, sfxBus, 700); } },
+    react_shock: { min: 90, win: 2, v: 0.3, prio: 1, fn: function (t, p, v) { noise(t, 0.2, v, 'bandpass', 4200 * p, 1200, sfxBus); osc('square', 1500 * p, 300 * p, t, 0.16, v * 0.35, sfxBus, 3500); osc('sine', 80, 50, t, 0.18, v * 0.5, sfxBus); } },
+    react_void: { min: 150, win: 1, v: 0.34, prio: 1, fn: function (t, p, v) { osc('sawtooth', 600 * p, 60, t, 0.35, v * 0.55, sfxBus, 1400); osc('sine', 70, 28, t + 0.28, 0.4, v, sfxBus); noise(t + 0.3, 0.3, v * 0.7, 'lowpass', 1200, 90, sfxBus); } },
+    react_steam: { min: 120, win: 2, v: 0.26, prio: 1, fn: function (t, p, v) { noise(t, 0.5, v, 'highpass', 3000 * p, 7000, sfxBus); osc('sine', 420 * p, 260 * p, t, 0.25, v * 0.25, sfxBus); } },
     ui_click: { min: 30, win: 3, v: 0.16, fn: function (t, p, v) { osc('square', 1200 * p, 900 * p, t, 0.03, v * 0.6, sfxBus, 3000); } },
     ui_hover: { min: 40, win: 3, v: 0.08, fn: function (t, p, v) { osc('sine', 900 * p, 900 * p, t, 0.025, v, sfxBus); } },
     ui_confirm: { min: 80, win: 2, v: 0.2, fn: function (t, p, v) { osc('sine', 660, 660, t, 0.08, v, sfxBus); osc('sine', 990, 990, t + 0.06, 0.12, v, sfxBus); } },
@@ -239,6 +244,7 @@
     E.on('area:explode', function (e) { sfx(e.r >= 200 ? 'explosion_big' : 'explosion'); });
     E.on('chain:arc', function () { sfx('shock'); });
     E.on('status:apply', function () { sfx('status'); });
+    E.on('status:react', function (e) { sfx(e.reaction === 'toxic_blast' ? 'react_toxic' : e.reaction === 'superconduct' ? 'react_shock' : 'react_' + e.reaction); });
     E.on('enemy:attack', function () { sfx('telegraph'); });
     E.on('weapon:evolve', function () { sfx('evolve'); });
     E.on('boss:phase', function (e) { sfx(e.phase > 0 ? 'boss_phase' : 'boss_intro'); });

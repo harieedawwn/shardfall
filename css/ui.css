@@ -85,6 +85,7 @@ small { font-size: 0.82em; font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .chip { display: inline-block; padding: 0.05em 0.5em; background: var(--ink); color: var(--cream); border: 2px solid var(--ink2); font-size: 0.78em; font-weight: 700; }
 .chip.el-fire { color: #FF7A2F; } .chip.el-ice { color: #7FD3F0; } .chip.el-shock { color: #FFD43B; } .chip.el-poison { color: #8BD450; } .chip.el-void { color: #C58CF0; }
+.chip.set { border-style: dashed; } .chip.set.soon { border-style: solid; border-color: currentColor; } .chip.set.on { border-style: solid; border-color: currentColor; background: var(--ink2); }
 .pips { display: inline-flex; gap: 3px; }
 .pips i { width: 0.7em; height: 0.7em; background: var(--ink); border: 2px solid var(--ink2); }
 .pips i.on { background: var(--rc, var(--yellow)); border-color: var(--ink); }

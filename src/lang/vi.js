@@ -314,6 +314,14 @@
     "hud.breakFree": "BỊ BẮT! LƯỚT ĐỂ THOÁT",
     "hud.bossHint": "Lõi sáng vàng = điểm yếu. Dồn sát thương lúc đó!",
     "hud.barrier": "Lá chắn! Ngừng xả, chờ lõi lộ ra",
-    "title.kicker": "Khi bầu trời vỡ vụn"
+    "title.kicker": "Khi bầu trời vỡ vụn",
+    "set.label": "BỘ",
+    "set.progress": "{name} {n}/{m}",
+    "set.completes": "Hoàn thành {name}: {bonus}",
+    "set.active": "{name} đang bật",
+    "set.need": "{name}: cần {n} vũ khí cùng nguyên tố ({have}/{n})",
+    "end.itemProc": "Vật phẩm: {name}",
+    "end.reaction": "Phản ứng: {name}",
+    "end.reactions": "Phản ứng nguyên tố"
   };
 })();
