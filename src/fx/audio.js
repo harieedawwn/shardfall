@@ -6,6 +6,7 @@
 (function () {
   const NR = globalThis.NR = globalThis.NR || {};
   const MAX_VOICES = 26, LOOKAHEAD = 0.25;
+  let verb = null;
   let AC = null, master = null, sfxBus = null, musicBus = null, duck = null, comp = null, noiseBuf = null;
   let inited = false, hidden = false, seed = 90210, ended = [], comboN = 0, comboT = -9;
   let track = null, want = null, duckLevel = 1;
@@ -40,15 +41,25 @@
     ended.push(t0 + dur + 0.03);
   }
 
+  // ---------- weapon layers: transient click, supersonic crack, body thump, low boom, mechanical rattle ----------
+  function gun(t, p, v, size) {
+    noise(t, 0.012, v * 0.9, 'highpass', 5200, 5200, sfxBus);                                  // transient
+    noise(t, 0.05 + size * 0.04, v * 0.85, 'bandpass', 2400 * p, 900 * p, sfxBus);             // crack
+    osc('sine', (150 - size * 40) * p, 42, t, 0.09 + size * 0.12, v * (0.7 + size * 0.5), sfxBus); // body thump
+    noise(t + 0.004, 0.08 + size * 0.25, v * (0.35 + size * 0.5), 'lowpass', 1400 - size * 600, 120, sfxBus); // boom
+    if (size < 0.5) noise(t + 0.045, 0.025, v * 0.18, 'bandpass', 3200 * p, 3200 * p, sfxBus); // action rattle
+  }
   // ---------- sfx recipes: fn(t, pitch, vol) ----------
   const SFX = {
-    shoot_light: { min: 45, win: 4, v: 0.16, fn: function (t, p, v) { osc('square', 900 * p, 320 * p, t, 0.07, v, sfxBus); noise(t, 0.04, v * 0.4, 'highpass', 3500, 3500, sfxBus); } },
-    shoot_heavy: { min: 70, win: 3, v: 0.26, fn: function (t, p, v) { osc('sawtooth', 340 * p, 70 * p, t, 0.17, v, sfxBus, 1800); osc('sine', 130 * p, 48, t, 0.16, v, sfxBus); noise(t, 0.12, v * 0.8, 'lowpass', 2600, 300, sfxBus); } },
-    melee: { min: 90, win: 3, v: 0.22, fn: function (t, p, v) { noise(t, 0.13, v, 'bandpass', 700 * p, 2400 * p, sfxBus); osc('triangle', 320 * p, 150 * p, t, 0.1, v * 0.6, sfxBus); } },
-    hit: { min: 35, win: 5, v: 0.16, fn: function (t, p, v) { noise(t, 0.035, v, 'highpass', 1600, 1600, sfxBus); osc('triangle', 430 * p, 190 * p, t, 0.055, v, sfxBus); } },
-    hit_crit: { min: 60, win: 3, v: 0.22, fn: function (t, p, v) { osc('square', 700 * p, 1500 * p, t, 0.08, v * 0.8, sfxBus); noise(t, 0.06, v, 'highpass', 2200, 2200, sfxBus); osc('sine', 1400 * p, 900 * p, t + 0.05, 0.1, v * 0.6, sfxBus); } },
-    kill: { min: 30, win: 4, v: 0.2, fn: function (t, p, v) { osc('square', 280 * p, 90 * p, t, 0.12, v * 0.7, sfxBus, 1500); noise(t, 0.1, v * 0.7, 'lowpass', 2200, 350, sfxBus); } },
-    kill_big: { min: 90, win: 2, v: 0.32, prio: 2, fn: function (t, p, v) { osc('sine', 130 * p, 38, t, 0.32, v, sfxBus); noise(t, 0.26, v, 'lowpass', 1100, 140, sfxBus); osc('square', 220 * p, 70, t, 0.18, v * 0.5, sfxBus, 900); } },
+    shoot_light: { min: 55, win: 4, v: 0.2, fn: function (t, p, v) { gun(t, p, v, 0.15); } },
+    shoot_heavy: { min: 80, win: 3, v: 0.28, fn: function (t, p, v) { gun(t, p * 0.85, v, 0.85); } },
+    melee: { min: 90, win: 3, v: 0.24, fn: function (t, p, v) {
+      noise(t, 0.16, v, 'bandpass', 380 * p, 2600 * p, sfxBus);                                  // whoosh through the air
+      osc('sine', 1850 * p, 1800 * p, t + 0.03, 0.22, v * 0.12, sfxBus); osc('sine', 2470 * p, 2440 * p, t + 0.03, 0.18, v * 0.08, sfxBus); } },
+    hit: { min: 40, win: 5, v: 0.17, fn: function (t, p, v) { noise(t, 0.05, v, 'lowpass', 900 * p, 250, sfxBus); osc('sine', 190 * p, 70, t, 0.06, v * 0.8, sfxBus); } },
+    hit_crit: { min: 60, win: 3, v: 0.24, fn: function (t, p, v) { noise(t, 0.07, v, 'lowpass', 1400 * p, 220, sfxBus); osc('sine', 150 * p, 45, t, 0.12, v, sfxBus); noise(t, 0.02, v * 0.6, 'highpass', 4000, 4000, sfxBus); } },
+    kill: { min: 35, win: 4, v: 0.2, fn: function (t, p, v) { noise(t, 0.14, v * 0.8, 'lowpass', 1300 * p, 160, sfxBus); osc('sine', 120 * p, 40, t, 0.12, v * 0.7, sfxBus); noise(t + 0.03, 0.06, v * 0.25, 'bandpass', 2600 * p, 1800, sfxBus); } },
+    kill_big: { min: 90, win: 2, v: 0.32, prio: 2, fn: function (t, p, v) { osc('sine', 110 * p, 30, t, 0.36, v, sfxBus); noise(t, 0.34, v, 'lowpass', 1000, 90, sfxBus); noise(t + 0.05, 0.2, v * 0.3, 'bandpass', 2200, 900, sfxBus); } },
     hurt: { min: 120, win: 2, v: 0.34, prio: 2, fn: function (t, p, v) { osc('sawtooth', 220 * p, 60, t, 0.26, v, sfxBus, 1400); noise(t, 0.16, v * 0.8, 'lowpass', 1800, 250, sfxBus); } },
     dodge: { min: 100, win: 2, v: 0.18, fn: function (t, p, v) { osc('sine', 900 * p, 1700 * p, t, 0.1, v, sfxBus); } },
     dash: { min: 90, win: 2, v: 0.22, fn: function (t, p, v) { noise(t, 0.17, v, 'bandpass', 400 * p, 2600 * p, sfxBus); osc('triangle', 200 * p, 520 * p, t, 0.12, v * 0.4, sfxBus); } },
@@ -58,9 +69,13 @@
     pickup_chest: { min: 150, win: 1, v: 0.25, prio: 2, fn: function (t, p, v) { const n = [392, 494, 587, 784]; for (let i = 0; i < n.length; i++) osc('square', n[i] * p, n[i] * p, t + i * 0.07, 0.16, v * 0.5, sfxBus, 2400); } },
     pickup_magnet: { min: 200, win: 1, v: 0.22, fn: function (t, p, v) { osc('sine', 300 * p, 1300 * p, t, 0.3, v, sfxBus); osc('triangle', 600 * p, 1800 * p, t, 0.25, v * 0.5, sfxBus); } },
     levelup: { min: 300, win: 1, v: 0.26, prio: 2, fn: function (t, p, v) { const n = [523, 659, 784, 1046, 1318]; for (let i = 0; i < n.length; i++) osc('square', n[i], n[i], t + i * 0.075, 0.18, v * 0.5, sfxBus, 3000); osc('sine', 1046, 2093, t + 0.35, 0.4, v * 0.5, sfxBus); } },
-    explosion: { min: 80, win: 2, v: 0.34, fn: function (t, p, v) { noise(t, 0.45, v, 'lowpass', 1900, 120, sfxBus); osc('sine', 100 * p, 34, t, 0.4, v, sfxBus); } },
-    explosion_big: { min: 150, win: 1, v: 0.42, prio: 2, fn: function (t, p, v) { noise(t, 0.8, v, 'lowpass', 2200, 90, sfxBus); osc('sine', 85 * p, 28, t, 0.7, v, sfxBus); osc('sawtooth', 160 * p, 40, t, 0.4, v * 0.4, sfxBus, 700); } },
-    shock: { min: 70, win: 3, v: 0.18, fn: function (t, p, v) { noise(t, 0.12, v, 'highpass', 2500, 2500, sfxBus); osc('square', 1500 * p, 220 * p, t, 0.1, v * 0.6, sfxBus); } },
+    explosion: { min: 80, win: 2, v: 0.36, fn: function (t, p, v) {
+      noise(t, 0.012, v, 'highpass', 4000, 4000, sfxBus); noise(t, 0.6, v, 'lowpass', 1500, 70, sfxBus); osc('sine', 75 * p, 26, t, 0.5, v, sfxBus);
+      for (let i = 1; i < 4; i++) noise(t + 0.05 * i + rnd() * 0.04, 0.03, v * 0.25, 'bandpass', 1800 + rnd() * 1500, 1200, sfxBus); } },
+    explosion_big: { min: 150, win: 1, v: 0.44, prio: 2, fn: function (t, p, v) {
+      noise(t, 0.015, v, 'highpass', 3500, 3500, sfxBus); noise(t, 1.1, v, 'lowpass', 1800, 55, sfxBus); osc('sine', 62 * p, 22, t, 0.9, v, sfxBus);
+      for (let i = 1; i < 6; i++) noise(t + 0.07 * i + rnd() * 0.05, 0.04, v * 0.22, 'bandpass', 1500 + rnd() * 2000, 900, sfxBus); } },
+    shock: { min: 70, win: 3, v: 0.18, fn: function (t, p, v) { noise(t, 0.14, v, 'bandpass', 3800 * p, 1600, sfxBus); noise(t, 0.02, v * 0.8, 'highpass', 6000, 6000, sfxBus); osc('sine', 90, 60, t, 0.12, v * 0.4, sfxBus); } },
     status: { min: 90, win: 3, v: 0.1, fn: function (t, p, v) { noise(t, 0.09, v, 'bandpass', 1500 * p, 800, sfxBus); } },
     telegraph: { min: 140, win: 2, v: 0.09, fn: function (t, p, v) { osc('triangle', 280 * p, 340 * p, t, 0.06, v, sfxBus); } },
     boss_intro: { min: 400, win: 1, v: 0.34, prio: 2, fn: function (t, p, v) { osc('sawtooth', 70, 45, t, 0.9, v, sfxBus, 500); osc('sine', 55, 40, t, 1, v, sfxBus); noise(t, 0.7, v * 0.5, 'lowpass', 400, 80, sfxBus); } },
@@ -166,6 +181,13 @@
       const len = Math.max(1, Math.floor(AC.sampleRate)), buf = AC.createBuffer(1, len, AC.sampleRate), data = buf.getChannelData(0);
       for (let i = 0; i < len; i++) data[i] = rnd() * 2 - 1;
       noiseBuf = buf;
+      // short concrete-room reverb (generated impulse) so shots have a tail instead of a dry arcade blip
+      try {
+        const rl = Math.floor(AC.sampleRate * 0.9), ir = AC.createBuffer(2, rl, AC.sampleRate);
+        for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < rl; i++) { const k = i / rl; d[i] = (rnd() * 2 - 1) * Math.pow(1 - k, 3.2) * (i < 40 ? i / 40 : 1); } }
+        verb = AC.createConvolver(); verb.buffer = ir; const wet = AC.createGain(); wet.gain.value = 0.22;
+        sfxBus.connect(verb); verb.connect(wet); wet.connect(master);
+      } catch (e) { verb = null; }
       if (AC.resume) AC.resume();
       applySettings();
       if (want) music(want.id, want.boss);

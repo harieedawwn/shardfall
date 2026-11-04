@@ -265,8 +265,8 @@ module.exports = function (H) {
       c.startItems.forEach(function (it) { ok(p.items[it] === 1, id + ' start item ' + it); });
     });
     eq(Object.keys(weapons).length, 4, 'four different starting weapons'); eq(new Set(Object.values(sig)).size, 4, 'four different stat lines: ' + JSON.stringify(sig));
-    eq(C.ranger.unlock.cost, 0); const costs = ['dasher', 'bulwark', 'tinker'].map(function (i) { return C[i].unlock.cost; });
-    ok(costs.every(function (c) { return c > 0; }) && new Set(costs).size === 3, 'unlock costs ' + costs); eq(NR.data.unlocks.chars.tinker, C.tinker.unlock.cost);
+    eq(C.ranger.unlock.cost, 0); eq(C.dasher.unlock.cost, 0, 'dasher is a second starter'); const costs = ['bulwark', 'tinker'].map(function (i) { return C[i].unlock.cost; });
+    ok(costs.every(function (c) { return c > 0; }) && new Set(costs).size === 2, 'unlock costs ' + costs); eq(NR.data.unlocks.chars.tinker, C.tinker.unlock.cost);
   });
   test('progression: character passives work (steady aim, blade dance, retaliate, engineer)', function () {
     let NR = fresh('ranger', 9), p = W(NR).player; p.vx = p.vy = 0;
@@ -480,9 +480,10 @@ module.exports = function (H) {
     NR.run.start({ charId: 'ranger', seed: 4 }); const p = W(NR).player;
     eq(p.maxHp, 100 + 10 * N.m_hp.max); eq(p.stats.weaponSlots, 5); eq(p.dash.max, 3); eq(p.revives, 1); near(p.stats.damage, 1.05);
     // characters
-    m.shards = 0; eq(NR.meta.charUnlocked('dasher'), false); eq(NR.meta.unlockChar('dasher'), false); m.shards = 1000;
+    eq(NR.meta.charUnlocked('dasher'), true, 'second starter');
+    m.shards = 0; eq(NR.meta.charUnlocked('bulwark'), false); eq(NR.meta.unlockChar('bulwark'), false); m.shards = 1000;
     const ev = []; NR.events.on('meta:change', function (e) { ev.push(e.kind + ':' + e.id); });
-    ok(NR.meta.unlockChar('dasher')); ok(NR.meta.charUnlocked('dasher')); eq(m.shards, 1000 - NR.data.unlocks.chars.dasher); eq(NR.meta.unlockChar('dasher'), false, 'only once'); eq(NR.meta.charUnlocked('ranger'), true);
+    ok(NR.meta.unlockChar('bulwark')); ok(NR.meta.charUnlocked('bulwark')); eq(m.shards, 1000 - NR.data.unlocks.chars.bulwark); eq(NR.meta.unlockChar('bulwark'), false, 'only once'); eq(NR.meta.charUnlocked('ranger'), true);
     // danger unlock by winning, shards credited at run end, codex
     const disc = []; NR.events.on('codex:discover', function (e) { disc.push(e.kind + ':' + e.id); });
     NR.run.start({ charId: 'dasher', danger: 0, seed: 5 }); const W0 = W(NR); W0.wave = 15; W0.stats.kills = 250; const s0 = m.shards;

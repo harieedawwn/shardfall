@@ -13,7 +13,7 @@
   let ctx = null, zone = 'scrap', cw = 1280, ch = 720, pal = FALLBACK_PAL, t = 0;
   let lastFireT = -10, lastFireSlot = 0, lastFireKind = '', lastFireWeapon = '';
   const M = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };   // world -> device transform of this frame (camera applied)
-  let calm = false, blinkT = 0;
+  let calm = false, blinkT = 0, dreadLvl = 0;
   function readM(c) { const m = c.getTransform ? c.getTransform() : null; if (m) { M.a = m.a; M.b = m.b; M.c = m.c; M.d = m.d; M.e = m.e; M.f = m.f; } }
   function resetM(c) { c.setTransform(M.a, M.b, M.c, M.d, M.e, M.f); }
 
@@ -562,8 +562,8 @@
     const dashing = p.dash && p.dash.t > 0, sp = Math.hypot(p.vx || 0, p.vy || 0), moving = sp > 10;
     const flip = Math.cos(p.aim) >= 0 ? 1 : -1;
     const hurt = p.hurtT > 0.19 || p.flash > 0;
-    const variant = hurt && !calm ? AC.V_FLASH : AC.V_STEP_A;
-    const spr = AC.playerSprite(p.charId, r, p.color || '#5FA8D3', variant);
+    const variant = hurt && !calm ? AC.V_FLASH : AC.V_STEP_A, tier = AC.tierOf(p);
+    const spr = AC.playerSprite(p.charId, r, p.color || '#5FA8D3', variant, tier);
     if (!spr) return;
     const R = spr.R, feet = spr.feet, walk = moving ? t * Math.min(16, 7 + sp * 0.03) : 0;
     let sx = 1, sy = 1;
@@ -599,15 +599,26 @@
       // small mouth, a determined smile
       c.strokeStyle = ink; c.lineWidth = 1.8; c.beginPath(); c.arc(ex + flip * gap * 0.1, ey + es * 1.9, es * 0.55, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke();
     }
-    // crest glow
-    art.light(x + flip * R * 0.05 * sx, cy - R * 1.25 * sy, R * 1.3, '#7FE3F5', 0.55);
+    // crest glow, and a shard halo of orbiting motes once the build is strong
+    const cc = AC.crest(p.charId) || '#7FE3F5';
+    art.light(x - flip * R * 0.5 * sx, cy - R * 2.0 * sy, R * (1.2 + tier * 0.4), cc, 0.5 + tier * 0.1);
+    if (tier >= 2) {
+      const n = tier >= 3 ? 6 : 3;
+      for (let i = 0; i < n; i++) {
+        const an = t * 1.6 + i * TAU / n, ox = Math.cos(an) * R * 1.5, oy = Math.sin(an) * R * 0.55;
+        const mx = x + ox, my = cy + oy - R * 0.2;
+        c.fillStyle = NR.config.INK; c.beginPath(); c.moveTo(mx, my - 6); c.lineTo(mx + 4, my); c.lineTo(mx, my + 6); c.lineTo(mx - 4, my); c.closePath(); c.fill();
+        c.fillStyle = cc; c.beginPath(); c.moveTo(mx, my - 4); c.lineTo(mx + 2.5, my); c.lineTo(mx, my + 4); c.lineTo(mx - 2.5, my); c.closePath(); c.fill();
+        art.light(mx, my, 18, cc, 0.5);
+      }
+    }
     // held weapon at the front hand, rotated to the aim (mirrored when aiming left so it never draws upside down)
     const timeSinceFire = t - lastFireT;
     const recoil = timeSinceFire >= 0 && timeSinceFire < 0.12 ? (1 - timeSinceFire / 0.12) * 5 : 0;
     const w0 = p.weapons && p.weapons[0], wId = lastFireWeapon || (w0 ? w0.id : 'pistol');
     const hx = x + flip * R * 0.42, hy = cy + R * 0.32;
     c.save(); c.translate(hx, hy); c.rotate(p.aim); if (flip < 0) c.scale(1, -1); c.scale(1.2, 1.2);
-    drawHeldWeapon(c, wId, evolved(wId), recoil);
+    drawHeldWeapon(c, HELD_ALIAS[wId] || wId, evolved(wId), recoil);
     c.fillStyle = p.color || '#5FA8D3'; c.strokeStyle = ink; c.lineWidth = 2;
     c.beginPath(); c.arc(9 - recoil, 3, 3.4, 0, TAU); c.fill(); c.stroke();
     if (timeSinceFire >= 0 && timeSinceFire < 0.055) {
@@ -1049,7 +1060,9 @@
       art.light(x, y, r * 3.2, art.T.elite, 0.35 + 0.15 * Math.sin(t * 3 + e.id));
     }
     if (ghost < 1) c.globalAlpha = ghost;
-    AC.draw(c, M, AC.enemySprite(e.defId, r, e.color || '#F2EFE6', variant), x, y, flip, sx, sy);
+    const lvl = dreadLvl;
+    AC.draw(c, M, AC.enemySprite(e.defId, r, e.color || '#F2EFE6', variant, lvl), x, y, flip, sx, sy);
+    if (lvl >= 2 && (e.id & 3) === 0) art.light(x, y - r * 0.4, r * 1.6, '#FF2E4D', 0.35);
     resetM(c);
     if (ghost < 1) c.globalAlpha = 1;
     if (tele) {
@@ -1167,7 +1180,8 @@
     }
   }
 
-  const PHYS_SHOT = { pistol: 1, gatling_pistol: 1, scattergun: 1, shredder: 0 };
+  const PHYS_SHOT = { pistol: 1, gatling_pistol: 1, scattergun: 1, smg: 1, venom_bow: 1, shredder: 0 };
+  const HELD_ALIAS = { smg: 'pistol', venom_bow: 'lancer', frost_seeker: 'seeker', chakram: 'saw_ring', railgun: 'lancer', thunder_hammer: 'maul', comet_staff: 'grenade' };
   function drawBullets(c, W, a, enemy) {
     const S = NR.fx.shapes, P = W.projectiles, tint = pal[4], ink = NR.config.INK;
     for (let i = 0; i < P.length; i++) {
@@ -1467,6 +1481,7 @@
     readM(ctx);
     NR.camera.toWorld(0, 0, view);
     calm = !!NR.save.getSettings().reduceFlashing;
+    dreadLvl = W.wave > 10 ? 2 : W.wave > 5 ? 1 : 0;
     if (F.art) F.art.setView(view.x, view.y, view.x + cw, view.y + ch);
     const p = W.player;
     if (F.floor) F.floor.draw(ctx);

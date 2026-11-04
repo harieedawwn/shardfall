@@ -34,3 +34,10 @@ Nhánh: `revamp/visual`. Đọc file này trước khi làm tiếp.
 - `node tests/run.js`: 107/107. `--strict-events`: 106/107 ngay từ baseline (bot 70 s không chạm tới run:end, weapon:evolve,
   chain:arc, area:explode, player:hurt, player:death, boss:phase, boss:death) — lỗi có sẵn, không phải do đợt này.
 - Stress (Chromium headless, 1280×720, DPR 1): ~46–51 FPS, render trung bình ~3.0 ms, p95 ~4.7 ms.
+
+## Đợt yêu cầu thêm (chủ game duyệt thay đổi gameplay)
+- 7 vũ khí mới (tiểu liên, nỏ độc, băng truy, đĩa sét, súng ray, búa sấm, trượng sao chổi); `dasher` mở sẵn cùng `ranger`.
+- Cài đặt `autoAim` (tự ngắm, mọi thiết bị); director thêm tối đa +15% ngân sách quái khi người chơi máu ≥85% và ít quái gần.
+- Baseline hash ghi lại sau thay đổi gameplay có chủ đích (`tools/baseline-hashes.json`).
+- Nhân vật: mũ trùm che mặt tối (không mắt), trang phục 4 bậc theo sức mạnh; quái "dread" bậc 1/2 ở frost/void.
+- Hiệu ứng: khói mềm, quả cầu lửa, tàn lửa phát sáng; âm thanh súng kiểu thực + vang phòng; hào quang icon theo độ hiếm.

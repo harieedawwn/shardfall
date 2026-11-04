@@ -1,6 +1,7 @@
 // Owner: Progression. Meta-progression: Shards, permanent nodes, unlocks, codex. Persisted through NR.save (meta + codex).
 (function () {
   const NR = globalThis.NR = globalThis.NR || {};
+  const STARTERS = ['ranger', 'dasher']; // characters open from the first run
   const chP = { kind: 'shards', id: '' };
   const cdP = { kind: '', id: '' };
   let inited = false;
@@ -37,7 +38,7 @@
     chP.kind = 'node'; chP.id = id; NR.events.emit('meta:change', chP);
     return true;
   }
-  function charUnlocked(id) { return !!NR.data.characters[id] && (id === 'ranger' || M().chars.indexOf(id) >= 0); }
+  function charUnlocked(id) { return !!NR.data.characters[id] && (STARTERS.indexOf(id) >= 0 || M().chars.indexOf(id) >= 0); }
   function unlockCost(id) { const c = NR.data.unlocks.chars[id]; return c === undefined ? 0 : c; }
   function unlockChar(id) {
     const c = NR.data.unlocks.chars[id];

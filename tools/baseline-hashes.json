@@ -1,290 +1,290 @@
 {
  "ranger/s1/d0": {
-  "hash": 4218103381,
+  "hash": 870657949,
   "wave": 4,
-  "kills": 108,
+  "kills": 128,
   "state": "clear"
  },
  "ranger/s1/d0/fx": {
-  "hash": 4218103381,
+  "hash": 870657949,
   "wave": 4,
-  "kills": 108,
+  "kills": 128,
   "state": "clear"
  },
  "ranger/s1/d5": {
-  "hash": 434471374,
+  "hash": 3286994648,
   "wave": 4,
-  "kills": 106,
+  "kills": 119,
   "state": "clear"
  },
  "ranger/s1/d5/fx": {
-  "hash": 434471374,
+  "hash": 3286994648,
   "wave": 4,
-  "kills": 106,
+  "kills": 119,
   "state": "clear"
  },
  "ranger/s2/d0": {
-  "hash": 2252238773,
+  "hash": 2174677509,
   "wave": 4,
-  "kills": 107,
+  "kills": 125,
   "state": "clear"
  },
  "ranger/s2/d0/fx": {
-  "hash": 2252238773,
+  "hash": 2174677509,
   "wave": 4,
-  "kills": 107,
+  "kills": 125,
   "state": "clear"
  },
  "ranger/s2/d5": {
-  "hash": 2461323369,
+  "hash": 2196487935,
   "wave": 4,
-  "kills": 130,
+  "kills": 159,
   "state": "clear"
  },
  "ranger/s2/d5/fx": {
-  "hash": 2461323369,
+  "hash": 2196487935,
   "wave": 4,
-  "kills": 130,
+  "kills": 159,
   "state": "clear"
  },
  "ranger/s3/d0": {
-  "hash": 3535810681,
+  "hash": 2025631854,
   "wave": 4,
-  "kills": 100,
+  "kills": 128,
   "state": "clear"
  },
  "ranger/s3/d0/fx": {
-  "hash": 3535810681,
+  "hash": 2025631854,
   "wave": 4,
-  "kills": 100,
+  "kills": 128,
   "state": "clear"
  },
  "ranger/s3/d5": {
-  "hash": 1832120679,
+  "hash": 3194837097,
   "wave": 4,
-  "kills": 148,
+  "kills": 164,
   "state": "clear"
  },
  "ranger/s3/d5/fx": {
-  "hash": 1832120679,
+  "hash": 3194837097,
   "wave": 4,
-  "kills": 148,
+  "kills": 164,
   "state": "clear"
  },
  "dasher/s1/d0": {
-  "hash": 1517321327,
+  "hash": 3962373663,
   "wave": 4,
-  "kills": 12,
+  "kills": 37,
   "state": "clear"
  },
  "dasher/s1/d0/fx": {
-  "hash": 1517321327,
+  "hash": 3962373663,
   "wave": 4,
-  "kills": 12,
+  "kills": 37,
   "state": "clear"
  },
  "dasher/s1/d5": {
-  "hash": 691034320,
+  "hash": 646493597,
   "wave": 4,
-  "kills": 17,
+  "kills": 13,
   "state": "clear"
  },
  "dasher/s1/d5/fx": {
-  "hash": 691034320,
+  "hash": 646493597,
   "wave": 4,
-  "kills": 17,
+  "kills": 13,
   "state": "clear"
  },
  "dasher/s2/d0": {
-  "hash": 4188834481,
+  "hash": 562595229,
   "wave": 4,
-  "kills": 5,
+  "kills": 19,
   "state": "clear"
  },
  "dasher/s2/d0/fx": {
-  "hash": 4188834481,
+  "hash": 562595229,
   "wave": 4,
-  "kills": 5,
+  "kills": 19,
   "state": "clear"
  },
  "dasher/s2/d5": {
-  "hash": 1221797561,
+  "hash": 2375469688,
   "wave": 4,
-  "kills": 55,
+  "kills": 63,
   "state": "clear"
  },
  "dasher/s2/d5/fx": {
-  "hash": 1221797561,
+  "hash": 2375469688,
   "wave": 4,
-  "kills": 55,
+  "kills": 63,
   "state": "clear"
  },
  "dasher/s3/d0": {
-  "hash": 1272865008,
+  "hash": 3160886907,
   "wave": 4,
   "kills": 6,
   "state": "clear"
  },
  "dasher/s3/d0/fx": {
-  "hash": 1272865008,
+  "hash": 3160886907,
   "wave": 4,
   "kills": 6,
   "state": "clear"
  },
  "dasher/s3/d5": {
-  "hash": 2302187294,
+  "hash": 3227796667,
   "wave": 4,
-  "kills": 52,
+  "kills": 9,
   "state": "clear"
  },
  "dasher/s3/d5/fx": {
-  "hash": 2302187294,
+  "hash": 3227796667,
   "wave": 4,
-  "kills": 52,
+  "kills": 9,
   "state": "clear"
  },
  "bulwark/s1/d0": {
-  "hash": 1843682352,
+  "hash": 3214464798,
   "wave": 4,
-  "kills": 79,
+  "kills": 105,
   "state": "clear"
  },
  "bulwark/s1/d0/fx": {
-  "hash": 1843682352,
+  "hash": 3214464798,
   "wave": 4,
-  "kills": 79,
+  "kills": 105,
   "state": "clear"
  },
  "bulwark/s1/d5": {
-  "hash": 2388886734,
+  "hash": 1043961290,
   "wave": 4,
-  "kills": 69,
+  "kills": 126,
   "state": "clear"
  },
  "bulwark/s1/d5/fx": {
-  "hash": 2388886734,
+  "hash": 1043961290,
   "wave": 4,
-  "kills": 69,
+  "kills": 126,
   "state": "clear"
  },
  "bulwark/s2/d0": {
-  "hash": 58637879,
+  "hash": 3926996229,
   "wave": 4,
-  "kills": 96,
+  "kills": 103,
   "state": "clear"
  },
  "bulwark/s2/d0/fx": {
-  "hash": 58637879,
+  "hash": 3926996229,
   "wave": 4,
-  "kills": 96,
+  "kills": 103,
   "state": "clear"
  },
  "bulwark/s2/d5": {
-  "hash": 2780079044,
+  "hash": 3599382443,
   "wave": 4,
-  "kills": 120,
+  "kills": 81,
   "state": "clear"
  },
  "bulwark/s2/d5/fx": {
-  "hash": 2780079044,
+  "hash": 3599382443,
   "wave": 4,
-  "kills": 120,
+  "kills": 81,
   "state": "clear"
  },
  "bulwark/s3/d0": {
-  "hash": 414861111,
+  "hash": 568165316,
   "wave": 4,
-  "kills": 112,
+  "kills": 108,
   "state": "clear"
  },
  "bulwark/s3/d0/fx": {
-  "hash": 414861111,
+  "hash": 568165316,
   "wave": 4,
-  "kills": 112,
+  "kills": 108,
   "state": "clear"
  },
  "bulwark/s3/d5": {
-  "hash": 550872324,
+  "hash": 4266476755,
   "wave": 4,
-  "kills": 105,
+  "kills": 99,
   "state": "clear"
  },
  "bulwark/s3/d5/fx": {
-  "hash": 550872324,
+  "hash": 4266476755,
   "wave": 4,
-  "kills": 105,
+  "kills": 99,
   "state": "clear"
  },
  "tinker/s1/d0": {
-  "hash": 255758898,
+  "hash": 3998572508,
   "wave": 4,
-  "kills": 107,
+  "kills": 125,
   "state": "clear"
  },
  "tinker/s1/d0/fx": {
-  "hash": 255758898,
+  "hash": 3998572508,
   "wave": 4,
-  "kills": 107,
+  "kills": 125,
   "state": "clear"
  },
  "tinker/s1/d5": {
-  "hash": 3215915964,
+  "hash": 3133350901,
   "wave": 4,
-  "kills": 152,
+  "kills": 192,
   "state": "clear"
  },
  "tinker/s1/d5/fx": {
-  "hash": 3215915964,
+  "hash": 3133350901,
   "wave": 4,
-  "kills": 152,
+  "kills": 192,
   "state": "clear"
  },
  "tinker/s2/d0": {
-  "hash": 2865899831,
+  "hash": 3516000250,
   "wave": 4,
-  "kills": 120,
+  "kills": 124,
   "state": "clear"
  },
  "tinker/s2/d0/fx": {
-  "hash": 2865899831,
+  "hash": 3516000250,
   "wave": 4,
-  "kills": 120,
+  "kills": 124,
   "state": "clear"
  },
  "tinker/s2/d5": {
-  "hash": 2789488754,
+  "hash": 135810344,
   "wave": 4,
-  "kills": 175,
+  "kills": 192,
   "state": "clear"
  },
  "tinker/s2/d5/fx": {
-  "hash": 2789488754,
+  "hash": 135810344,
   "wave": 4,
-  "kills": 175,
+  "kills": 192,
   "state": "clear"
  },
  "tinker/s3/d0": {
-  "hash": 766231241,
+  "hash": 1339735398,
   "wave": 4,
-  "kills": 106,
+  "kills": 132,
   "state": "clear"
  },
  "tinker/s3/d0/fx": {
-  "hash": 766231241,
+  "hash": 1339735398,
   "wave": 4,
-  "kills": 106,
+  "kills": 132,
   "state": "clear"
  },
  "tinker/s3/d5": {
-  "hash": 3272542330,
+  "hash": 3794918586,
   "wave": 4,
-  "kills": 153,
+  "kills": 159,
   "state": "clear"
  },
  "tinker/s3/d5/fx": {
-  "hash": 3272542330,
+  "hash": 3794918586,
   "wave": 4,
-  "kills": 153,
+  "kills": 159,
   "state": "clear"
  }
 }

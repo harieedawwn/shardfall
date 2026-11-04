@@ -139,7 +139,7 @@ module.exports = function (H) {
     const NR = H.load({ fx: true, ui: true });
     NR.main.boot();
     eq(typeof NR.main.boot, 'function');
-    eq(Object.keys(NR.data.weapons).length, 22);
+    eq(Object.keys(NR.data.weapons).length, 29); // 23 base (16 + 7 v2 variants) + 6 evolved
     eq(NR.data.evolutions.length, 6);
   });
 

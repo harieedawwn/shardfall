@@ -19,7 +19,7 @@
       { maxHp: 100, critChance: 0.08 }, { charges: 2, cd: 1.2, dist: 150, iframes: 0.25 }, 'pistol', { type: 'start', cost: 0 }, [],
       { fx: 'still', p: { dmg: 0.2, wait: 0.3 }, tpl: { vi: 'Ngắm vững: +{dmg%} sát thương khi đứng yên {wait}s.', en: 'Steady Aim: +{dmg%} damage after standing still for {wait}s.' } }),
     dasher: ch('Kiếm khách', 'Dasher', 'Mong manh nhưng nhanh; lướt liên tục để tăng sát thương.', 'Fragile but fast; chain dashes to stay empowered.', 'tri', '#E8C547',
-      { maxHp: 70, moveSpeed: 1.15 }, { charges: 3, cd: 1, dist: 160, iframes: 0.3 }, 'katana', { type: 'shards', cost: 150 }, [],
+      { maxHp: 70, moveSpeed: 1.15 }, { charges: 3, cd: 1, dist: 160, iframes: 0.3 }, 'katana', { type: 'start', cost: 0 }, [],
       { fx: 'dashBuff', p: { dmg: 0.3, dur: 2.5 }, tpl: { vi: 'Vũ điệu kiếm: mỗi lần lướt +{dmg%} sát thương trong {dur}s.', en: 'Blade Dance: each dash grants +{dmg%} damage for {dur}s.' } }),
     bulwark: ch('Hộ vệ', 'Bulwark', 'Chậm và trâu; bị đánh sẽ phản đòn.', 'Slow tank; punishes anything that hits it.', 'square', '#8C4A3B',
       { maxHp: 160, armor: 4, moveSpeed: 0.85 }, { charges: 2, cd: 1.4, dist: 130, iframes: 0.2 }, 'scattergun', { type: 'shards', cost: 250 }, [],

@@ -120,7 +120,11 @@
       fire = virt.fire;
     }
     if (virt.fire) fire = true;
-    if (device !== 'kbm' && p && NR.save.getSettings().aimAssist) {
+    if (p && NR.save.getSettings().autoAim) {
+      // assist: auto-aim locks onto the nearest enemy in range (any device); manual aim is used when nothing is near
+      const e = NR.spatial.nearest(p.x, p.y, AUTOFIRE_RANGE);
+      if (e) aim = Math.atan2(e.y - p.y, e.x - p.x);
+    } else if (device !== 'kbm' && p && NR.save.getSettings().aimAssist) {
       const e = NR.spatial.nearest(p.x, p.y, ASSIST_RANGE);
       if (e) {
         const ea = Math.atan2(e.y - p.y, e.x - p.x);

@@ -307,6 +307,8 @@
     "set.qHigh": "Cao",
     "levelup.new": "Mới",
     "levelup.lv": "Cấp {n}",
-    "levelup.lvUp": "Cấp {a} → {b}"
+    "levelup.lvUp": "Cấp {a} → {b}",
+    "set.autoAim": "Tự ngắm",
+    "set.autoAimTip": "Tự động ngắm vào kẻ địch gần nhất, mọi thiết bị. Không có địch gần thì dùng hướng ngắm của bạn."
   };
 })();

@@ -8,11 +8,11 @@
   function defaults() {
     return {
       v: VERSION,
-      meta: { shards: 0, nodes: {}, chars: ['ranger'], maxDanger: 0, runs: 0, wins: 0, bestWave: 0 },
+      meta: { shards: 0, nodes: {}, chars: ['ranger', 'dasher'], maxDanger: 0, runs: 0, wins: 0, bestWave: 0 },
       codex: { weapon: {}, item: {}, enemy: {}, boss: {}, evolution: {}, character: {} },
       settings: {
         language: 'vi', master: 0.8, music: 0.6, sfx: 0.8, shake: 100, reduceFlashing: false,
-        damageNumbers: true, autoFire: false, aimAssist: true, showFps: false, fullscreen: false, quality: 'auto'
+        damageNumbers: true, autoFire: false, aimAssist: true, showFps: false, fullscreen: false, quality: 'auto', autoAim: false
       },
       run: null
     };

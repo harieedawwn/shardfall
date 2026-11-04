@@ -6,11 +6,12 @@
   const AFFIXES = ['hasty', 'plated', 'volatile', 'regen'];
   const RESERVE = 12;          // slots kept free for boss summons and splitter children
   const wfn = function (o) { return o.weight; };
+  let chillT = 0, extra = 0;
   let info = null, total = 0, spent = 0, bossSpawned = false, cleared = false, minCost = 0.4, clock = 0, plN = 0;
   const plT = new Float64Array(128), plC = new Int32Array(128); // spawn-marker log: enemies waiting behind a marker count against the cap
   const affTmp = [];
 
-  function reset() { info = null; total = 0; spent = 0; bossSpawned = false; cleared = false; clock = 0; plN = 0; }
+  function reset() { chillT = 0; extra = 0; info = null; total = 0; spent = 0; bossSpawned = false; cleared = false; clock = 0; plN = 0; }
   function pending() { let n = 0, j = 0; for (let i = 0; i < plN; i++) if (plT[i] > clock) { plT[j] = plT[i]; plC[j] = plC[i]; j++; n += plC[i]; } plN = j; return n; }
   function zoneOf(n) { return ['scrap', 'frost', 'void'][Math.floor((n - 1) / 5) % 3]; }
   function poolOf(obj) { const a = []; for (const id in obj) a.push({ enemy: id, weight: obj[id] }); return a; }
@@ -34,7 +35,7 @@
     const W = NR.world.get();
     info = waveInfo(n);
     W.waveDur = info.duration; W.waveT = info.duration;
-    total = info.budget * W.scale.count; spent = 0; cleared = false; bossSpawned = false;
+    total = info.budget * W.scale.count; spent = 0; chillT = 0; extra = 0; cleared = false; bossSpawned = false;
     startP.wave = n; startP.zone = info.zone; startP.isBoss = info.isBoss; startP.duration = info.duration;
     NR.events.emit('wave:start', startP);
     if (info.isBoss) bossSpawned = !!NR.bosses.spawn(info.boss, { hpMult: info.hpMult, donor: info.donor });
@@ -94,6 +95,17 @@
       if (bossSpawned && (!W.boss || W.boss.dead)) { cleared = true; clearP.wave = W.wave; clearP.isBoss = true; NR.events.emit('wave:clear', clearP); return; }
     } else if (W.waveT <= 0) {
       cleared = true; NR.enemies.dissolveAll(); clearP.wave = W.wave; clearP.isBoss = false; NR.events.emit('wave:clear', clearP); return;
+    }
+    // pressure: a player cruising at high HP with few enemies near gets a light top-up (at most +15% of the wave budget)
+    if (!info.isBoss && p && !p.dead && W.waveT > 3) {
+      let near = 0;
+      const E0 = W.enemies;
+      for (let i = 0; i < E0.length; i++) { const e = E0[i]; if (!e.dead && Math.abs(e.x - p.x) < 420 && Math.abs(e.y - p.y) < 420) near++; }
+      if (p.hp >= p.maxHp * 0.85 && near < 6 + W.wave) chillT += dt; else chillT = Math.max(0, chillT - dt * 2);
+      if (chillT > 6) {
+        const base = info.budget * W.scale.count, add = Math.min(base * 0.15 - extra, base * 0.15 * dt / Math.max(10, info.duration * 0.5));
+        if (add > 0) { extra += add; total += add; }
+      }
     }
     if (W.waveT > 3 && p && !p.dead && spent < total - 1e-9) { // spawning stops 3 s before the end
       const T = Math.max(1, info.duration - 3), tau = NR.util.clamp((info.duration - W.waveT) / T, 0, 1);

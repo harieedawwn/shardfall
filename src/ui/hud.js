@@ -810,13 +810,39 @@
     }
   }
 
+  // v2 weapons reuse a sibling's silhouette in their own element colour
+  const ICON_ALIAS = { smg: 'pistol', venom_bow: 'lancer', frost_seeker: 'seeker', chakram: 'saw_ring', railgun: 'lancer', thunder_hammer: 'maul', comet_staff: 'grenade' };
+  // rarity aura behind the icon: rare = soft halo, epic = halo + spikes, legendary/evolved = gold halo, spikes and sparkles
+  function rarityAura(g, def, r, sil) {
+    if (sil || !def) return;
+    const tier = def.evolved ? 3 : def.rarity === 'legendary' ? 3 : def.rarity === 'epic' ? 2 : def.rarity === 'rare' ? 1 : 0;
+    if (!tier) return;
+    const art = NR.fx && NR.fx.art, col = tier >= 3 ? '#FFC23D' : RCOL[def.rarity] || '#B26CF5';
+    const img = art && art.lightSprite ? art.lightSprite(col) : null;
+    if (img) { g.globalAlpha = 0.45 + tier * 0.15; g.drawImage(img, -r * (1.5 + tier * 0.15), -r * (1.5 + tier * 0.15), r * (3 + tier * 0.3), r * (3 + tier * 0.3)); g.globalAlpha = 1; }
+    if (tier >= 2) {
+      const n = tier >= 3 ? 12 : 8;
+      g.fillStyle = col;
+      g.beginPath();
+      for (let i = 0; i < n * 2; i++) { const a = i / (n * 2) * Math.PI * 2 + 0.2, rr2 = i % 2 ? r * 1.02 : r * (tier >= 3 ? 1.38 : 1.22); if (i) g.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2); else g.moveTo(Math.cos(a) * rr2, Math.sin(a) * rr2); }
+      g.closePath(); g.globalAlpha = tier >= 3 ? 0.5 : 0.32; g.fill(); g.globalAlpha = 1;
+    }
+    if (tier >= 3) {
+      g.fillStyle = '#FFF6D0';
+      const sp = [[-0.95, -0.7, 0.16], [0.9, -0.85, 0.12], [0.85, 0.8, 0.1]];
+      for (let i = 0; i < sp.length; i++) { const sx = sp[i][0] * r, sy = sp[i][1] * r, k = sp[i][2] * r; g.beginPath(); g.moveTo(sx, sy - k * 2); g.lineTo(sx + k * 0.5, sy); g.lineTo(sx, sy + k * 2); g.lineTo(sx - k * 0.5, sy); g.closePath(); g.fill(); g.beginPath(); g.moveTo(sx - k * 2, sy); g.lineTo(sx, sy + k * 0.5); g.lineTo(sx + k * 2, sy); g.lineTo(sx, sy - k * 0.5); g.closePath(); g.fill(); }
+    }
+  }
   function drawWeaponIcon(g, id, x, y, r, fill, o) {
     o = o || {};
     const sil = !!o.sil, sh = sil ? 0 : (o.shadow === undefined ? Math.max(1.5, r * 0.12) : o.shadow);
     const lw = o.line === undefined ? Math.max(1.8, r * 0.1) : o.line;
-    const col = fill || (NR.data && NR.data.weapons && NR.data.weapons[id] && NR.data.weapons[id].color) || '#F2EFE6';
+    const def = NR.data && NR.data.weapons && NR.data.weapons[id];
+    const col = fill || (def && def.color) || '#F2EFE6';
     g.save();
     g.translate(x, y);
+    if (!o.cool && !o.noAura) rarityAura(g, def, r, sil);
+    if (ICON_ALIAS[id]) id = ICON_ALIAS[id];
     if (o.rot) g.rotate(o.rot);
     if (sh > 0) {
       g.save(); g.translate(sh, sh);

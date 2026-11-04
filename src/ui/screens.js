@@ -732,7 +732,7 @@
       au.appendChild(sliderRow('master', 1)); au.appendChild(sliderRow('music', 1)); au.appendChild(sliderRow('sfx', 1));
       pn.appendChild(au);
       const gp = h('section', 'sset'); gp.appendChild(h('h3', 'h sm', t('set.group.gameplay')));
-      gp.appendChild(toggleRow('autoFire')); gp.appendChild(toggleRow('aimAssist')); gp.appendChild(toggleRow('damageNumbers'));
+      gp.appendChild(toggleRow('autoAim')); gp.appendChild(toggleRow('autoFire')); gp.appendChild(toggleRow('aimAssist')); gp.appendChild(toggleRow('damageNumbers'));
       pn.appendChild(gp);
       const gf = h('section', 'sset'); gf.appendChild(h('h3', 'h sm', t('set.group.display')));
       gf.appendChild(qualityRow());

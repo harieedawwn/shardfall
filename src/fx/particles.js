@@ -3,7 +3,7 @@
 // Cosmetic PRNG only (never NR.rng). Quality steps down automatically when the frame time stays above 20 ms for 2 s.
 (function () {
   const NR = globalThis.NR = globalThis.NR || {};
-  const SHARD = 1, CHIP = 2, SPARK = 3, RING = 4, FLASH = 5, AFTER = 6, BOLT = 7, DROP = 8, SWIPE = 9;
+  const SHARD = 1, CHIP = 2, SPARK = 3, RING = 4, FLASH = 5, AFTER = 6, BOLT = 7, DROP = 8, SWIPE = 9, PUFF = 10, GLOW = 11, EMBER = 12;
   const QMUL = [1, 0.7, 0.45, 0.25];
   const SLOW_FRAME = 0.020, SLOW_TIME = 2, FAST_FRAME = 0.0135, FAST_TIME = 10;
   const TAU = Math.PI * 2;
@@ -100,6 +100,26 @@
     o = o || {};
     p.size1 = r; p.n = o.w || Math.min(14, 4 + r * 0.05); p.c2 = o.inner === undefined ? NR.fx.shapes.lightOf(color) : o.inner;
   }
+  // smoke puffs (soft baked blobs that swell and fade), additive glows (fireball cores, hit flashes), glowing embers
+  function smoke(x, y, color, n, size, speed, life) {
+    const m = Math.max(1, Math.round(n * QMUL[quality]));
+    for (let i = 0; i < m; i++) {
+      const p = mk(PUFF, x + rr(-size, size) * 0.4, y + rr(-size, size) * 0.4, color, (life || 0.7) * rr(0.7, 1.3), size * rr(0.6, 1.1));
+      if (!p) break;
+      const a = rnd() * TAU, s = (speed || 40) * rr(0.3, 1);
+      p.vx = Math.cos(a) * s; p.vy = Math.sin(a) * s - 18; p.drag = 2.2; p.size1 = p.size * rr(1.8, 2.6); p.rot = rnd() * TAU; p.vr = rr(-1.5, 1.5);
+    }
+  }
+  function glow(x, y, color, size, life) { const p = mk(GLOW, x, y, color, life || 0.18, size); if (p) p.a = 1; }
+  function embers(x, y, color, n, speed) {
+    const m = Math.max(1, Math.round(n * QMUL[quality]));
+    for (let i = 0; i < m; i++) {
+      const p = mk(EMBER, x, y, color, rr(0.35, 0.8), rr(1.6, 3));
+      if (!p) break;
+      const a = rnd() * TAU, s = (speed || 220) * rr(0.4, 1);
+      p.vx = Math.cos(a) * s; p.vy = Math.sin(a) * s - 40; p.drag = 1.6;
+    }
+  }
   function debris(x, y, color, n) { burst('debris', x, y, color, n, { speed: 130, size: 4 }); }
   function spark(x, y, color, n, angle, spread) { burst('spark', x, y, color, n, { angle: angle, spread: spread, speed: 300 }); }
   function flash(x, y, color, size, angle, life) {
@@ -142,6 +162,8 @@
     const r = en.r || 10, col = en.color || '#F2EFE6', boss = e.isBoss;
     if (boss) return;
     burst('death', e.x, e.y, col, 5 + r * 0.55, { size: 3 + r * 0.2, speed: 140 + r * 4 });
+    glow(e.x, e.y, col, r * 4, 0.22); smoke(e.x, e.y, NR.fx.shapes.darkOf(col), 2 + r * 0.12, r * 1.4, 50, 0.7);
+    embers(e.x, e.y, NR.fx.shapes.lightOf(col), 3 + r * 0.2, 180 + r * 5);
     burst('debris', e.x, e.y, col, 2 + r * 0.18, { size: 3 + r * 0.12, speed: 90 + r * 2 });
     if (r >= 14 || e.elite) ring(e.x, e.y, r * 2.2 + (e.elite ? 20 : 0), e.elite ? NR.fx.render.palette()[3] : col, 0.3);
     if (e.elite) burst('star', e.x, e.y, '#FFD43B', 8, { speed: 200 });
@@ -155,6 +177,7 @@
   function onDamage(e) {
     const t = e.target, col = elColor(e.element), amt = e.amount;
     burst('hit', e.x, e.y, col, e.crit ? 6 : 3, { speed: 260 });
+    if (amt > 0) glow(e.x, e.y, col, e.crit ? 46 : 26, 0.1);
     if (t && t.color && !e.killed) burst('chip', e.x, e.y, t.color, e.crit ? 4 : 2, { speed: 120, size: 3 });
     if (settings().damageNumbers) {
       const tid = t ? t.id : 0, shown = Math.max(1, Math.round(amt));
@@ -186,6 +209,8 @@
     const ca = Math.cos(e.angle), sa = Math.sin(e.angle);
     if (k === 'melee') { swipe(e.x + ca * 10, e.y + sa * 10, col, 70, e.angle, 0.16); return; }
     flash(e.x + ca * 22, e.y + sa * 22, col, heavy ? 13 : 9, e.angle, 0.07);
+    glow(e.x + ca * 24, e.y + sa * 24, '#FFC86B', heavy ? 70 : 44, 0.06);
+    if (heavy) smoke(e.x + ca * 26, e.y + sa * 26, '#8C8698', 2, 9, 60, 0.5);
     spark(e.x + ca * 24, e.y + sa * 24, col, heavy ? 3 : 1, e.angle, 0.7);
   }
   function onImpact(e) {
@@ -198,6 +223,9 @@
   function onExplode(e) {
     const col = e.team === 'enemy' ? NR.fx.render.palette()[4] : elColor(e.element), r = e.r;
     ring(e.x, e.y, r, col, 0.4, { w: Math.min(16, 5 + r * 0.04) });
+    glow(e.x, e.y, '#FFB45A', r * 2.4, 0.32); glow(e.x, e.y, col, r * 1.6, 0.5);
+    smoke(e.x, e.y, '#3A3440', Math.min(9, 3 + r / 25), r * 0.6, 60 + r * 0.5, 1.1);
+    embers(e.x, e.y, '#FFC86B', Math.min(18, 5 + r / 10), 200 + r * 1.5);
     if (r > 60) ring(e.x, e.y, r * 0.6, '#F2EFE6', 0.28, { w: 5 });
     burst('death', e.x, e.y, col, Math.min(26, 6 + r / 8), { speed: 120 + r, size: 4 + r * 0.02 });
     burst('spark', e.x, e.y, col, Math.min(14, 4 + r / 14), { speed: 180 + r * 1.2 });
@@ -241,6 +269,7 @@
   function onBossDeath(e) {
     const b = e.boss, col = b ? b.color : '#F2EFE6', r = b ? b.r : 50;
     burst('death', e.x, e.y, col, 44, { speed: 380, size: 8, life: 1 });
+    glow(e.x, e.y, '#FFE2A0', r * 9, 0.6); smoke(e.x, e.y, '#3A3440', 12, r * 1.2, 120, 1.6); embers(e.x, e.y, '#FFC86B', 30, 420);
     burst('debris', e.x, e.y, col, 14, { speed: 220, size: 8, life: 1 });
     ring(e.x, e.y, r * 5, col, 0.8, { w: 16 }); ring(e.x, e.y, r * 3, '#F2EFE6', 0.6, { w: 10 });
     for (let i = 1; i <= 4; i++) schedule(i * 0.16, function () {
@@ -318,11 +347,24 @@
     ctx.closePath();
   }
   function draw(ctx) {
-    const INK = NR.config.INK;
+    const INK = NR.config.INK, art = NR.fx.art;
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if (art) for (let i = 0; i < count; i++) {
+      const p = pool[i];
+      if (p.k === PUFF) {
+        const f = p.t / p.life, img = art.puff(p.color); if (!img) continue;
+        const s = p.size + (p.size1 - p.size) * (1 - (1 - f) * (1 - f));
+        ctx.globalAlpha = Math.max(0, (f < 0.15 ? f / 0.15 : 1 - (f - 0.15) / 0.85) * 0.85);
+        ctx.drawImage(img, p.x - s, p.y - s, s * 2, s * 2);
+      } else if (p.k === GLOW) { const f = p.t / p.life; art.light(p.x, p.y, p.size * (0.7 + f * 0.5), p.color, 1 - f); }
+      else if (p.k === EMBER) { const f = p.t / p.life; art.light(p.x, p.y, 12 * (1 - f) + 4, p.color, 0.8 * (1 - f)); }
+      else if (p.k === SPARK && (i & 1)) art.light(p.x, p.y, 14, p.color, 0.5 * (1 - p.t / p.life));
+    }
+    ctx.globalAlpha = 1;
     for (let i = 0; i < count; i++) {
       const p = pool[i];
-      if (p.k === AFTER) continue;
+      if (p.k === AFTER || p.k === PUFF || p.k === GLOW) continue;
+      if (p.k === EMBER) { const f = p.t / p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x - p.size * (1 - f * 0.5), p.y - p.size * (1 - f * 0.5), p.size * 2 * (1 - f * 0.5), p.size * 2 * (1 - f * 0.5)); continue; }
       const f = p.t / p.life;
       switch (p.k) {
         case SHARD: {
@@ -387,7 +429,7 @@
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.strokeStyle = NR.config.INK;
     for (let i = 0; i < T.length; i++) {
       const t = T[i], sz = Math.round(t.size * (1 + t.pop * 0.5));
-      ctx.font = 'bold ' + sz + 'px sans-serif';
+      ctx.font = '800 ' + sz + 'px "Shard Title", "Baloo 2", system-ui, sans-serif';
       if (t.life < 0.2) ctx.globalAlpha = Math.max(0, t.life / 0.2);
       ctx.lineWidth = t.crit ? 5 : 4; ctx.strokeText(t.str, t.x, t.y);
       ctx.fillStyle = t.color; ctx.fillText(t.str, t.x, t.y);
@@ -399,7 +441,7 @@
   NR.fx = NR.fx || {};
   NR.fx.particles = {
     init: init, update: update, draw: draw, drawUnder: drawUnder, drawTexts: drawTexts, burst: burst, ring: ring, debris: debris, spark: spark, flash: flash,
-    bolt: bolt, afterimage: afterimage, text: text, clear: clear,
+    bolt: bolt, afterimage: afterimage, text: text, clear: clear, smoke: smoke, glow: glow, embers: embers,
     count: function () { return count; }, textCount: function () { return T.length; }, quality: function () { return quality; }, setQuality: setQuality
   };
 })();

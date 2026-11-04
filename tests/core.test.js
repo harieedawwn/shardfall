@@ -146,7 +146,7 @@ module.exports = function (H) {
     const store = memStorage();
     let NR = H.load({ storage: store });
     const d = NR.save.load();
-    eq(d.v, 1); eq(d.settings.language, 'vi'); eq(d.meta.chars, ['ranger']); eq(d.meta.maxDanger, 0);
+    eq(d.v, 1); eq(d.settings.language, 'vi'); eq(d.meta.chars, ['ranger', 'dasher']); eq(d.meta.maxDanger, 0);
     NR.save.getMeta().shards = 77; NR.save.getMeta().nodes.m_hp = 2;
     NR.save.getCodex().item['Đồ ốc'] = true;
     let ev = null; NR.events.on('settings:change', function (e) { ev = e.key + '=' + e.value; });
@@ -165,7 +165,7 @@ module.exports = function (H) {
     eq(d.settings.language, 'en'); eq(d.settings.master, 0.3); eq(d.settings.sfx, 0.8); eq(d.codex.boss, {}); eq(d.run, null);
     NR.save.flush(); eq(JSON.parse(store.d[KEY]).v, 1);
     const s2 = memStorage(); s2.d[KEY] = JSON.stringify({ v: 1, meta: { shards: 5 }, settings: { shake: 'bad' } });
-    const d2 = H.load({ storage: s2 }).save.load(); eq(d2.meta.shards, 5); eq(d2.meta.chars, ['ranger']); eq(d2.settings.shake, 100);
+    const d2 = H.load({ storage: s2 }).save.load(); eq(d2.meta.shards, 5); eq(d2.meta.chars, ['ranger', 'dasher']); eq(d2.settings.shake, 100);
   });
   test('save: corrupt JSON and newer version -> defaults + backup, no exception', function () {
     const s1 = memStorage(); s1.d[KEY] = '{{{ not json';

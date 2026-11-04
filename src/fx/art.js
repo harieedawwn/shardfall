@@ -141,6 +141,25 @@
     g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
   }
 
+  // soft smoke/dust puff (baked once per colour): lumpy radial blob, drawn with alpha by particles
+  const puffImg = Object.create(null);
+  function puff(color) {
+    let c = puffImg[color];
+    if (c === undefined) {
+      c = canvas(64, 64);
+      if (c) {
+        const g = c.getContext('2d'), blobs = [[32, 32, 26], [22, 28, 15], [42, 26, 16], [36, 42, 14], [24, 40, 12]];
+        for (let i = 0; i < blobs.length; i++) {
+          const b = blobs[i], gr = g.createRadialGradient(b[0], b[1], 0, b[0], b[1], b[2]);
+          gr.addColorStop(0, rgba(color, 0.55)); gr.addColorStop(0.6, rgba(color, 0.28)); gr.addColorStop(1, rgba(color, 0));
+          g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+        }
+      }
+      puffImg[color] = c;
+    }
+    return c;
+  }
+
   // ---------- light sprites (additive, batched, capped) ----------
   const lightImg = Object.create(null);
   const LMAX = 300, lx = new Float32Array(LMAX), ly = new Float32Array(LMAX), lr = new Float32Array(LMAX), la = new Float32Array(LMAX), lc = new Array(LMAX);
@@ -285,7 +304,7 @@
     quality: function () { return Q; }, setting: function () { return setting; }, renderScale: function () { return SCALES[scaleIx]; },
     version: function () { return version; }, reduced: function () { return reduced; },
     scale: function () { return S; }, gen: function () { return gen; }, setScale: setScale,
-    store: store, bake: bake, glow: glow, get: get, blit: blit, cel: cel, flat: flat, mix: mix, rgba: rgba, shade: shade, canvas: canvas,
+    store: store, bake: bake, glow: glow, puff: puff, get: get, blit: blit, cel: cel, flat: flat, mix: mix, rgba: rgba, shade: shade, canvas: canvas,
     light: light, flushLights: flushLights, lightCount: lightCount, lightSprite: lightSprite, setView: setView,
     hostileBullet: hostileBullet, playerBullet: playerBullet, stripes: stripes, vignette: vignette, drawMotes: drawMotes
   };

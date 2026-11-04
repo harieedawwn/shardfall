@@ -246,7 +246,8 @@ module.exports = function (H) {
       }
       const want = wd.budget * W.scale.count;
       ok(peak <= cap, 'wave ' + n + ' peak ' + peak + ' > cap');
-      ok(spent <= want + 1e-6 && spent >= want - 2.0, 'wave ' + n + ' d' + danger + ' spent ' + spent.toFixed(2) + ' budget*count ' + want.toFixed(2));
+      ok(spent <= want * 1.15 + 1e-6 && spent >= want - 2.0, // +15% max pressure top-up when the player cruises (director)
+      'wave ' + n + ' d' + danger + ' spent ' + spent.toFixed(2) + ' budget*count ' + want.toFixed(2));
       for (const id in mix) ok(wd.pool.some(function (q) { return q.enemy === id; }), 'wave ' + n + ' spawned ' + id + ' outside its zone mix');
       ok(near === 0, 'wave ' + n + ' spawned ' + near + ' enemies on top of the player');
       if (n >= 6 && !wd.boss) { const kinds = Object.keys(mix).length; ok(kinds >= 3, 'wave ' + n + ' mix has ' + kinds + ' kinds'); }

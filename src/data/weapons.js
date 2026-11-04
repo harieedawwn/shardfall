@@ -1,4 +1,4 @@
-// Arsenal - weapon and evolution data (Content Registry: 16 weapons, 6 evolutions).
+// Arsenal - weapon and evolution data (Content Registry: 23 weapons, 6 evolutions).
 // Level rows are full objects (every field present). Shared fields read by weapons.resolve:
 //   dmg rate speed range count pierce area crit statusChance knock
 // Kind fields: spread jitter r bounce wbounce blast blastDmg split homing pull (projectile/spread/homing),
@@ -126,6 +126,32 @@
       { dmg: 6.43, rate: 2.4, range: 380, count: 4, jumps: 10, jrange: 170, falloff: 1, statusChance: 0.5, knock: 40, stun: 1 }]
   ];
 
+  // Extra arsenal (v2): variants built on proven kinds; rows derive from the source weapon's raw rows, scaled.
+  // id, from, element, vi, en, descVi, descEn, shape, size, trail, hit, sfx, rarity, cost, per-row scale/overrides
+  const X = [
+    ['smg', 'pistol', 'physical', 'Tiểu liên', 'SMG', 'Xả đạn cực nhanh, sát thương nhỏ. Cấp 5: đạn nảy.', 'Spits bullets very fast for small damage. Lv5: ricochets.', 'circle', 4, false, 0.06, 'shoot_light', 'common', 38,
+      { dmgX: 0.5, rateX: 1.9, set: { jitter: 0.08, spread: 0.16, range: 560 } }],
+    ['venom_bow', 'pistol', 'poison', 'Nỏ độc', 'Venom Crossbow', 'Mũi tên độc xuyên hàng. Cấp 5: xuyên thêm và độc nặng hơn.', 'Poison bolts that pierce a line. Lv5: more pierce, heavier poison.', 'capsule', 6, true, 0.25, 'shoot_heavy', 'common', 46,
+      { dmgX: 1.9, rateX: 0.55, set: { speed: 980, pierce: 2, statusChance: 0.55, range: 720, spread: 0.04, jitter: 0.01 } }],
+    ['frost_seeker', 'seeker', 'ice', 'Băng truy', 'Frost Seeker', 'Mảnh băng tự tìm mục tiêu, gây lạnh. Cấp 5: tách đôi.', 'Homing ice shards that chill. Lv5: they split.', 'diamond', 7, true, 0.2, 'shoot_light', 'rare', 64,
+      { dmgX: 1.0, rateX: 1.1, set: { pull: 0, statusChance: 0.5 } }],
+    ['chakram', 'saw_ring', 'shock', 'Đĩa sét', 'Storm Chakram', 'Đĩa điện xoay quanh bạn, giật tê kẻ địch.', 'Charged discs circle you and shock what they cut.', 'ring', 11, false, 0.12, 'shoot_light', 'rare', 72,
+      { dmgX: 0.8, rateX: 1, set: { statusChance: 0.25, orad: 100 } }],
+    ['railgun', 'lancer', 'physical', 'Súng ray', 'Railgun', 'Phát bắn xuyên toàn màn, nạp chậm, cực đau.', 'A slow, brutal shot that pierces the whole screen.', 'beam', 7, false, 0.6, 'shoot_heavy', 'rare', 80,
+      { dmgX: 1.9, rateX: 0.55, set: { range: 760, pierce: 99, knock: 200 } }],
+    ['thunder_hammer', 'maul', 'shock', 'Búa sấm', 'Thunder Hammer', 'Đập búa gọi sét quanh điểm rơi.', 'Hammer slams that crackle with lightning.', 'arc', 14, false, 0.9, 'shoot_heavy', 'epic', 96,
+      { dmgX: 1.05, rateX: 1, set: { statusChance: 0.45 } }],
+    ['comet_staff', 'grenade', 'fire', 'Trượng sao chổi', 'Comet Staff', 'Gọi sao chổi rơi nổ lửa diện rộng.', 'Calls down comets that explode in fire.', 'star', 9, true, 0.8, 'shoot_heavy', 'epic', 104,
+      { dmgX: 1.25, rateX: 0.8, set: { blast: 90, statusChance: 0.6 } }]
+  ];
+  X.forEach(function (x) {
+    const src = B.filter(function (b) { return b[0] === x[1]; })[0], o = x[14];
+    const lv = src[13].map(function (r) { const n = Object.assign({}, r, o.set); n.dmg = r.dmg * o.dmgX; n.rate = r.rate * o.rateX; if (r.cloudDmg) n.cloudDmg = r.cloudDmg * o.dmgX; return n; });
+    if (x[0] === 'venom_bow') lv[4].pierce = 4;
+    CURVE[x[0]] = CURVE[x[1]];
+    B.push([x[0], src[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], src[11], x[11], lv, x[12], x[13]]);
+  });
+
   const W = {}, evolutions = [];
   // B columns: 0 id,1 kind,2 element,3 vi,4 en,5 descVi,6 descEn,7 shape,8 size,9 trail,10 hit,11 auto,12 sfx,13 level rows
   B.forEach(function (b) {
@@ -135,7 +161,7 @@
   B.forEach(function (b, i) {
     W[b[0]] = {
       name: { vi: b[3], en: b[4] }, desc: { vi: b[5], en: b[6] }, kind: b[1], element: b[2], evolved: false,
-      cost: 30 + 6 * i, rarity: i < 6 ? 'common' : i < 12 ? 'rare' : 'epic', levels: b[13], shape: b[7], color: EC[b[2]],
+      cost: b[15] || 30 + 6 * i, rarity: b[14] || (i < 6 ? 'common' : i < 12 ? 'rare' : 'epic'), levels: b[13], shape: b[7], color: EC[b[2]],
       size: b[8], trail: b[9], hit: b[10], auto: b[11], sfx: b[12]
     };
   });
