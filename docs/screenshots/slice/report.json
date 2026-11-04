@@ -1,0 +1,46 @@
+{
+ "desk-1366x768/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 42
+ },
+ "desk-1366x768/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "desk-1366x768/levelup/en": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 60
+ },
+ "iphone15pro-land/wave1/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 58
+ },
+ "iphone15pro-land/stress/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [],
+  "fps": 49
+ },
+ "iphone15pro-land/levelup/vi": {
+  "errors": [],
+  "network": [],
+  "issues": [
+   "tap<44 126x41 btn rr \"Đổi thẻ5R\""
+  ],
+  "fps": 53
+ }
+}

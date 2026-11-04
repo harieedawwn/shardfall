@@ -134,6 +134,13 @@
     if (lw > 0) { pathFn(g); g.lineWidth = lw; g.strokeStyle = T.ink; g.stroke(); }
   }
 
+  // soft light pool painted into a baked canvas (floor chunks): radial gradient, bake time only
+  function glow(g, x, y, r, color, a) {
+    const gr = g.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, rgba(color, a)); gr.addColorStop(0.6, rgba(color, a * 0.35)); gr.addColorStop(1, rgba(color, 0));
+    g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+
   // ---------- light sprites (additive, batched, capped) ----------
   const lightImg = Object.create(null);
   const LMAX = 300, lx = new Float32Array(LMAX), ly = new Float32Array(LMAX), lr = new Float32Array(LMAX), la = new Float32Array(LMAX), lc = new Array(LMAX);
@@ -278,7 +285,7 @@
     quality: function () { return Q; }, setting: function () { return setting; }, renderScale: function () { return SCALES[scaleIx]; },
     version: function () { return version; }, reduced: function () { return reduced; },
     scale: function () { return S; }, gen: function () { return gen; }, setScale: setScale,
-    store: store, bake: bake, get: get, blit: blit, cel: cel, flat: flat, mix: mix, rgba: rgba, shade: shade, canvas: canvas,
+    store: store, bake: bake, glow: glow, get: get, blit: blit, cel: cel, flat: flat, mix: mix, rgba: rgba, shade: shade, canvas: canvas,
     light: light, flushLights: flushLights, lightCount: lightCount, lightSprite: lightSprite, setView: setView,
     hostileBullet: hostileBullet, playerBullet: playerBullet, stripes: stripes, vignette: vignette, drawMotes: drawMotes
   };

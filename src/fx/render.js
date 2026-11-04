@@ -12,6 +12,10 @@
   const evoCache = Object.create(null);
   let ctx = null, zone = 'scrap', cw = 1280, ch = 720, pal = FALLBACK_PAL, t = 0;
   let lastFireT = -10, lastFireSlot = 0, lastFireKind = '', lastFireWeapon = '';
+  const M = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };   // world -> device transform of this frame (camera applied)
+  let calm = false, blinkT = 0;
+  function readM(c) { const m = c.getTransform ? c.getTransform() : null; if (m) { M.a = m.a; M.b = m.b; M.c = m.c; M.d = m.d; M.e = m.e; M.f = m.f; } }
+  function resetM(c) { c.setTransform(M.a, M.b, M.c, M.d, M.e, M.f); }
 
   function now() { const p = globalThis.performance; return (p && p.now ? p.now() : Date.now()) / 1000; }
   // ---------- responsive viewport ----------
@@ -315,6 +319,8 @@
 
   // ---------- procedural character player renderer ----------
   function drawPlayer(c, p, a, q) {
+    const AC = NR.fx.actors;
+    if (AC && AC.hasChar(p.charId)) { drawActorPlayer(c, p, a, AC); return; }
     const S = NR.fx.shapes, ink = NR.config.INK;
     const x = p.px + (p.x - p.px) * a, y = p.py + (p.y - p.py) * a, r = p.r || 14;
     const dashing = p.dash && p.dash.t > 0;
@@ -546,6 +552,70 @@
     }
 
     c.restore();
+    if (ghost) c.globalAlpha = 1;
+  }
+
+  // Flat++ player: baked body that flips with the aim, stepping boots, live eyes that look along the aim, held weapon
+  function drawActorPlayer(c, p, a, AC) {
+    const art = NR.fx.art, ink = NR.config.INK;
+    const x = p.px + (p.x - p.px) * a, y = p.py + (p.y - p.py) * a, r = p.r || 14;
+    const dashing = p.dash && p.dash.t > 0, sp = Math.hypot(p.vx || 0, p.vy || 0), moving = sp > 10;
+    const flip = Math.cos(p.aim) >= 0 ? 1 : -1;
+    const hurt = p.hurtT > 0.19 || p.flash > 0;
+    const variant = hurt && !calm ? AC.V_FLASH : AC.V_STEP_A;
+    const spr = AC.playerSprite(p.charId, r, p.color || '#5FA8D3', variant);
+    if (!spr) return;
+    const R = spr.R, feet = spr.feet, walk = moving ? t * Math.min(16, 7 + sp * 0.03) : 0;
+    let sx = 1, sy = 1;
+    if (dashing) { sx = 1.22; sy = 0.84; }
+    else if (moving) { const k = 0.07 * Math.abs(Math.sin(walk)); sy = 1 + k; sx = 1 - k * 0.5; }
+    else { const k = 0.03 * Math.sin(t * 3); sy = 1 + k; sx = 1 - k * 0.5; }
+    const ghost = p.iframes > 0 && !(p.hurtT > 0.19) && !calm && Math.floor(t * 16) % 2 === 1;
+    if (ghost) c.globalAlpha = 0.5;
+    // boots
+    const st = moving ? Math.sin(walk) * R * 0.22 : 0, fy = y + feet - R * 0.12;
+    c.fillStyle = '#2A2333'; c.strokeStyle = ink; c.lineWidth = 2.2;
+    for (let i = -1; i <= 1; i += 2) {
+      const bx = x + i * R * 0.38 + st * i * flip, by = fy - (moving ? Math.max(0, Math.sin(walk + (i > 0 ? Math.PI : 0))) * R * 0.12 : 0);
+      c.beginPath(); c.ellipse(bx + flip * R * 0.06, by, R * 0.26, R * 0.17, 0, 0, TAU); c.fill(); c.stroke();
+    }
+    AC.draw(c, M, spr, x, y, flip, sx, sy);
+    resetM(c);
+    // face: body centre after squash around the feet
+    const cy = y + feet * (1 - sy), fc = AC.face(p.charId);
+    if (fc && variant !== AC.V_FLASH) {
+      const ex = x + flip * R * fc.x * sx, ey = cy + R * fc.y * sy, es = R * fc.s, gap = R * fc.gap;
+      blinkT -= 0;
+      const blink = !calm && (t % 3.7) < 0.12;
+      const lx = Math.cos(p.aim) * es * 0.35, ly = Math.sin(p.aim) * es * 0.35;
+      for (let i = -1; i <= 1; i += 2) {
+        const px = ex + flip * (i < 0 ? -gap * 0.42 : gap * 0.58), rx = es * (i < 0 ? 0.88 : 1), ry = es * 1.12;
+        if (blink) { c.strokeStyle = ink; c.lineWidth = 2; c.beginPath(); c.moveTo(px - rx, ey); c.lineTo(px + rx, ey); c.stroke(); continue; }
+        c.fillStyle = art.T.eye; c.beginPath(); c.ellipse(px, ey, rx, ry, 0, 0, TAU); c.fill();
+        c.lineWidth = Math.max(1.6, es * 0.3); c.strokeStyle = ink; c.stroke();
+        c.fillStyle = art.T.pupil; c.beginPath(); c.ellipse(px + lx, ey + ly, rx * 0.5, ry * 0.56, 0, 0, TAU); c.fill();
+        c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(px + lx - rx * 0.18, ey + ly - ry * 0.25, Math.max(0.8, rx * 0.2), 0, TAU); c.fill();
+      }
+      // small mouth, a determined smile
+      c.strokeStyle = ink; c.lineWidth = 1.8; c.beginPath(); c.arc(ex + flip * gap * 0.1, ey + es * 1.9, es * 0.55, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke();
+    }
+    // crest glow
+    art.light(x + flip * R * 0.05 * sx, cy - R * 1.25 * sy, R * 1.3, '#7FE3F5', 0.55);
+    // held weapon at the front hand, rotated to the aim (mirrored when aiming left so it never draws upside down)
+    const timeSinceFire = t - lastFireT;
+    const recoil = timeSinceFire >= 0 && timeSinceFire < 0.12 ? (1 - timeSinceFire / 0.12) * 5 : 0;
+    const w0 = p.weapons && p.weapons[0], wId = lastFireWeapon || (w0 ? w0.id : 'pistol');
+    const hx = x + flip * R * 0.42, hy = cy + R * 0.32;
+    c.save(); c.translate(hx, hy); c.rotate(p.aim); if (flip < 0) c.scale(1, -1); c.scale(1.2, 1.2);
+    drawHeldWeapon(c, wId, evolved(wId), recoil);
+    c.fillStyle = p.color || '#5FA8D3'; c.strokeStyle = ink; c.lineWidth = 2;
+    c.beginPath(); c.arc(9 - recoil, 3, 3.4, 0, TAU); c.fill(); c.stroke();
+    if (timeSinceFire >= 0 && timeSinceFire < 0.055) {
+      c.fillStyle = '#FFE9A8'; c.strokeStyle = ink; c.lineWidth = 1.6;
+      star(c, 27 - recoil, 0, 7, 5, 0.45); c.fill(); c.stroke();
+    }
+    c.restore();
+    if (timeSinceFire >= 0 && timeSinceFire < 0.07) art.light(hx + Math.cos(p.aim) * 30, hy + Math.sin(p.aim) * 30, 46, '#FFC86B', 0.9);
     if (ghost) c.globalAlpha = 1;
   }
 
@@ -903,6 +973,8 @@
   function drawEnemy(c, e, a, q) {
     const x = e.px + (e.x - e.px) * a + (e.kox || 0), y = e.py + (e.y - e.py) * a + (e.koy || 0), r = e.r || 10;
     if (!inView(x, y, r * 2 + 50)) return;
+    const AC = NR.fx.actors;
+    if (AC && !e.isBoss && AC.has(e.defId)) { drawActorEnemy(c, e, x, y, r, AC); return; }
     const S = NR.fx.shapes, flags = e.flags || {};
     let sx = e.sx || 1, sy = e.sy || 1;
     if (q < 3) {
@@ -955,6 +1027,41 @@
     if (e.status && (q < 2 || flags.elite || e.isBoss)) statusFx(c, e, x, y, r);
   }
 
+  // Flat++ sprite enemy: feet-anchored baked sprite, flips toward its facing, bobs/steps, hit flash and frozen variants
+  function drawActorEnemy(c, e, x, y, r, AC) {
+    const art = NR.fx.art, flags = e.flags || {};
+    const sp = Math.hypot(e.vx || 0, e.vy || 0), moving = sp > 12;
+    let variant = moving ? (Math.floor(t * 7 + e.id * 0.37) & 1) : 0;
+    if (e.flash > 0 && !calm) variant = AC.V_FLASH; else if (isFrozen(e)) variant = AC.V_FROZEN;
+    let sx = e.sx || 1, sy = e.sy || 1;
+    if (!art.reduced() || true) {
+      const ph = t * (moving ? 12 : 3.2) + e.id * 1.7;
+      const k = moving ? 0.07 * Math.abs(Math.sin(ph)) : 0.035 * Math.sin(ph);
+      sy *= 1 + k; sx *= 1 - k * 0.6;
+    }
+    const tele = telegraphing(e);
+    if (tele) { const k = 1 + 0.07 * (calm ? 1 : 0.5 + 0.5 * Math.sin(t * 22)); sx *= k; sy *= k; }
+    const rot = e.rot || 0, flip = Math.cos(rot) >= 0 ? 1 : -1;
+    const ghost = typeof e.alpha === 'number' ? e.alpha : (flags.phased || flags.invisible || flags.cloaked ? 0.42 : 1);
+    if (flags.elite) {
+      c.lineWidth = 5; c.strokeStyle = NR.config.INK; c.beginPath(); c.ellipse(x, y + r * 0.95, r * 1.45, r * 0.55, 0, 0, TAU); c.stroke();
+      c.lineWidth = 2.5; c.strokeStyle = art.T.elite; c.stroke();
+      art.light(x, y, r * 3.2, art.T.elite, 0.35 + 0.15 * Math.sin(t * 3 + e.id));
+    }
+    if (ghost < 1) c.globalAlpha = ghost;
+    AC.draw(c, M, AC.enemySprite(e.defId, r, e.color || '#F2EFE6', variant), x, y, flip, sx, sy);
+    resetM(c);
+    if (ghost < 1) c.globalAlpha = 1;
+    if (tele) {
+      // warning pip above the head: magenta diamond with a white "!" (steady when reduceFlashing)
+      const hy = y - r * 1.15 * 1.55 - 8, s2 = 6;
+      c.fillStyle = NR.config.INK; c.beginPath(); c.moveTo(x, hy - s2 - 2.5); c.lineTo(x + s2 + 2.5, hy); c.lineTo(x, hy + s2 + 2.5); c.lineTo(x - s2 - 2.5, hy); c.closePath(); c.fill();
+      c.fillStyle = art.T.tele; c.beginPath(); c.moveTo(x, hy - s2); c.lineTo(x + s2, hy); c.lineTo(x, hy + s2); c.lineTo(x - s2, hy); c.closePath(); c.fill();
+      c.fillStyle = '#FFFFFF'; c.fillRect(x - 1, hy - 3.5, 2, 4.5); c.fillRect(x - 1, hy + 2, 2, 1.8);
+    }
+    if (e.status) statusFx(c, e, x, y, r);
+  }
+
   function drawAreas(c, W, a) {
     for (let i = 0; i < W.areas.length; i++) {
       const ar = W.areas[i]; if (ar.dead) continue;
@@ -978,6 +1085,7 @@
     c.globalAlpha = 1;
   }
 
+  const PICK_LIGHT = { xp_shard: '#6FD6F2', gold: '#FFC23D', heart: '#FF5C8A', magnet: '#FF6B6B', nova_bomb: '#FF9A3D', chest: '#FFC23D' };
   function drawPickups(c, W, a, p) {
     const S = NR.fx.shapes, ink = NR.config.INK;
     for (let i = 0; i < W.pickups.length; i++) {
@@ -990,6 +1098,7 @@
       }
       if (!k.magnet && k.life < 4 && Math.floor(t * 9) % 2) continue;
       const bob = Math.sin((k.bob || 0) * 4 + k.id) * 2.5, pulse = 1 + 0.06 * Math.sin(t * 6 + k.id);
+      if (NR.fx.art) { const lc = PICK_LIGHT[k.type]; if (lc) NR.fx.art.light(x, y + bob, (k.r || 6) * (k.type === 'chest' ? 6 : 3.4), lc, k.type === 'xp_shard' ? 0.38 : 0.5); }
       const pr = (k.r || 6) * pulse;
 
       // Realistic floor contact shadow
@@ -1058,6 +1167,7 @@
     }
   }
 
+  const PHYS_SHOT = { pistol: 1, gatling_pistol: 1, scattergun: 1, shredder: 0 };
   function drawBullets(c, W, a, enemy) {
     const S = NR.fx.shapes, P = W.projectiles, tint = pal[4], ink = NR.config.INK;
     for (let i = 0; i < P.length; i++) {
@@ -1066,7 +1176,21 @@
       if (!inView(x, y, 80)) continue;
       const evo = !enemy && b.weaponId && evolved(b.weaponId), r = (b.r || 5) + (enemy ? 1.5 : 1) + (evo ? 2 : 0);
       if (enemy) {
-        S.draw(c, b.shape || 'circle', x, y, r, b.rot || 0, b.sx || 1, b.sy || 1, b.color || tint, 4, true);
+        const art = NR.fx.art, hs = art.hostileBullet(b.r || 5);
+        if (hs) {
+          const ang = t * 3 + b.id * 0.7, ca = Math.cos(ang) * M.a, sa = Math.sin(ang) * M.a;
+          c.setTransform(ca, sa, -sa, ca, M.e + x * M.a, M.f + y * M.a);
+          c.drawImage(hs.img, -hs.ax, -hs.ay, hs.w, hs.h);
+          art.light(x, y, (b.r || 5) * 4.2, art.T.hostileGlow, 0.55);
+        } else S.draw(c, b.shape || 'circle', x, y, r, b.rot || 0, b.sx || 1, b.sy || 1, b.color || tint, 4, true);
+      } else if (PHYS_SHOT[b.weaponId]) {
+        const art = NR.fx.art, ps = art.playerBullet(b.color && b.color[0] === '#' && b.color.length === 7 ? b.color : '#F2EFE6', b.r || 4, evo);
+        if (ps) {
+          const ang = Math.atan2(b.vy || 0, b.vx || 1), ca = Math.cos(ang) * M.a, sa = Math.sin(ang) * M.a;
+          c.setTransform(ca, sa, -sa, ca, M.e + x * M.a, M.f + y * M.a);
+          c.drawImage(ps.img, -ps.ax, -ps.ay, ps.w, ps.h);
+          art.light(x, y, (b.r || 4) * 3.2, '#FFD27A', evo ? 0.35 : 0.22);
+        }
       } else {
         if (evo) { c.lineWidth = 2.5; c.strokeStyle = pal[5]; c.beginPath(); c.arc(x, y, r + 4, 0, TAU); c.stroke(); }
         if (b.weaponId === 'seeker') {
@@ -1340,7 +1464,10 @@
     ctx.save();
     if (V.ox > 0 || V.oy > 0) { ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.clip(); }
     NR.camera.apply(ctx);
+    readM(ctx);
     NR.camera.toWorld(0, 0, view);
+    calm = !!NR.save.getSettings().reduceFlashing;
+    if (F.art) F.art.setView(view.x, view.y, view.x + cw, view.y + ch);
     const p = W.player;
     if (F.floor) F.floor.draw(ctx);
     if (F.particles) F.particles.drawUnder(ctx);
@@ -1360,16 +1487,23 @@
       }
     }
     drawBullets(ctx, W, a, false);
+    resetM(ctx);
     if (p && !p.dead) drawPlayer(ctx, p, a, q);
-    if (F.particles) { F.particles.draw(ctx); F.particles.drawTexts(ctx); }
+    if (F.particles) F.particles.draw(ctx);
+    drawBullets(ctx, W, a, true);
+    resetM(ctx);
+    if (F.art) F.art.flushLights(ctx);
+    if (F.particles) F.particles.drawTexts(ctx);
     ctx.restore();
+    // screen-space atmosphere: parallax motes + baked vignette (quality permitting)
+    if (F.art) {
+      const Q = F.art.quality();
+      ctx.setTransform(V.k, 0, 0, V.k, V.ox, V.oy);
+      F.art.drawMotes(ctx, zone, view.x, view.y, cw, ch, t);
+      if (Q.vignette) { const vg = F.art.vignette(zone, pal[2] || '#14121F'); if (vg) ctx.drawImage(vg, 0, 0, cw, ch); }
+    }
     ctx.setTransform(V.k, 0, 0, V.k, V.ox, V.oy);
     if (F.juice) F.juice.drawOverlay(ctx, cw, ch);
-    ctx.save();
-    if (V.ox > 0 || V.oy > 0) { ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.clip(); }
-    NR.camera.apply(ctx);
-    drawBullets(ctx, W, a, true);
-    ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
   // decorative frame beside a world wider than 21:9 (or above/below it): zone wall colour, ink rails, rivet studs

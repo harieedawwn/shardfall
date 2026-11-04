@@ -12,8 +12,16 @@ Nhánh: `revamp/visual`. Đọc file này trước khi làm tiếp.
       ẩn fullscreen khi không hỗ trợ, ULT trên gamepad = Y, bỏ hệ số "x1.05" giả của combo (không có trong sim).
       Test Acceptance 12 viết lại (gradient chỉ trong `src/fx/art.js`, 'lighter' chỉ trong src/fx, không tạo gradient sau warm-up).
 
+- [x] Giai đoạn 2 (lát cắt mẫu, chờ duyệt): `src/fx/actors.js` (ranger, grunt, swarmer, spitter có mắt/biểu cảm, nhún, bước,
+      nháy trắng, đóng băng), sàn scrap mới theo ô, đạn địch hình gai viền trắng + quầng sáng, đạn súng lục bớt rực,
+      telegraph sọc + viền hai lớp, pass ánh sáng 'lighter' có trần, bụi parallax + vignette nướng sẵn, HUD mới,
+      bộ UI Flat++ (font nhúng, nút/panel/thẻ bo góc, chuyển cảnh + xuất hiện lần lượt), màn lên cấp mới.
+      Ảnh: `docs/screenshots/slice/`.
+
 ## Đang làm
-- Giai đoạn 2: lát cắt mẫu (scrap, ranger, grunt/swarmer/spitter, pistol, HUD, màn lên cấp).
+- Chờ duyệt lát cắt mẫu trước Giai đoạn 3 (2 vùng còn lại, 9 quái, 3 trùm, 3 nhân vật, mọi vũ khí/nguyên tố).
+- Quyết định mới: thêm file `src/fx/actors.js` (sprite nhân vật/quái) ngoài `art.js`.
+- Tồn đọng đã biết: `--strict-events` lỗi sẵn từ baseline; SPEC/README/CREDITS chưa cập nhật (làm ở Giai đoạn 6).
 
 ## Quyết định đã chốt
 - Font: Baloo 2 ExtraBold (tiêu đề) + Be Vietnam Pro Medium/Bold (nội dung), OFL, subset Latin+Việt, base64 trong `css/fonts.css`.

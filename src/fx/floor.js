@@ -34,6 +34,7 @@
   function paint(c, zone, pal, rx, ry, rw, rh) {
     const A = NR.config.ARENA, S = NR.fx.shapes, rnd = rngFor('floor:' + zone);
     const ink = NR.config.INK;
+    if (zone === 'scrap' && NR.fx.art) { paintScrap(c, pal, rx || 0, ry || 0, rw || A.w, rh || A.h); return; }
     c.fillStyle = pal[0]; c.fillRect(0, 0, A.w, A.h);
 
     if (zone === 'scrap') {
@@ -167,6 +168,106 @@
       S.draw(c, d[0], x, y, d[3] + rnd() * (d[4] - d[3]), rnd() * TAU, 1, 1, shade(pal[d[1]], d[2]), 3, false);
     }
   }
+  // ---------- Flat++ floor painters (per-tile hashed so any chunk can be painted alone) ----------
+  const T2 = 128, WALL = 30;
+  function h2(x, y, k) { let n = Math.imul(x * 374761393 + y * 668265263 + (k || 0) * 2147483647, 1274126177); n = (n ^ (n >>> 13)) >>> 0; return (Math.imul(n, 1597334677) >>> 0) / 4294967296; }
+  const tone = Object.create(null);
+  function tc(base, amt) { const k = base + amt; let v = tone[k]; if (v === undefined) v = tone[k] = NR.util.shade(base, amt); return v; }
+  function scrapProps() {
+    const A = NR.config.ARENA, list = [], rnd = rngFor('props:scrap');
+    for (let i = 0; i < 70; i++) {
+      const side = (rnd() * 4) | 0, along = rnd(), off = WALL + 14 + rnd() * 70;
+      const x = side < 2 ? 60 + along * (A.w - 120) : (side === 2 ? off : A.w - off), y = side < 2 ? (side === 0 ? off : A.h - off) : 60 + along * (A.h - 120);
+      list.push({ k: (rnd() * 5) | 0, x: x, y: y, r: 12 + rnd() * 16, a: rnd() * TAU });
+    }
+    return list;
+  }
+  let propCache = null;
+  function drawProp(c, pr, pal) {
+    const ink = NR.config.INK, art = NR.fx.art, steel = NR.util.shade(pal[0], 0.28), rust = art.mix(pal[3], pal[0], 0.55), dark = NR.util.shade(pal[0], -0.35);
+    c.save(); c.translate(pr.x, pr.y);
+    c.fillStyle = 'rgba(11,10,18,0.35)'; c.beginPath(); c.ellipse(3, pr.r * 0.55, pr.r * 1.05, pr.r * 0.45, 0, 0, TAU); c.fill();
+    c.rotate(pr.a); c.lineWidth = 2.2; c.strokeStyle = ink; c.lineJoin = 'round';
+    const r = pr.r;
+    if (pr.k === 0) { // gear
+      c.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, rr = i % 2 ? r : r * 0.8; if (i) c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else c.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath();
+      c.fillStyle = rust; c.fill(); c.stroke(); c.beginPath(); c.arc(0, 0, r * 0.32, 0, TAU); c.fillStyle = dark; c.fill(); c.stroke();
+    } else if (pr.k === 1) { // pipe
+      c.fillStyle = steel; c.fillRect(-r * 1.3, -r * 0.32, r * 2.6, r * 0.64); c.strokeRect(-r * 1.3, -r * 0.32, r * 2.6, r * 0.64);
+      c.fillStyle = dark; c.fillRect(-r * 1.3, -r * 0.42, r * 0.3, r * 0.84); c.strokeRect(-r * 1.3, -r * 0.42, r * 0.3, r * 0.84);
+      c.fillStyle = NR.util.shade(steel, 0.25); c.fillRect(-r * 0.9, -r * 0.22, r * 2, r * 0.12);
+    } else if (pr.k === 2) { // crate
+      c.fillStyle = art.mix(pal[3], pal[0], 0.35); c.fillRect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6); c.strokeRect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6);
+      c.beginPath(); c.moveTo(-r * 0.8, -r * 0.8); c.lineTo(r * 0.8, r * 0.8); c.moveTo(r * 0.8, -r * 0.8); c.lineTo(-r * 0.8, r * 0.8); c.lineWidth = 1.6; c.stroke();
+    } else if (pr.k === 3) { // tyre
+      c.beginPath(); c.arc(0, 0, r * 0.9, 0, TAU); c.fillStyle = '#26232B'; c.fill(); c.stroke();
+      c.beginPath(); c.arc(0, 0, r * 0.42, 0, TAU); c.fillStyle = dark; c.fill(); c.stroke();
+    } else { // scrap plate heap
+      c.fillStyle = steel; c.beginPath(); c.moveTo(-r, r * 0.2); c.lineTo(-r * 0.3, -r * 0.7); c.lineTo(r * 0.8, -r * 0.4); c.lineTo(r, r * 0.4); c.lineTo(0, r * 0.7); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = rust; c.beginPath(); c.moveTo(-r * 0.5, 0); c.lineTo(0, -r * 0.4); c.lineTo(r * 0.5, 0); c.lineTo(0, r * 0.35); c.closePath(); c.fill(); c.stroke();
+    }
+    c.restore();
+  }
+  function paintScrap(c, pal, rx, ry, rw, rh) {
+    const A = NR.config.ARENA, art = NR.fx.art;
+    const g0 = art.mix(pal[0], '#1A1C22', 0.25), g1 = art.mix(pal[1], '#1A1C22', 0.3), seam = NR.util.shade(g0, -0.32);
+    c.fillStyle = seam; c.fillRect(rx, ry, rw, rh);
+    const t0x = Math.floor(rx / T2), t0y = Math.floor(ry / T2), t1x = Math.floor((rx + rw) / T2), t1y = Math.floor((ry + rh) / T2);
+    for (let ty = t0y; ty <= t1y; ty++) for (let tx = t0x; tx <= t1x; tx++) {
+      const x0 = tx * T2, y0 = ty * T2, h = h2(tx, ty, 1), base = h < 0.32 ? g1 : g0, v = (h2(tx, ty, 2) - 0.5) * 0.06;
+      const fill = tc(base, v);
+      c.fillStyle = fill; c.fillRect(x0 + 2, y0 + 2, T2 - 4, T2 - 4);
+      c.fillStyle = tc(fill, 0.07); c.fillRect(x0 + 2, y0 + 2, T2 - 4, 2); c.fillRect(x0 + 2, y0 + 2, 2, T2 - 4);
+      c.fillStyle = tc(fill, -0.12); c.fillRect(x0 + 2, y0 + T2 - 4, T2 - 4, 2); c.fillRect(x0 + T2 - 4, y0 + 2, 2, T2 - 4);
+      const d = h2(tx, ty, 3);
+      if (d < 0.12) { // diamond tread
+        c.strokeStyle = tc(fill, -0.1); c.lineWidth = 2; c.beginPath();
+        for (let yy = 14; yy < T2 - 10; yy += 16) for (let xx = 14 + ((yy / 16) & 1) * 8; xx < T2 - 10; xx += 16) { c.moveTo(x0 + xx - 4, y0 + yy + 3); c.lineTo(x0 + xx + 4, y0 + yy - 3); }
+        c.stroke();
+      } else if (d < 0.2) { // floor vent, low contrast
+        c.fillStyle = tc(fill, -0.2); c.fillRect(x0 + 26, y0 + 34, T2 - 52, T2 - 68);
+        c.fillStyle = tc(fill, -0.32); for (let yy = y0 + 40; yy < y0 + T2 - 40; yy += 9) c.fillRect(x0 + 30, yy, T2 - 60, 4);
+      } else if (d < 0.27) { // worn hazard paint
+        c.save(); c.beginPath(); c.rect(x0 + 2, y0 + T2 * 0.38, T2 - 4, T2 * 0.24); c.clip();
+        c.fillStyle = art.rgba(pal[3], 0.13); for (let xx = -T2; xx < T2 * 2; xx += 28) { c.beginPath(); c.moveTo(x0 + xx, y0 + T2 * 0.62); c.lineTo(x0 + xx + 14, y0 + T2 * 0.62); c.lineTo(x0 + xx + 44, y0 + T2 * 0.38); c.lineTo(x0 + xx + 30, y0 + T2 * 0.38); c.closePath(); c.fill(); }
+        c.restore();
+      }
+      if (h2(tx, ty, 4) < 0.18) { // oil stain
+        c.fillStyle = 'rgba(12,12,18,0.2)'; const ox = x0 + 20 + h2(tx, ty, 5) * 80, oy = y0 + 20 + h2(tx, ty, 6) * 80;
+        c.beginPath(); c.ellipse(ox, oy, 18 + h2(tx, ty, 7) * 16, 10 + h2(tx, ty, 8) * 8, h2(tx, ty, 9) * 3, 0, TAU); c.fill();
+        c.beginPath(); c.arc(ox + 22, oy + 6, 5, 0, TAU); c.fill();
+      }
+      if (h2(tx, ty, 10) < 0.25) { // scratches
+        c.strokeStyle = 'rgba(237,227,200,0.06)'; c.lineWidth = 1.5; c.beginPath();
+        const sx = x0 + 16 + h2(tx, ty, 11) * 90, sy = y0 + 16 + h2(tx, ty, 12) * 90; c.moveTo(sx, sy); c.lineTo(sx + 26, sy + 9); c.moveTo(sx + 4, sy + 7); c.lineTo(sx + 22, sy + 14); c.stroke();
+      }
+      c.fillStyle = tc(fill, -0.24);
+      c.fillRect(x0 + 8, y0 + 8, 4, 4); c.fillRect(x0 + T2 - 12, y0 + 8, 4, 4); c.fillRect(x0 + 8, y0 + T2 - 12, 4, 4); c.fillRect(x0 + T2 - 12, y0 + T2 - 12, 4, 4);
+      if (h2(tx, ty, 13) < 0.07) art.glow(c, x0 + T2 / 2, y0 + T2 / 2, 150, '#FFB25C', 0.07);
+    }
+    // arena wall: dark band, inner lip, muted hazard chevrons, bolts
+    const wall = art.mix(pal[2], '#0F1114', 0.2), lip = NR.util.shade(pal[2], 0.25), chev = art.mix(pal[3], wall, 0.45);
+    c.fillStyle = wall;
+    c.fillRect(0, 0, A.w, WALL); c.fillRect(0, A.h - WALL, A.w, WALL); c.fillRect(0, 0, WALL, A.h); c.fillRect(A.w - WALL, 0, WALL, A.h);
+    c.fillStyle = chev;
+    for (let x = 0; x < A.w; x += 56) {
+      if (x + 60 < rx || x - 60 > rx + rw) continue;
+      c.beginPath(); c.moveTo(x, WALL - 8); c.lineTo(x + 16, 8); c.lineTo(x + 30, 8); c.lineTo(x + 14, WALL - 8); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(x, A.h - 8); c.lineTo(x + 16, A.h - WALL + 8); c.lineTo(x + 30, A.h - WALL + 8); c.lineTo(x + 14, A.h - 8); c.closePath(); c.fill();
+    }
+    for (let y = 0; y < A.h; y += 56) {
+      if (y + 60 < ry || y - 60 > ry + rh) continue;
+      c.beginPath(); c.moveTo(WALL - 8, y); c.lineTo(8, y + 16); c.lineTo(8, y + 30); c.lineTo(WALL - 8, y + 14); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(A.w - 8, y); c.lineTo(A.w - WALL + 8, y + 16); c.lineTo(A.w - WALL + 8, y + 30); c.lineTo(A.w - 8, y + 14); c.closePath(); c.fill();
+    }
+    c.fillStyle = NR.config.INK;
+    c.fillRect(WALL, WALL, A.w - WALL * 2, 3); c.fillRect(WALL, A.h - WALL - 3, A.w - WALL * 2, 3); c.fillRect(WALL, WALL, 3, A.h - WALL * 2); c.fillRect(A.w - WALL - 3, WALL, 3, A.h - WALL * 2);
+    c.fillStyle = lip;
+    c.fillRect(WALL + 3, WALL + 3, A.w - WALL * 2 - 6, 2); c.fillRect(WALL + 3, WALL + 3, 2, A.h - WALL * 2 - 6);
+    if (!propCache) propCache = scrapProps();
+    for (let i = 0; i < propCache.length; i++) { const pr = propCache[i]; if (pr.x + 50 < rx || pr.x - 50 > rx + rw || pr.y + 50 < ry || pr.y - 50 > ry + rh) continue; drawProp(c, pr, pal); }
+  }
+
   // ---------- chunked floor cache ----------
   // The arena is cached as CHUNK x CHUNK world-px tiles baked at fs = min(render scale, quality cap) device px per
   // world px (<= 1024 px per side, under the iOS Safari canvas limits). Chunks bake on demand, at most BAKE_PER_FRAME
@@ -263,26 +364,38 @@
     const ang = p && !p.dead ? Math.atan2(p.y - e.y, p.x - e.x) : (en && en.rot) || 0;
     telegraph(e.kind, e.x, e.y, e.r, e.time, { angle: ang, w: Math.max(20, ((en && en.r) || 10) * 1.7), follow: en });
   }
+  // telegraphs (SPEC 12 priority 1): striped danger fill, a solid inner fill that grows to the hit moment, and a thick
+  // two-tone rim (ink + hot magenta) that reads on every zone; no blinking, so reduceFlashing changes nothing but tint.
+  let patCtx = null, pat = null, patCalm = null;
+  function pattern(c, calm) {
+    if (patCtx !== c) { patCtx = c; pat = null; patCalm = null; }
+    const art = NR.fx.art;
+    if (!art || !c.createPattern) return null;
+    if (calm) { if (!patCalm) { const img = art.stripes(true); patCalm = img ? c.createPattern(img, 'repeat') : null; } return patCalm; }
+    if (!pat) { const img = art.stripes(false); pat = img ? c.createPattern(img, 'repeat') : null; }
+    return pat;
+  }
+  function teleShape(c, T, R) {
+    c.beginPath();
+    if (T.type === 'line') c.rect(0, -T.w / 2, R, T.w);
+    else if (T.type === 'cone') { c.moveTo(T.x, T.y); c.arc(T.x, T.y, R, T.angle - T.arc / 2, T.angle + T.arc / 2); c.closePath(); }
+    else c.arc(T.x, T.y, R, 0, TAU);
+  }
   function drawTele(c, pal) {
+    const art = NR.fx.art, calm = !!NR.save.getSettings().reduceFlashing, col = art ? (calm ? art.T.teleCalm : art.T.tele) : pal[4];
+    const pt = pattern(c, calm);
     for (let i = 0; i < tele.length; i++) {
-      const T = tele[i], f = Math.min(1, T.t / T.time), col = T.color || pal[4];
-      c.fillStyle = col; c.strokeStyle = col; c.lineJoin = 'round';
-      if (T.type === 'line') {
-        c.save(); c.translate(T.x, T.y); c.rotate(T.angle);
-        c.globalAlpha = 0.18; c.fillRect(0, -T.w / 2, T.r, T.w);
-        c.globalAlpha = 0.5; c.fillRect(0, -T.w / 2, T.r * f, T.w);
-        c.globalAlpha = 1; c.lineWidth = 3; c.strokeRect(0, -T.w / 2, T.r, T.w);
-        c.restore();
-      } else if (T.type === 'cone') {
-        const a0 = T.angle - T.arc / 2, a1 = T.angle + T.arc / 2;
-        c.globalAlpha = 0.18; c.beginPath(); c.moveTo(T.x, T.y); c.arc(T.x, T.y, T.r, a0, a1); c.closePath(); c.fill();
-        c.globalAlpha = 0.5; c.beginPath(); c.moveTo(T.x, T.y); c.arc(T.x, T.y, T.r * f, a0, a1); c.closePath(); c.fill();
-        c.globalAlpha = 1; c.lineWidth = 3; c.beginPath(); c.moveTo(T.x, T.y); c.arc(T.x, T.y, T.r, a0, a1); c.closePath(); c.stroke();
-      } else {
-        c.globalAlpha = 0.18; c.beginPath(); c.arc(T.x, T.y, T.r, 0, TAU); c.fill();
-        c.globalAlpha = 0.5; c.beginPath(); c.arc(T.x, T.y, T.r * f, 0, TAU); c.fill();
-        c.globalAlpha = 1; c.lineWidth = 3; c.beginPath(); c.arc(T.x, T.y, T.r, 0, TAU); c.stroke();
-      }
+      const T = tele[i], f = Math.min(1, T.t / T.time);
+      const line = T.type === 'line';
+      if (line) { c.save(); c.translate(T.x, T.y); c.rotate(T.angle); }
+      teleShape(c, T, T.r);
+      if (pt) { c.fillStyle = pt; c.fill(); } else { c.globalAlpha = 0.18; c.fillStyle = col; c.fill(); c.globalAlpha = 1; }
+      c.globalAlpha = 0.28 + 0.2 * f; c.fillStyle = T.color || col; teleShape(c, T, T.r * f); c.fill(); c.globalAlpha = 1;
+      teleShape(c, T, T.r);
+      c.lineJoin = 'round'; c.lineWidth = 6; c.strokeStyle = NR.config.INK; c.stroke();
+      c.lineWidth = 3; c.strokeStyle = T.color || col; c.stroke();
+      if (line) c.restore();
+      if (art && !line) art.light(T.x, T.y, T.r * 1.1, col, 0.18 + 0.25 * f);
     }
     c.globalAlpha = 1;
   }

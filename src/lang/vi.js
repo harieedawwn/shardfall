@@ -304,6 +304,9 @@
     "set.qAuto": "Tự động",
     "set.qLow": "Thấp",
     "set.qMedium": "Vừa",
-    "set.qHigh": "Cao"
+    "set.qHigh": "Cao",
+    "levelup.new": "Mới",
+    "levelup.lv": "Cấp {n}",
+    "levelup.lvUp": "Cấp {a} → {b}"
   };
 })();

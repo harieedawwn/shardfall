@@ -471,7 +471,7 @@ module.exports = function (H) {
     eq(list.slice(9, 14), ['i18n', 'save', 'input', 'camera', 'loop'].map(function (n) { return 'src/core/' + n + '.js'; }));
     const sim = ['world', 'player', 'weapons', 'projectiles', 'combat', 'enemies', 'bosses', 'director', 'items', 'progression', 'shop', 'pickups', 'meta', 'run'].map(function (n) { return 'src/sim/' + n + '.js'; });
     eq(list.filter(function (s) { return /^src\/sim\//.test(s); }), sim);
-    eq(list.filter(function (s) { return /^src\/fx\//.test(s); }), ['shapes', 'art', 'render', 'particles', 'floor', 'juice', 'audio'].map(function (n) { return 'src/fx/' + n + '.js'; }));
+    eq(list.filter(function (s) { return /^src\/fx\//.test(s); }), ['shapes', 'art', 'actors', 'render', 'particles', 'floor', 'juice', 'audio'].map(function (n) { return 'src/fx/' + n + '.js'; }));
     eq(list.filter(function (s) { return /^src\/ui\//.test(s); }), ['hud', 'screens', 'touch'].map(function (n) { return 'src/ui/' + n + '.js'; }));
     eq(list[list.length - 1], 'src/main.js'); ok(fs.existsSync(path.join(H.ROOT, '.nojekyll')));
     ok(list.indexOf('src/data/weapons.js') > list.indexOf('src/core/loop.js') && list.indexOf('src/data/meta.js') < list.indexOf('src/sim/world.js'));

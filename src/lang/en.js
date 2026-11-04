@@ -304,6 +304,9 @@
     "set.qAuto": "Auto",
     "set.qLow": "Low",
     "set.qMedium": "Medium",
-    "set.qHigh": "High"
+    "set.qHigh": "High",
+    "levelup.new": "New",
+    "levelup.lv": "Lv {n}",
+    "levelup.lvUp": "Lv {a} → {b}"
   };
 })();

@@ -452,7 +452,7 @@
       const W = world(), p = W.player, L = W.levelup, open = D.lastOpen && D.lastOpen.cards === L.cards ? D.lastOpen : null;
       const cards = L.cards || [];
       const price = open && open.rerollPrice !== undefined ? open.rerollPrice : 5 + 5 * (L.rerolls || 0);
-      const s = scr('levelup');
+      const s = scr('levelup', 'dim');
       const pn = h('section', 'panel lv');
       pn.appendChild(h('div', 'lv-top', [
         h('h2', 'h ttl', t('levelup.title')),
@@ -466,27 +466,25 @@
         const d = isW ? null : NR.data.upgrades[c.stat];
         const cv = isW ? 0 : p.stats[c.stat], nv = isW ? 0 : previewStat(p, c.stat, c.add, c.pct);
         const nameStr = isW ? tx(wdef.name) : tx(d.name);
-        const deltaStr = isW ? (c.isNew ? 'NEW' : ('Lv ' + c.level)) : fmtDelta(c.stat, c.add, c.pct);
-        const ftStr = isW ? (c.isNew ? t('shop.weapon') : ('Lv ' + (c.level - 1) + '  →  Lv ' + c.level)) : (fmtVal(c.stat, cv) + '  →  ' + fmtVal(c.stat, nv));
-        const iconEl = isW ? iconOf('weapon', c.id, 42) : (c.stat ? iconOf('stat', c.stat, 38) : null);
+        const deltaStr = isW ? (c.isNew ? upper(t('levelup.new')) : t('levelup.lv', { n: c.level })) : fmtDelta(c.stat, c.add, c.pct);
+        const ftStr = isW ? (c.isNew ? t('shop.weapon') : t('levelup.lvUp', { a: c.level - 1, b: c.level })) : (fmtVal(c.stat, cv) + '  →  ' + fmtVal(c.stat, nv));
+        const dsStr = isW ? (tx(wdef.desc) || '') : t('tip.' + c.stat);
+        const iconEl = isW ? iconOf('weapon', c.id, 56) : (c.stat ? iconOf('stat', c.stat, 52) : null);
         const b = h('button', 'btn card up r-' + c.rarity, [
           h('span', 'band', [h('span', '', t('rarity.' + c.rarity)), keycap(String(i + 1))]),
           h('span', 'ub', [
             iconEl ? h('div', 'uico', [iconEl]) : null,
             h('b', 'big', deltaStr),
             h('span', 'nm', nameStr),
+            dsStr ? h('span', 'ds', dsStr) : null,
             h('span', 'ft', ftStr)
           ])
         ]);
         b.setAttribute('type', 'button'); b.setAttribute('data-fk', 'c' + i); if (i === 0) b.setAttribute('data-auto', '1');
         b.setAttribute('aria-label', nameStr + ' ' + deltaStr + ', ' + t('rarity.' + c.rarity));
-        b.style.animationDelay = (i * 45) + 'ms';
         b.addEventListener('click', function () { if (guarded()) return; sfx('ui_click'); NR.progression.pick(i); });
-        if (isW) {
-          setTip(b, [nameStr, tx(wdef.desc) || '']);
-        } else {
-          setTip(b, [nameStr, t('tip.' + c.stat), t('tip.now', { v: fmtVal(c.stat, cv), base: fmtVal(c.stat, NR.stats.defaults[c.stat]) })]);
-        }
+        // the card itself shows name, description and the real before/after values, so no tooltip covers the reroll row
+        if (!isW) b.setAttribute('title', t('tip.now', { v: fmtVal(c.stat, cv), base: fmtVal(c.stat, NR.stats.defaults[c.stat]) }));
         row.appendChild(b);
       });
       pn.appendChild(row);
@@ -1015,12 +1013,27 @@
     });
     focusEl(pick || firstF);
   }
+  // staged entrance: the parts of a screen rise one after another (CSS .stg, delay from --i)
+  function stage(el) {
+    let box = el, kids = box.children || [];
+    if (kids.length === 1 && kids[0].children && kids[0].children.length) { box = kids[0]; kids = box.children; }
+    let i = 0;
+    for (let k = 0; k < kids.length && i < 12; k++) {
+      const c = kids[k];
+      if (!c.classList) continue;
+      if (c.classList.contains('cards') || c.classList.contains('offers') || c.classList.contains('tt-menu')) {
+        const g = c.children || [];
+        for (let j = 0; j < g.length; j++) { g[j].classList.add('stg'); if (g[j].style && g[j].style.setProperty) g[j].style.setProperty('--i', String(i + j)); }
+        i += g.length;
+      } else { c.classList.add('stg'); if (c.style && c.style.setProperty) c.style.setProperty('--i', String(i)); i++; }
+    }
+  }
   function renderScreen(name, o) {
     const def = SCREENS[name];
     const prev = curEl, same = cur === name;
     const saved = prev && same ? { fk: activeFk(prev), top: prev.scrollTop } : null;
     const el = def.build(o || {});
-    if (o && o.first) el.className += ' enter';
+    if (o && o.first) { el.className += ' enter'; stage(el); }
     hideTip();
     if (prev) prev.remove();
     root.appendChild(el);

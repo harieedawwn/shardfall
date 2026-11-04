@@ -1,16 +1,18 @@
-/* Owner: UI. Flat, solid, opaque. No gradients, no blur, no glow, no translucency; hard offset shadows only. */
+/* Owner: UI. "Flat++" UI kit: ink outlines, hard (unblurred) offset shadows, chunky rounded shapes, static gradients
+   and translucent scrims allowed; banned list in SPEC 12. Tokens mirror NR.fx.art.T. */
 html {
   --sat: env(safe-area-inset-top, 0px); --sar: env(safe-area-inset-right, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px);
 }
 #ui {
-  --amber: #FFC23D; --ult: #B57CFF; --panel2: #30254A;
-  --ink: #14121F; --ink2: #0B0A12; --bg: #1B1429; --panel: #2A1E3F; --card: #3B2A58; --card2: #4A3670; --line: #5A4685;
-  --cream: #F2EFE6; --mute: #B9B0CF; --dim: #8C86A0; --gold: #C9A24B; --yellow: #FFD43B; --pink: #E86AA6; --cyan: #7FD3F0;
-  --green: #8BD450; --red: #E5484D; --orange: #D9693A; --off: #3A3550;
-  --r0: #A8A6B8; --r1: #5FA8D3; --r2: #A25CE0; --r3: #FFD43B; --rc: var(--r0);
-  --t: 150ms;
-  font-family: Bahnschrift, "Segoe UI", system-ui, sans-serif; font-size: 16px; font-weight: 600; line-height: 1.25; color: var(--cream);
-  -webkit-tap-highlight-color: transparent; user-select: none;
+  --ink: #14121F; --ink2: #0B0A12; --bg: #1A1428; --panel: #251C38; --panel2: #30254A; --card: #30254A; --card2: #3C2F5C; --line: #46386A;
+  --cream: #F6F0DF; --mute: #B8B0CC; --dim: #8F88A6; --amber: #FFC23D; --gold: #FFC23D; --yellow: #FFC23D; --pink: #FF5C8A; --cyan: #6FD6F2;
+  --green: #8BD450; --red: #FF5468; --orange: #FF7A2F; --off: #2C2640; --ult: #B57CFF; --hi: #4A3C70;
+  --r0: #B9B6C8; --r1: #4FA8F0; --r2: #B26CF5; --r3: #FFC23D; --rc: var(--r0);
+  --rad: 12px; --rad-s: 8px; --t: 150ms;
+  --ft: "Shard Title", "Baloo 2", Bahnschrift, "Segoe UI", system-ui, sans-serif;
+  --fb: "Shard Body", "Be Vietnam Pro", Bahnschrift, "Segoe UI", system-ui, sans-serif;
+  font-family: var(--fb); font-size: 16px; font-weight: 500; line-height: 1.35; color: var(--cream);
+  -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
 }
 #ui *, #ui *::before, #ui *::after { box-sizing: border-box; }
 #ui > * { pointer-events: auto; }
@@ -407,3 +409,57 @@ small { font-size: 0.82em; font-weight: 600; }
 @keyframes rotdev { 0%, 20% { transform: rotate(0deg); } 45%, 75% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 @media (prefers-reduced-motion: reduce) { .rot-dev { animation: none; transform: rotate(-90deg); } }
 #ui[data-calm="1"] .rot-dev { animation: none; transform: rotate(-90deg); }
+
+
+/* =====================================================================================================
+   Flat++ kit overrides (fonts, shapes, focus, staged entrances). Layout rules above stay authoritative.
+   ===================================================================================================== */
+#ui .h, #ui .logo, #ui .btn, #ui .card .band, #ui .ub .big, #ui .ub .nm, #ui .tip .tp-h, #ui .tag, #ui .stamp, #ui kbd {
+  font-family: var(--ft); font-stretch: normal; font-weight: 800; line-height: 1.15; }
+#ui .h, #ui .btn { letter-spacing: 0.02em; }
+#ui .h.ttl { text-shadow: 0 3px 0 var(--ink2); padding-top: 0.08em; }
+#ui .logo { color: var(--amber); text-shadow: 0 4px 0 var(--ink), 0 8px 0 var(--ink2); letter-spacing: 0.02em; padding-top: 0.1em; }
+#ui .sub, #ui small, #ui p { line-height: 1.45; }
+.scr.solid { background: radial-gradient(120% 90% at 50% 0%, #2A2040 0%, var(--bg) 60%, #120E1C 100%); }
+.scr.dim { background: rgba(14, 11, 22, 0.72); }
+.panel { border-radius: var(--rad); box-shadow: 0 6px 0 var(--ink2); background: linear-gradient(180deg, #2C2242 0%, var(--panel) 40%); border-top-color: var(--ink); position: relative; }
+.panel::before { content: ""; position: absolute; left: 10px; right: 10px; top: 3px; height: 2px; border-radius: 2px; background: var(--hi); pointer-events: none; }
+.btn { border-radius: var(--rad-s); box-shadow: 0 4px 0 var(--ink2); background: var(--panel2); }
+.btn:hover, .btn:focus { transform: translateY(-2px); box-shadow: 0 6px 0 var(--ink2); background: var(--card2); }
+.btn:focus-visible, .btn:focus { outline: 3px solid var(--amber); outline-offset: 3px; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink2); }
+.btn.pri { background: var(--amber); color: var(--ink); }
+.btn.pri:hover, .btn.pri:focus { background: #FFD266; color: var(--ink); }
+.btn.on { background: var(--amber); color: var(--ink); }
+.btn.off { background: var(--off); color: var(--dim); box-shadow: 0 2px 0 var(--ink2); }
+.btn.dng { background: #6E2235; }
+.btn.dng:hover, .btn.dng:focus, .btn.armed { background: var(--red); color: var(--ink); }
+.seg .btn { border-radius: 0; }
+.seg .btn:first-child { border-radius: var(--rad-s) 0 0 var(--rad-s); }
+.seg .btn:last-child { border-radius: 0 var(--rad-s) var(--rad-s) 0; }
+.tag, .chip, .kh { border-radius: 6px; }
+.tip { border-radius: var(--rad-s); border-color: var(--amber); box-shadow: 0 4px 0 var(--ink2); }
+.msg { border-radius: var(--rad-s); }
+.card { border-radius: var(--rad); box-shadow: 0 4px 0 var(--ink2); overflow: hidden; }
+.card .band { border-radius: 0; }
+/* level-up / reward cards: rarity frame, inner glow strip, big readable value */
+.btn.card.up { background: linear-gradient(180deg, var(--card2) 0%, var(--card) 55%, #271E3E 100%); border-color: var(--ink); box-shadow: 0 5px 0 var(--ink2); }
+.btn.card.up::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 3px solid var(--rc); opacity: 0.55; pointer-events: none; }
+.btn.card.up { position: relative; }
+.btn.card.up:hover, .btn.card.up:focus { transform: translateY(-6px); box-shadow: 0 11px 0 var(--ink2); background: linear-gradient(180deg, #4A3B70 0%, var(--card2) 60%, var(--card) 100%); }
+.btn.card.up:hover::after, .btn.card.up:focus::after { opacity: 1; }
+.btn.card.up.r-legendary::after, .btn.card.up.r-epic::after { opacity: 0.9; }
+.ub .uico { height: 64px; }
+.ub .uico .ico { width: 56px; height: 56px; }
+.ub .big { color: var(--rc); text-shadow: 0 3px 0 var(--ink); }
+.ub .nm { text-transform: none; font-size: 1.12em; letter-spacing: 0.01em; }
+.ub .ds { color: var(--mute); font-size: 0.86em; line-height: 1.4; font-weight: 500; }
+.ub .ft { color: var(--cream); font-weight: 700; background: rgba(11, 10, 18, 0.45); border-radius: 6px; padding: 0.2em 0.5em; align-self: flex-start; }
+.lv-top .h.ttl { color: var(--amber); }
+/* staged entrance: screens fade in, their parts rise one after another (stagger set inline by screens.js) */
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.scr.enter { animation: fadein 160ms ease-out both; }
+.scr.enter .stg { animation: rise 260ms cubic-bezier(.2, .9, .3, 1.2) both; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
+#ui[data-calm="1"] .scr.enter .stg { animation: fadein 160ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .scr.enter, .scr.enter .stg { animation: fadein 120ms linear both; } .btn, .card { transition: none; } }
