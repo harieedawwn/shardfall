@@ -295,28 +295,16 @@
   // =====================================================================================================
   // TITLE
   // =====================================================================================================
-  function decor() {
-    const d = h('div', 'decor'); d.setAttribute('aria-hidden', 'true');
-    const cols = ['#C9A24B', '#E86AA6', '#7FD3F0', '#A25CE0', '#D9693A', '#8BD450', '#FFD43B'];
-    const shapes = ['tri', 'sq', 'dia', 'hex', 'tri', 'dia', 'sq', 'hex', 'tri'];
-    for (let i = 0; i < shapes.length; i++) {
-      const s = h('i', 'sh ' + shapes[i]);
-      s.style.left = (52 + (i * 37) % 44) + '%'; s.style.top = (6 + (i * 53) % 78) + '%';
-      s.style.background = cols[i % cols.length];
-      s.style.animationDelay = (-i * 1.7) + 's'; s.style.animationDuration = (9 + (i % 4) * 2.5) + 's';
-      d.appendChild(s);
-    }
-    return d;
-  }
   SCREENS.title = {
     guard: false,
     build: function () {
       const meta = NR.save.getMeta(), run = NR.save.readRun();
-      const s = scr('title', 'solid');
-      s.appendChild(decor());
+      const s = scr('title', 'cine');
       const top = h('div', 'tt-top'); top.appendChild(langToggle()); s.appendChild(top);
       const col = h('div', 'tt-col');
-      col.appendChild(h('h1', 'logo', t('game.title')));
+      col.appendChild(h('div', 'tt-kicker', t('title.kicker')));
+      const nm = t('game.title'), cut = Math.ceil(nm.length / 2) + 0;
+      col.appendChild(h('h1', 'logo', [h('span', 'logo-a', nm.slice(0, 5)), h('span', 'logo-b', nm.slice(5))]));
       col.appendChild(h('p', 'tagline', t('title.tagline')));
       const menu = h('nav', 'tt-menu');
       menu.appendChild(btn('pri big', t('menu.play'), function () { show('select'); }, { fk: 'play', auto: true }));

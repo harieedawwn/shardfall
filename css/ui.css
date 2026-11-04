@@ -463,3 +463,47 @@ small { font-size: 0.82em; font-weight: 600; }
 .scr.enter .stg { animation: rise 260ms cubic-bezier(.2, .9, .3, 1.2) both; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
 #ui[data-calm="1"] .scr.enter .stg { animation: fadein 160ms ease-out both; }
 @media (prefers-reduced-motion: reduce) { .scr.enter, .scr.enter .stg { animation: fadein 120ms linear both; } .btn, .card { transition: none; } }
+
+/* =====================================================================================================
+   Cinematic title: the canvas scene (src/fx/title.js) shows through; the menu sits bottom-left like film credits
+   ===================================================================================================== */
+.scr-title.cine { background: transparent; display: block; padding: 0; overflow: hidden; }
+.scr-title.cine::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(7,5,15,0.82) 0%, rgba(7,5,15,0.55) 30%, rgba(7,5,15,0) 58%); }
+.scr-title.cine .tt-col { position: absolute; left: calc(var(--sal) + max(5vw, 28px)); bottom: calc(var(--sab) + 9vh); top: auto; margin: 0; width: min(440px, 88vw); gap: 10px; z-index: 1; }
+.scr-title.cine .tt-top { top: calc(var(--sat) + 8vh); right: calc(var(--sar) + 24px); }
+.tt-kicker { font-family: var(--ft); font-weight: 800; font-size: 0.95em; letter-spacing: 0.32em; text-transform: uppercase; color: #FF9A5C; line-height: 1.3;
+  animation: kick 1.4s cubic-bezier(.2,.8,.2,1) both; }
+#ui .scr-title.cine .logo { font-size: clamp(3.2em, 9.5vw, 7.4em); line-height: 0.9; letter-spacing: 0.01em; margin: 0 0 6px -0.04em; text-shadow: none; display: flex; flex-wrap: wrap; padding-top: 0.12em; }
+.scr-title.cine .logo span { display: inline-block; color: #FFC23D; text-shadow: 0 0.045em 0 #B8452F, 0 0.09em 0 var(--ink), 0 0.14em 0 rgba(0,0,0,0.55); animation: logoin 1.1s cubic-bezier(.2,.9,.2,1) both; }
+.scr-title.cine .logo .logo-b { color: #8FE6F7; text-shadow: 0 0.045em 0 #3A5FC0, 0 0.09em 0 var(--ink), 0 0.14em 0 rgba(0,0,0,0.55); animation-delay: 0.15s; }
+.scr-title.cine .tagline { color: #D9CFEA; max-width: 26em; font-size: 1.02em; line-height: 1.5; animation: rise 0.9s 0.35s ease-out both; }
+.scr-title.cine .tt-menu { gap: 8px; margin-top: 10px; }
+#ui .scr-title.cine .tt-menu .btn { background: rgba(14,10,24,0.72); border: 0; border-left: 4px solid rgba(255,194,61,0.35); border-radius: 4px; box-shadow: none; min-height: 3em;
+  justify-content: space-between; padding: 0.55em 1.1em; letter-spacing: 0.08em; transition: transform 160ms ease-out, background-color 160ms ease-out, border-color 160ms ease-out; }
+#ui .scr-title.cine .tt-menu .btn:hover, #ui .scr-title.cine .tt-menu .btn:focus { transform: translateX(10px); background: rgba(40,26,64,0.88); border-left-color: var(--amber); outline: none; }
+#ui .scr-title.cine .tt-menu .btn:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+#ui .scr-title.cine .tt-menu .btn.pri { background: linear-gradient(90deg, #FFC23D 0%, #FF9A3D 100%); color: var(--ink); border-left-color: #FFF3C4; font-size: 1.3em; min-height: 2.8em; }
+#ui .scr-title.cine .tt-menu .btn.pri:hover, #ui .scr-title.cine .tt-menu .btn.pri:focus { background: linear-gradient(90deg, #FFD266 0%, #FFB45A 100%); }
+.scr-title.cine .tt-menu .btn:nth-child(1) { animation: slidein 0.7s 0.55s cubic-bezier(.2,.9,.2,1) both; }
+.scr-title.cine .tt-menu .btn:nth-child(2) { animation: slidein 0.7s 0.63s cubic-bezier(.2,.9,.2,1) both; }
+.scr-title.cine .tt-menu .btn:nth-child(3) { animation: slidein 0.7s 0.71s cubic-bezier(.2,.9,.2,1) both; }
+.scr-title.cine .tt-menu .btn:nth-child(4) { animation: slidein 0.7s 0.79s cubic-bezier(.2,.9,.2,1) both; }
+.scr-title.cine .tt-menu .btn:nth-child(5) { animation: slidein 0.7s 0.87s cubic-bezier(.2,.9,.2,1) both; }
+.scr-title.cine .tt-stats { color: #A79CC0; font-size: 0.85em; animation: rise 0.9s 1s ease-out both; }
+.scr-title.cine .foot { position: absolute; right: calc(var(--sar) + 24px); bottom: calc(var(--sab) + 8vh); }
+@keyframes logoin { from { opacity: 0; transform: translateY(0.25em) scale(1.06); letter-spacing: 0.2em; } to { opacity: 1; transform: none; letter-spacing: 0.01em; } }
+@keyframes kick { from { opacity: 0; letter-spacing: 0.8em; } to { opacity: 1; letter-spacing: 0.32em; } }
+@keyframes slidein { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: none; } }
+@media (orientation: portrait) {
+  .scr-title.cine::before { background: linear-gradient(0deg, rgba(7,5,15,0.92) 0%, rgba(7,5,15,0.6) 40%, rgba(7,5,15,0) 62%); }
+  .scr-title.cine .tt-col { left: calc(var(--sal) + 20px); right: calc(var(--sar) + 20px); width: auto; bottom: calc(var(--sab) + 5vh); }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .scr-title.cine .tt-col { bottom: calc(var(--sab) + 9vh); gap: 4px; }
+  #ui .scr-title.cine .logo { font-size: 3.2em; }
+  .scr-title.cine .tagline { display: none; }
+  #ui .scr-title.cine .tt-menu .btn { min-height: 2.6em; padding: 0.35em 1em; }
+}
+@media (prefers-reduced-motion: reduce) { .scr-title.cine .logo span, .tt-kicker, .scr-title.cine .tt-menu .btn, .scr-title.cine .tagline, .scr-title.cine .tt-stats { animation: fadein 300ms both; } }
+@media (orientation: portrait), (pointer: coarse) { .scr-title.cine .foot { display: none; } }

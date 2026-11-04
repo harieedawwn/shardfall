@@ -48,9 +48,10 @@
   }
 
   // ---------- per-entity visuals ----------
+  // tracked flag = id + 1 so the player (id 0) is never mistaken for "already tracked" once released (stuck white flash)
   function track(e) {
-    if (e._tr === e.id) return;
-    e._tr = e.id; tracked.push(e);
+    if (e._tr === e.id + 1) return;
+    e._tr = e.id + 1; tracked.push(e);
     if (e.sx === undefined) e.sx = 1;
     if (e.sy === undefined) e.sy = 1;
     e.fvx = 0; e.fvy = 0; e.kox = 0; e.koy = 0;
@@ -110,7 +111,7 @@
     if (fl.t > 0) fl.t -= dt;
     for (let i = tracked.length - 1; i >= 0; i--) {
       const e = tracked[i];
-      if (e._tr !== e.id || e.dead) { tracked.splice(i, 1); if (e._tr === e.id) e._tr = 0; continue; }
+      if (e._tr !== e.id + 1 || e.dead) { tracked.splice(i, 1); if (e._tr === e.id + 1) e._tr = 0; continue; }
       if (e.flash > 0) e.flash -= dt;
       const kd = Math.exp(-14 * dt); e.kox *= kd; e.koy *= kd;
       e.fvx += ((1 - e.sx) * 260 - e.fvx * 15) * dt; e.sx += e.fvx * dt;

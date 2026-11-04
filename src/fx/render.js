@@ -562,7 +562,7 @@
     const x = p.px + (p.x - p.px) * a, y = p.py + (p.y - p.py) * a, r = p.r || 14;
     const dashing = p.dash && p.dash.t > 0, sp = Math.hypot(p.vx || 0, p.vy || 0), moving = sp > 10;
     const flip = Math.cos(p.aim) >= 0 ? 1 : -1;
-    const hurt = p.hurtT > 0.19 || p.flash > 0;
+    const hurt = p.hurtT > 0.19 || (p.flash > 0 && p.flash <= 0.1);
     const variant = hurt && !calm ? AC.V_FLASH : AC.V_STEP_A, tier = AC.tierOf(p);
     const spr = AC.playerSprite(p.charId, r, p.color || '#5FA8D3', variant, tier);
     if (!spr) return;
@@ -1659,6 +1659,8 @@
     if (F.art) { F.art.tickFrame(); if (F.art.version() !== artVer) dirty = true; }
     if (dirty) fit();
     t = now(); pal = palette();
+    // main menu: the cinematic title scene replaces the arena
+    if (W.state === 'menu' && F.title && NR.ui && NR.ui.screens && NR.ui.screens.current && NR.ui.screens.current() === 'title') { F.title.draw(ctx, V, t); ctx.setTransform(1, 0, 0, 1, 0, 0); return; }
     const q = F.particles ? F.particles.quality() : 0, a = alpha === undefined ? 1 : alpha;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
@@ -1726,5 +1728,5 @@
     if (V.ox > 0) for (let y = st / 2; y < V.bh; y += st) { ctx.fillRect(V.ox / 2 - s, y - s, s * 2, s * 2); ctx.fillRect(x1 + (V.bw - x1) / 2 - s, y - s, s * 2, s * 2); }
   }
   NR.fx = NR.fx || {};
-  NR.fx.render = { init: init, resize: resize, fit: fit, toView: toView, view: function () { return V; }, draw: draw, setZone: setZone, palette: palette, zone: function () { return zone; }, size: function () { return sz; } };
+  NR.fx.render = { drawHeldWeapon: function (c, id, recoil) { drawHeldWeapon(c, HELD_ALIAS[id] || id, evolved(id), recoil || 0); }, init: init, resize: resize, fit: fit, toView: toView, view: function () { return V; }, draw: draw, setZone: setZone, palette: palette, zone: function () { return zone; }, size: function () { return sz; } };
 })();

@@ -275,6 +275,8 @@
     }
     return sp;
   }
+  // large hero painter for the title scene (body only, facing right, origin at body centre)
+  function paintHero(g, charId, R, tier) { const ch = CHARS[charId] || CHARS.ranger, d = NR.data.characters[charId]; ch.body(g, R, (d && d.color) || '#5FA8D3', 0, tier | 0); }
   function has(defId) { return !!DESIGNS[defId]; }
   function hasChar(id) { return !!CHARS[id]; }
   function face(id) { return null; }
@@ -290,7 +292,7 @@
 
   NR.fx = NR.fx || {};
   NR.fx.actors = {
-    enemySprite: enemySprite, playerSprite: playerSprite, has: has, hasChar: hasChar, face: face, crest: crest, tierOf: tierOf, draw: draw, eyes: eyes,
+    enemySprite: enemySprite, playerSprite: playerSprite, has: has, hasChar: hasChar, paintHero: paintHero, face: face, crest: crest, tierOf: tierOf, draw: draw, eyes: eyes,
     V_STEP_A: V_STEP_A, V_STEP_B: V_STEP_B, V_FLASH: V_FLASH, V_FROZEN: V_FROZEN, PLAYER_VIS: PLAYER_VIS, ENEMY_VIS: ENEMY_VIS
   };
 })();

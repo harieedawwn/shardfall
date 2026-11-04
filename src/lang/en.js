@@ -313,6 +313,7 @@
     "hud.special": "⚠ {name} incoming!",
     "hud.breakFree": "GRABBED! DASH TO BREAK FREE",
     "hud.bossHint": "Glowing gold core = weak point. Unload on it then!",
-    "hud.barrier": "Barrier! Hold fire until the core opens"
+    "hud.barrier": "Barrier! Hold fire until the core opens",
+    "title.kicker": "When the sky shatters"
   };
 })();

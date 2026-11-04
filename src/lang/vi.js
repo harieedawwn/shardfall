@@ -313,6 +313,7 @@
     "hud.special": "⚠ {name} xuất hiện!",
     "hud.breakFree": "BỊ BẮT! LƯỚT ĐỂ THOÁT",
     "hud.bossHint": "Lõi sáng vàng = điểm yếu. Dồn sát thương lúc đó!",
-    "hud.barrier": "Lá chắn! Ngừng xả, chờ lõi lộ ra"
+    "hud.barrier": "Lá chắn! Ngừng xả, chờ lõi lộ ra",
+    "title.kicker": "Khi bầu trời vỡ vụn"
   };
 })();
