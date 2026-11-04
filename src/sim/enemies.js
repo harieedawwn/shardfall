@@ -52,11 +52,149 @@
     for (let i = 0; i < P.length; i++) if (P[i].team === 'enemy' && !P[i].dead) n++;
     hostile = n;
   }
+  // bullet look per shooter (fx reads b.style): acid glob, sniper needle, trickster dart, turret bolt
+  const STYLE = { kiter: 'glob', sniper: 'needle', trickster: 'dart', turret: 'bolt' };
   function fire(e, ang, speed, r, life) {
     const b = NR.projectiles.spawn({ team: 'enemy', x: e.x, y: e.y, vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed, r: r, dmg: e.dmg, life: life || 4 });
-    if (b) { b.color = e.color; hostile++; }
+    if (b) { b.color = e.color; b.style = STYLE[e.ak] || 'spike'; hostile++; }
     return b;
   }
+  // aim with lead: where the player will be after the bullet's flight time
+  function leadAng(e, p, speed) {
+    const dx = p.x - e.x, dy = p.y - e.y, tt = Math.sqrt(dx * dx + dy * dy) / speed;
+    return Math.atan2(p.y + (p.vy || 0) * tt * 0.85 - e.y, p.x + (p.vx || 0) * tt * 0.85 - e.x);
+  }
+  function aliveTurrets(owner) { const E = NR.world.get().enemies; let n = 0; for (let i = 0; i < E.length; i++) if (!E[i].dead && E[i].ak === 'turret' && E[i].ai.owner === owner) n++; return n; }
+
+  // ---------- specials ----------
+  function thinkSpecial(e, p, W, dt, d, ux, uy, sm) {
+    const a = e.ai, ap = e.ap, A = NR.config.ARENA;
+    switch (e.ak) {
+      case 'juggernaut': { // relentless tank; when close it plants and slams the ground
+        if (a.state === 'slam') {
+          e.vx = 0; e.vy = 0; a.t -= dt * sm;
+          if (a.t <= 0) { tele(e, false); NR.combat.explode(e.x, e.y, ap.blastR, e.dmg * 1.4, { team: 'enemy', element: 'physical', knock: 300 }); a.state = 'move'; a.cd = ap.cd; }
+          return true;
+        }
+        e.vx = ux * e.speed; e.vy = uy * e.speed; e.kbx *= 0.2; e.kby *= 0.2; a.cd -= dt * sm;
+        if (d < ap.range && a.cd <= 0) { a.state = 'slam'; a.t = ap.tele; tele(e, true); emitAttack(e, 'blast', ap.tele, e.x, e.y, ap.blastR); }
+        return false;
+      }
+      case 'kidnapper': { // sprints in; on touch it grabs the player and drags them away (dash or a heavy hit breaks free)
+        if (a.state === 'grab') {
+          a.t -= dt;
+          const free = p.dash && p.dash.t > 0, hurt = a.buf - e.hp > e.maxHp * ap.breakHp;
+          if (a.t <= 0 || free || hurt || p.dead) { a.state = 'flee'; a.t = 1.2; a.cd = ap.cd; tele(e, false); p.grabbedBy = 0; return true; }
+          // drag toward the far side from the arena centre (into the crowd and walls)
+          const cx = A.w / 2, cy = A.h / 2, gx = e.x - cx, gy = e.y - cy, gd = Math.sqrt(gx * gx + gy * gy) || 1;
+          e.vx = gx / gd * ap.drag; e.vy = gy / gd * ap.drag;
+          return true;
+        }
+        if (a.state === 'flee') { e.vx = -ux * e.speed; e.vy = -uy * e.speed; a.t -= dt * sm; if (a.t <= 0) a.state = 'move'; return false; }
+        a.cd -= dt * sm;
+        // circle-strafe in, then lunge when the cooldown is up
+        const w = a.cd > 0 ? 0.8 : 0;
+        e.vx = (ux - uy * a.dir * w) * e.speed; e.vy = (uy + ux * a.dir * w) * e.speed;
+        if (a.cd <= 0 && d < e.r + p.r + 4 && !(p.iframes > 0) && !p.grabbedBy) {
+          a.state = 'grab'; a.t = ap.grabT; a.buf = e.hp; tele(e, true); p.grabbedBy = e.id;
+          NR.combat.damagePlayer(e.dmg, e.id, {}); emitAttack(e, 'melee', 0, e.x, e.y, e.r);
+        }
+        return false;
+      }
+      case 'warlord': { // hangs back and empowers nearby enemies (bigger, tougher, harder hitting; red outline)
+        if (a.state === 'buff') {
+          e.vx = 0; e.vy = 0; a.t -= dt * sm;
+          if (a.t <= 0) {
+            tele(e, false); a.state = 'move'; a.cd = ap.cd;
+            const n = NR.spatial.circle(e.x, e.y, ap.buffR, tmp);
+            for (let k = 0; k < n; k++) {
+              const o = tmp[k];
+              if (o === e || o.dead || o.isBoss || o.flags.empowered || o.ak === 'turret') continue;
+              o.flags.empowered = true; o.maxHp *= 1 + ap.hpBoost; o.hp = Math.min(o.maxHp, o.hp * (1 + ap.hpBoost) + o.maxHp * 0.2); o.dmg *= ap.dmgBoost; o.speed *= 1.1;
+            }
+          }
+          return true;
+        }
+        steerKeep(e, p, d, ux, uy, ap.keepMin, ap.keepMax, dt); a.cd -= dt * sm;
+        if (a.cd <= 0) { a.state = 'buff'; a.t = ap.tele; tele(e, true); emitAttack(e, 'blast', ap.tele, e.x, e.y, ap.buffR); }
+        return false;
+      }
+      case 'trickster': { // small, tough, clever: dodges your shots, blinks to your flank, leads its aim
+        if (a.hitCd2 > 0) { a.hitCd2 -= dt; if (a.hitCd2 <= 0) tele(e, false); }
+        if (a.dodge > 0) { a.dodge -= dt; e.vx = a.dx * e.speed * 2.3; e.vy = a.dy * e.speed * 2.3; }
+        else {
+          steerKeep(e, p, d, ux, uy, ap.keepMin, ap.keepMax, dt);
+          const P = W.projectiles;
+          for (let i = 0; i < P.length; i++) {
+            const b = P[i];
+            if (b.dead || b.team !== 'player' || b.orb) continue;
+            const bx = e.x - b.x, by = e.y - b.y, bd2 = bx * bx + by * by;
+            if (bd2 > 140 * 140) continue;
+            const bs = Math.sqrt(b.vx * b.vx + b.vy * b.vy) || 1;
+            if ((bx * b.vx + by * b.vy) / bs < 0) continue; // moving away
+            const side = (bx * b.vy - by * b.vx) > 0 ? 1 : -1;
+            a.dodge = 0.22; a.dx = -b.vy / bs * side; a.dy = b.vx / bs * side; break;
+          }
+        }
+        a.t -= dt;
+        if (a.t <= 0 && (d < 170 || e.hp < a.buf - e.maxHp * 0.18)) { // blink behind the player's aim
+          const ang = p.aim + Math.PI + NR.rng.range(-0.9, 0.9);
+          e.x = NR.util.clamp(p.x + Math.cos(ang) * 230, 40, A.w - 40); e.y = NR.util.clamp(p.y + Math.sin(ang) * 230, 40, A.h - 40);
+          e.px = e.x; e.py = e.y; a.t = ap.blinkCd; a.buf = e.hp; a.cd = Math.min(a.cd, 0.5);
+          tele(e, true); a.hitCd2 = 0.5; emitAttack(e, 'dash', 0.5, e.x, e.y, e.r + 20);
+        }
+        if (a.buf === 0) a.buf = e.hp;
+        a.cd -= dt * sm;
+        if (a.cd <= 0) { a.cd = ap.cd; const ang = leadAng(e, p, ap.bulletSpeed); fire(e, ang, ap.bulletSpeed, ap.bulletR); fire(e, ang + 0.16, ap.bulletSpeed, ap.bulletR); }
+        return false;
+      }
+      case 'engineer': { // picks a spot near you and builds an indestructible turret; kill it mid-build and nothing appears
+        if (a.state === 'build') {
+          e.vx = 0; e.vy = 0; a.t -= dt * sm;
+          if (a.t <= 0) {
+            tele(e, false); a.state = 'move'; a.cd = ap.cd;
+            const tu = create(def('turret'), defIdT, a.tx, a.ty, { owner: e.id });
+            if (tu) { tu.flags.invuln = true; tu.flags.structure = true; tu.ai.t = tu.ap.life; tu.ai.n = tu.ap.ammo; }
+          }
+          return true;
+        }
+        a.cd -= dt * sm;
+        if (a.state !== 'goto' && a.cd <= 0 && aliveTurrets(e.id) < ap.maxTurrets) {
+          const ang = NR.rng.range(0, TAU);
+          a.tx = NR.util.clamp(p.x + Math.cos(ang) * 260, 60, A.w - 60); a.ty = NR.util.clamp(p.y + Math.sin(ang) * 260, 60, A.h - 60); a.state = 'goto';
+        }
+        if (a.state === 'goto') {
+          const gx = a.tx - e.x, gy = a.ty - e.y, gd = Math.sqrt(gx * gx + gy * gy) || 1;
+          if (gd < 12) { a.state = 'build'; a.t = ap.build; tele(e, true); emitAttack(e, 'summon', ap.build, a.tx, a.ty, 34); }
+          else { e.vx = gx / gd * e.speed; e.vy = gy / gd * e.speed; }
+          e.rot = Math.atan2(gy, gx);
+          return true;
+        }
+        steerKeep(e, p, d, ux, uy, 300, 420, dt);
+        return false;
+      }
+      case 'turret': { // stationary, untargetable, runs out of ammo or time and falls apart
+        e.vx = 0; e.vy = 0; a.t -= dt; a.cd -= dt;
+        e.rot = Math.atan2(p.y - e.y, p.x - e.x);
+        if (a.cd <= 0 && a.n > 0) { a.cd = ap.rate; a.n--; fire(e, leadAng(e, p, ap.bulletSpeed), ap.bulletSpeed, ap.bulletR); }
+        if (a.t <= 0 || a.n <= 0 && a.cd < -0.6) { e.dead = true; NR.events.emit('projectile:impact', { x: e.x, y: e.y, r: 20, element: 'physical', team: 'enemy', surface: 'expire' }); }
+        return true;
+      }
+      case 'mortar': { // lobs shells at where you are going; each landing zone is telegraphed
+        steerKeep(e, p, d, ux, uy, ap.keepMin, ap.keepMax, dt); a.cd -= dt * sm;
+        if (a.cd <= 0) {
+          a.cd = ap.cd;
+          for (let k = 0; k < ap.shells; k++) {
+            const lx = p.x + (p.vx || 0) * ap.flight * (k === 0 ? 1 : 0.5) + (k ? NR.rng.range(-110, 110) : 0), ly = p.y + (p.vy || 0) * ap.flight * (k === 0 ? 1 : 0.5) + (k ? NR.rng.range(-110, 110) : 0);
+            queueBlast(NR.util.clamp(lx, 20, A.w - 20), NR.util.clamp(ly, 20, A.h - 20), ap.blastR, e.dmg, ap.flight + k * 0.18, e);
+          }
+        }
+        return false;
+      }
+    }
+    return false;
+  }
+  const defIdT = 'turret';
 
   // ---------- spawning ----------
   function create(d, defId, x, y, o) {
@@ -66,9 +204,9 @@
       defId: defId, ak: d.ai, ap: ap, x: NR.util.clamp(x, d.r, A.w - d.r), y: NR.util.clamp(y, d.r, A.h - d.r), r: d.r, hp: hp, maxHp: hp,
       speed: d.speed * sc.speed * (o.speedMult || 1), dmg: d.dmg * (o.dmgMult || 1), armor: d.armor, xp: d.xp * sc.xp * (o.xpMult || 1), gold: d.gold * sc.gold,
       isBoss: false, phase: 0, affixes: [], contact: d.contact,
-      ai: { state: 'move', t: 0, cd: 0, tx: 0, ty: 0, owner: o.owner || 0, gen: o.gen || 0, dir: NR.rng.chance(0.5) ? 1 : -1, ph: NR.rng.range(0, TAU), hit: false, buf: 0, dx: 0, dy: 0, a0: d.armor, hitCd: 0 },
+      ai: { state: 'move', t: 0, cd: 0, n: 0, dodge: 0, hitCd2: 0, tx: 0, ty: 0, owner: o.owner || 0, gen: o.gen || 0, dir: NR.rng.chance(0.5) ? 1 : -1, ph: NR.rng.range(0, TAU), hit: false, buf: 0, dx: 0, dy: 0, a0: d.armor, hitCd: 0 },
       status: {}, kbx: 0, kby: 0, shape: d.shape, color: d.color, rot: 0, sx: 1, sy: 1, flash: 0,
-      flags: { elite: false, boss: false, frozen: false, burning: false, poisoned: false, shielded: false, telegraph: false, invuln: false, hurt: false, enraged: false }
+      flags: { elite: false, boss: false, frozen: false, burning: false, poisoned: false, shielded: false, telegraph: false, invuln: false, hurt: false, enraged: false, empowered: false, structure: false, special: d.tags.indexOf('special') >= 0 }
     });
     if (!e) return null;
     if (ap.cd) e.ai.cd = NR.rng.range(0.6, Math.max(0.7, ap.cd * 0.7));
@@ -162,8 +300,10 @@
     else { vx = -uy * e.ai.dir * 0.55; vy = ux * e.ai.dir * 0.55; }
     e.vx = vx * e.speed; e.vy = vy * e.speed;
   }
+  const SPECIAL = { juggernaut: 1, kidnapper: 1, warlord: 1, trickster: 1, engineer: 1, turret: 1, mortar: 1 };
   function think(e, p, W, dt, d, ux, uy, sm) {
     const a = e.ai, ap = e.ap, dn = W.danger | 0, cdm = 1 - 0.04 * dn;
+    if (SPECIAL[e.ak]) { if (!thinkSpecial(e, p, W, dt, d, ux, uy, sm)) e.rot = Math.atan2(uy, ux); return; }
     switch (e.ak) {
       case 'walker': e.vx = ux * e.speed; e.vy = uy * e.speed; break;
       case 'weaver': {
@@ -367,6 +507,7 @@
       e.x += e.vx * dt * sm; e.y += e.vy * dt * sm;
       if (e.ai.state !== 'vanish') separate(e);
       e.x = NR.util.clamp(e.x, e.r, A.w - e.r); e.y = NR.util.clamp(e.y, e.r, A.h - e.r);
+      if (e.ak === 'kidnapper' && e.ai.state === 'grab' && p.grabbedBy === e.id) { p.x = e.x - Math.cos(e.rot) * (e.r + p.r - 2); p.y = e.y - Math.sin(e.rot) * (e.r + p.r - 2); p.vx = 0; p.vy = 0; }
       if (e.contact && e.ai.hitCd <= 0 && NR.util.dist2(e.x, e.y, p.x, p.y) < (e.r + p.r) * (e.r + p.r)) { hitPlayer(e, p, W); e.ai.hitCd = 0.8; }
     }
   }
@@ -377,6 +518,8 @@
     deathP.enemy = e; deathP.weaponId = weaponId || null; deathP.x = e.x; deathP.y = e.y; deathP.elite = !!(e.flags && e.flags.elite); deathP.isBoss = !!e.isBoss;
     NR.events.emit('enemy:death', deathP);
     if (e.isBoss) { NR.bosses.kill(e); return; }
+    const pl = NR.world.get().player;
+    if (pl && pl.grabbedBy === e.id) pl.grabbedBy = 0;
     const ap = e.ap;
     if (e.flags.elite) {
       if (NR.pickups) NR.pickups.spawn('chest', e.x, e.y, 0);

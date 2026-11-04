@@ -223,6 +223,34 @@
       });
     });
   }
+  // styled hostile shots: every style keeps the ink outline + white inner rim (colour-blind safe), shapes differ
+  const HSTY = {
+    glob: ['#7FE04A', function (g, R) { g.beginPath(); g.ellipse(0, 0, R * 1.2, R, 0, 0, TAU); g.moveTo(-R * 1.1, 0); g.quadraticCurveTo(-R * 2, R * 0.2, -R * 1.9, R * 0.9); g.quadraticCurveTo(-R * 1.4, R * 0.6, -R * 1.0, R * 0.55); }],
+    needle: ['#FF3D6E', function (g, R) { g.beginPath(); g.moveTo(R * 2.4, 0); g.lineTo(0, -R * 0.55); g.lineTo(-R * 1.6, 0); g.lineTo(0, R * 0.55); g.closePath(); }],
+    dart: ['#4FA8F0', function (g, R) { g.beginPath(); g.moveTo(R * 1.6, 0); g.lineTo(-R * 0.9, -R * 1.0); g.lineTo(-R * 0.4, 0); g.lineTo(-R * 0.9, R * 1.0); g.closePath(); }],
+    bolt: ['#FFC23D', function (g, R) { g.beginPath(); g.rect(-R * 1.4, -R * 0.55, R * 2.8, R * 1.1); }],
+    shell: ['#FF7A2F', function (g, R) { g.beginPath(); g.moveTo(R * 1.5, 0); g.quadraticCurveTo(R * 1.2, -R, 0, -R); g.lineTo(-R * 1.2, -R * 0.8); g.lineTo(-R * 1.2, R * 0.8); g.lineTo(0, R); g.quadraticCurveTo(R * 1.2, R, R * 1.5, 0); g.closePath(); }],
+    shard: ['#7FD3F0', function (g, R) { g.beginPath(); g.moveTo(R * 1.7, 0); g.lineTo(R * 0.2, -R * 0.8); g.lineTo(-R * 1.3, -R * 0.3); g.lineTo(-R * 0.9, R * 0.5); g.lineTo(R * 0.3, R * 0.75); g.closePath(); }],
+    orb: ['#B57CFF', function (g, R) { g.beginPath(); g.arc(0, 0, R * 1.15, 0, TAU); }]
+  };
+  function hostileStyled(style, r) {
+    const st = HSTY[style];
+    if (!st) return hostileBullet(r);
+    const R = Math.max(4, Math.round(r + 1.5));
+    return get(bul, style + R, function () {
+      const ext = R * 2.6 + 3;
+      return bake(ext * 2, ext * 2, ext, ext, function (g) {
+        st[1](g); g.lineWidth = 2.8; g.strokeStyle = T.ink; g.stroke();
+        st[1](g); g.fillStyle = '#FFFFFF'; g.fill();
+        g.save(); g.scale(0.7, 0.7); st[1](g); g.fillStyle = st[0]; g.fill(); g.restore();
+        if (style === 'orb') { g.beginPath(); g.arc(0, 0, R * 0.38, 0, TAU); g.fillStyle = '#14121F'; g.fill(); }
+        g.beginPath(); g.arc(-R * 0.2, -R * 0.25, R * 0.18, 0, TAU); g.fillStyle = 'rgba(255,255,255,0.8)'; g.fill();
+      });
+    });
+  }
+  function hostileColor(style) { const st = HSTY[style]; return st ? st[0] : T.hostileGlow; }
+  const ORIENT = { needle: 1, dart: 1, bolt: 1, shell: 1, shard: 1, glob: 1 };
+
   // player shots: elongated, element coloured but muted, no ink outline (less contrast than hostile shots)
   function playerBullet(color, r, evo) {
     const R = Math.max(3, Math.round(r));
@@ -307,6 +335,6 @@
     scale: function () { return S; }, gen: function () { return gen; }, setScale: setScale,
     store: store, bake: bake, glow: glow, puff: puff, get: get, blit: blit, cel: cel, flat: flat, mix: mix, rgba: rgba, shade: shade, canvas: canvas,
     light: light, flushLights: flushLights, lightCount: lightCount, lightSprite: lightSprite, setView: setView,
-    hostileBullet: hostileBullet, playerBullet: playerBullet, stripes: stripes, vignette: vignette, drawMotes: drawMotes
+    hostileBullet: hostileBullet, hostileStyled: hostileStyled, hostileColor: hostileColor, orient: function (s) { return !!ORIENT[s]; }, playerBullet: playerBullet, stripes: stripes, vignette: vignette, drawMotes: drawMotes
   };
 })();

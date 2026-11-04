@@ -7,11 +7,13 @@
   const RESERVE = 12;          // slots kept free for boss summons and splitter children
   const wfn = function (o) { return o.weight; };
   let chillT = 0, extra = 0;
+  const spT = [], spId = []; let spN = 0, spI = 0;
+  const SPECIALS = [['juggernaut', 1], ['kidnapper', 1], ['trickster', 2], ['engineer', 3], ['mortar', 3], ['warlord', 4]];
   let info = null, total = 0, spent = 0, bossSpawned = false, cleared = false, minCost = 0.4, clock = 0, plN = 0;
   const plT = new Float64Array(128), plC = new Int32Array(128); // spawn-marker log: enemies waiting behind a marker count against the cap
   const affTmp = [];
 
-  function reset() { chillT = 0; extra = 0; info = null; total = 0; spent = 0; bossSpawned = false; cleared = false; clock = 0; plN = 0; }
+  function reset() { usedBoss = {}; chillT = 0; extra = 0; spN = 0; spI = 0; info = null; total = 0; spent = 0; bossSpawned = false; cleared = false; clock = 0; plN = 0; }
   function pending() { let n = 0, j = 0; for (let i = 0; i < plN; i++) if (plT[i] > clock) { plT[j] = plT[i]; plC[j] = plC[i]; j++; n += plC[i]; } plN = j; return n; }
   function zoneOf(n) { return ['scrap', 'frost', 'void'][Math.floor((n - 1) / 5) % 3]; }
   function poolOf(obj) { const a = []; for (const id in obj) a.push({ enemy: id, weight: obj[id] }); return a; }
@@ -31,15 +33,46 @@
     }
     return { zone: zone, isBoss: isBoss, duration: E.duration, budget: budget, boss: boss, pool: poolOf(E.pools[zone]), eliteChance: E.eliteChance, hpMult: hpMult, donor: donor };
   }
+  // boss waves pick from a small pool (zone boss or a wandering boss), never the same boss twice in a run
+  const BOSS_POOL = { 5: ['scrap_titan', 'brood_mother'], 10: ['frost_warden', 'hollow_king', 'brood_mother'], 15: ['void_maw', 'hollow_king'] };
+  let usedBoss = {};
+  function pickBoss(W, n, def0) {
+    const pool = BOSS_POOL[n]; if (!pool) return def0;
+    const left = pool.filter(function (id) { return !usedBoss[id] && NR.data.bosses[id]; });
+    if (!left.length) return def0;
+    const k = (NR.util.hash('boss' + W.seed + ':' + n) >>> 0) % left.length, id = left[k];
+    usedBoss[id] = true;
+    return id;
+  }
   function startWave(n) {
     const W = NR.world.get();
     info = waveInfo(n);
+    if (info.isBoss && n <= 15) info.boss = pickBoss(W, n, info.boss);
     W.waveDur = info.duration; W.waveT = info.duration;
     total = info.budget * W.scale.count; spent = 0; chillT = 0; extra = 0; cleared = false; bossSpawned = false;
     startP.wave = n; startP.zone = info.zone; startP.isBoss = info.isBoss; startP.duration = info.duration;
     NR.events.emit('wave:start', startP);
+    planSpecials(W, n);
     if (info.isBoss) bossSpawned = !!NR.bosses.spawn(info.boss, { hpMult: info.hpMult, donor: info.donor });
   }
+  // specials: 3-7 per wave (more with wave and danger, 2 on boss waves), spread over 15%-85% of the wave
+  function planSpecials(W, n) {
+    const dn = W.danger | 0;
+    let hs = NR.util.hash('sp' + W.seed + ':' + n) >>> 0; // own stream: does not shift NR.rng for the rest of the wave
+    const R = { range: function (a, b) { hs = (Math.imul(hs, 1664525) + 1013904223) >>> 0; return a + hs / 4294967296 * (b - a); }, int: function (a, b) { return a + Math.floor(this.range(0, 0.9999) * (b - a + 1)); } };
+    let count = info.isBoss ? 2 + (dn >= 3 ? 1 : 0) : Math.min(7, 3 + Math.floor(n / 3) + (dn >= 3 ? 1 : 0) + (dn >= 5 ? 1 : 0));
+    const pool = [];
+    for (let i = 0; i < SPECIALS.length; i++) if (n >= SPECIALS[i][1]) pool.push(SPECIALS[i][0]);
+    spN = count; spI = 0;
+    const dur = Math.max(10, info.duration - 3);
+    for (let i = 0; i < count; i++) { spT[i] = dur * (0.15 + 0.7 * (i + R.range(0.1, 0.9)) / count); spId[i] = pool[R.int(0, pool.length - 1)]; }
+  }
+  function spawnSpecial(W, p, id) {
+    const A = NR.config.ARENA, k = NR.util.hash('spp' + W.seed + ':' + W.wave + ':' + spI) >>> 0, ang = (k % 6283) / 1000, d = 380 + (k >>> 13) % 140;
+    const x = NR.util.clamp(p.x + Math.cos(ang) * d, 80, A.w - 80), y = NR.util.clamp(p.y + Math.sin(ang) * d, 80, A.h - 80);
+    NR.enemies.spawn(id, x, y, { marker: 1.2, hpMult: 1 + 0.12 * (W.danger | 0) });
+  }
+  const TAU_D = Math.PI * 2;
   function costOf(id) { return NR.data.enemies[id].aiParams.cost; }
 
   // a point outside the camera view (or inside it, behind a 1 s marker), never close to the player
@@ -96,6 +129,7 @@
     } else if (W.waveT <= 0) {
       cleared = true; NR.enemies.dissolveAll(); clearP.wave = W.wave; clearP.isBoss = false; NR.events.emit('wave:clear', clearP); return;
     }
+    if (p && !p.dead && spI < spN && clock >= spT[spI] && W.waveT > 3) { spawnSpecial(W, p, spId[spI]); spI++; }
     // pressure: a player cruising at high HP with few enemies near gets a light top-up (at most +15% of the wave budget)
     if (!info.isBoss && p && !p.dead && W.waveT > 3) {
       let near = 0;

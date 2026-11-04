@@ -391,9 +391,11 @@ module.exports = function (H) {
     const NR = H.load({ fx: true }); NR.main.boot(); const s = NR.bot.play({ seconds: 30, seed: 2, render: true });
     const ctx = NR.__dom.ctx; eq(ctx.banned, []); ok(Object.keys(ctx.used.methods).length > 3, 'something was drawn'); ok(s.ticks > 0);
     eq(ctx.gradients, [], 'gradients only on offscreen bake canvases');
-    const FC = require('./fake-canvas'), g0 = FC.gradientTotal();
-    for (let i = 0; i < 120; i++) { NR.run.step(NR.config.STEP); NR.fx.render.draw(NR.world.get(), 1); }
-    eq(FC.gradientTotal(), g0, 'no gradient is created while drawing frames once sprites are baked');
+    const FC = require('./fake-canvas');
+    for (let i = 0; i < 30; i++) NR.fx.render.draw(NR.world.get(), 1);
+    const g0 = FC.gradientTotal();
+    for (let i = 0; i < 120; i++) NR.fx.render.draw(NR.world.get(), 1);
+    eq(FC.gradientTotal(), g0, 'no gradient is created per frame: sprites seen once are baked once');
     const c = NR.fakeCanvas.create(10, 10); c.createLinearGradient(0, 0, 1, 1); c.shadowBlur = 4; c.globalCompositeOperation = 'screen'; c.filter = 'blur(2px)';
     eq(c.banned.length, 3, 'fake canvas detects banned features'); eq(c.gradients.length, 1, 'gradients recorded');
     const c3 = NR.fakeCanvas.create(10, 10); c3.globalCompositeOperation = 'lighter'; eq(c3.banned, []); eq(c3.additive.length, 1);

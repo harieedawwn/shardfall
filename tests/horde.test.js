@@ -2,7 +2,8 @@
 module.exports = function (H) {
   const STEP = 1 / 60, TAU = Math.PI * 2;
   const ENEMIES = ['grunt', 'swarmer', 'spitter', 'brute', 'bomber', 'lunger', 'sniper', 'shielder', 'summoner', 'splitter', 'medic', 'phantom'];
-  const BOSSES = ['scrap_titan', 'frost_warden', 'void_maw'];
+  const SPECIALS = ['juggernaut', 'kidnapper', 'warlord', 'trickster', 'engineer', 'mortar', 'turret']; // v2: own director schedule, not in wave pools
+  const BOSSES = ['scrap_titan', 'frost_warden', 'void_maw', 'hollow_king', 'brood_mother']; // + 2 wandering bosses (v2, random on boss waves)
   function ok(c, m) { if (!c) throw new Error(m || 'assertion failed'); }
 
   function started(o) {
@@ -35,7 +36,7 @@ module.exports = function (H) {
 
   H.test('horde data: SPEC 4 ids, {vi,en} names, distinct silhouettes, costs, boss shape', function () {
     const NR = H.load(), D = NR.data;
-    H.eq(Object.keys(D.enemies), ENEMIES); H.eq(Object.keys(D.bosses), BOSSES); H.eq(Object.keys(D.zones), ['scrap', 'frost', 'void']);
+    H.eq(Object.keys(D.enemies), ENEMIES.concat(SPECIALS)); H.eq(Object.keys(D.bosses), BOSSES); H.eq(Object.keys(D.zones), ['scrap', 'frost', 'void']);
     const seen = {};
     for (const id of ENEMIES) {
       const d = D.enemies[id];
@@ -51,6 +52,46 @@ module.exports = function (H) {
     }
     for (let n = 1; n <= 15; n++) { const w = D.waves[n]; ok(w.pool.length && w.budget > 0 && w.duration >= 25 && w.duration <= 60, 'wave ' + n); }
     H.eq(Object.keys(D.waves).filter(function (n) { return D.waves[n].boss; }), ['5', '10', '15']);
+  });
+
+  H.test('horde: specials - slam, grab (dash breaks it), empower, turret build (untargetable, expires), mortar shells, trickster blink', function () {
+    const eq = H.eq;
+    // juggernaut slams near the player
+    let NR = started({ seed: 4 }), W = NR.world.get(), p = calm(NR); place(NR, 1200, 800);
+    let ex = 0; NR.events.on('area:explode', function (e) { if (e.team === 'enemy') ex++; });
+    NR.enemies.spawn('juggernaut', 1350, 800, {}); for (let t = 0; t < 600 && !ex; t++) tick(NR);
+    ok(ex > 0, 'juggernaut slam');
+    // kidnapper grabs, drags, and a dash frees the player
+    NR = started({ seed: 4 }); W = NR.world.get(); p = calm(NR); place(NR, 1200, 800);
+    const kd = NR.enemies.spawn('kidnapper', 1260, 800, {}); kd.ai.cd = 0; let grabbed = false;
+    for (let t = 0; t < 300 && !grabbed; t++) { p.iframes = 0; tick(NR); if (p.grabbedBy === kd.id) grabbed = true; }
+    ok(grabbed, 'kidnapper grabbed the player');
+    const x0 = p.x, y0 = p.y; tick(NR, 20); ok(Math.abs(p.x - x0) + Math.abs(p.y - y0) > 20, 'player is dragged');
+    NR.input.inject({ mx: 1, my: 0, aim: 0, fire: false, dash: true }); tick(NR, 3); NR.input.inject(null);
+    eq(p.grabbedBy, 0, 'dash breaks the grab');
+    // warlord empowers allies (red outline flag, more hp)
+    NR = started({ seed: 4 }); W = NR.world.get(); p = calm(NR); place(NR, 1200, 800);
+    const ally = NR.enemies.spawn('brute', 1500, 600, {}), hp0 = ally.maxHp; NR.enemies.spawn('warlord', 1520, 620, {});
+    for (let t = 0; t < 900 && !ally.flags.empowered; t++) { tick(NR); ally.x = 1500; ally.y = 600; }
+    ok(ally.flags.empowered && ally.maxHp > hp0 * 1.5, 'warlord empowered an ally');
+    // engineer builds a turret that cannot be targeted and falls apart; killed mid-build -> nothing
+    NR = started({ seed: 4 }); W = NR.world.get(); p = calm(NR); place(NR, 1200, 800);
+    W.waveT = 1e4; const en = NR.enemies.spawn('engineer', 1500, 800, {}); en.ai.cd = 0;
+    for (let t = 0; t < 900 && !count(W, 'turret'); t++) { p.hp = p.maxHp = 1e9; tick(NR); }
+    eq(count(W, 'turret'), 1, 'turret built');
+    const tu = W.enemies.filter(function (e) { return e.defId === 'turret' && !e.dead; })[0];
+    NR.spatial.rebuild(W); ok(NR.spatial.nearest(tu.x, tu.y, 5) !== tu, 'turret is not targetable');
+    NR.enemies.kill(en); for (let t = 0; t < 60 * 16; t++) { p.hp = p.maxHp = 1e9; tick(NR); } eq(count(W, 'turret'), 0, 'turret expired');
+    NR = started({ seed: 4 }); W = NR.world.get(); p = calm(NR); place(NR, 1200, 800);
+    const en2 = NR.enemies.spawn('engineer', 1500, 800, {}); en2.ai.cd = 0;
+    for (let t = 0; t < 900 && en2.ai.state !== 'build'; t++) tick(NR);
+    NR.enemies.kill(en2); tick(NR, 300); eq(count(W, 'turret'), 0, 'no turret when the engineer dies mid-build');
+    // mortar telegraphs shells, trickster blinks
+    NR = started({ seed: 4 }); W = NR.world.get(); p = calm(NR); place(NR, 1200, 800);
+    let blasts = 0, dashes = 0; NR.events.on('enemy:attack', function (a) { if (a.kind === 'blast' && a.enemy.defId === 'mortar') blasts++; if (a.kind === 'dash' && a.enemy.defId === 'trickster') dashes++; });
+    NR.enemies.spawn('mortar', 1600, 800, {}); NR.enemies.spawn('trickster', 1330, 800, {});
+    for (let t = 0; t < 600; t++) tick(NR);
+    ok(blasts >= 3, 'mortar shells telegraphed'); ok(dashes >= 1, 'trickster blinked');
   });
 
   H.test('horde: each enemy spawns, moves, attacks, takes damage, dies and drops', function () {
@@ -140,6 +181,7 @@ module.exports = function (H) {
       const NR = started({ seed: 5 }), W = NR.world.get(), p = calm(NR); place(NR, 1200, 900);
       const d = NR.data.bosses[id], phases = []; let deaths = 0, leak = false, invulTicks = 0, burst = false, enrageSeen = false;
       NR.events.on('boss:phase', function (e) { phases.push(e.phase); }); NR.events.on('boss:death', function () { deaths++; });
+      let gotChest = false, gotXp = false; NR.events.on('pickup:collect', function (k) { if (k.type === 'chest') gotChest = true; if (k.type === 'xp_shard') gotXp = true; }); // bosses that leap can land on the player and loot is collected at once
       const b = NR.bosses.spawn(id, {}); ok(b && W.boss === b && b.isBoss && b.r >= 36, id + ' spawned'); H.eq(phases, [0]);
       const total = b.maxHp; let t = 0, ph = 1;
       for (; t < 60 * 150 && !b.dead; t++) {
@@ -152,7 +194,7 @@ module.exports = function (H) {
       ok(b.dead && deaths === 1, id + ' dies once (t=' + t + ')'); ok(!leak, id + ' took damage while invulnerable');
       ok(invulTicks >= 40 && invulTicks <= 60 * 2 * d.phases.length, id + ' invuln ticks ' + invulTicks); ok(burst, id + ' phase burst');
       ok(phases[0] === 0 && phases.slice(1).join() === d.phases.slice(1).map(function (_, i) { return i + 2; }).join(), id + ' phases ' + phases);
-      tick(NR, 2); ok(W.pickups.some(function (k) { return k.type === 'chest'; }), id + ' loot'); ok(W.pickups.some(function (k) { return k.type === 'xp_shard'; }), id + ' xp');
+      tick(NR, 2); ok(gotChest || W.pickups.some(function (k) { return k.type === 'chest'; }), id + ' loot'); ok(gotXp || W.pickups.some(function (k) { return k.type === 'xp_shard'; }), id + ' xp');
       void enrageSeen; H.eq(NR.__w.bad, [], id);
     }
   });
@@ -171,7 +213,7 @@ module.exports = function (H) {
       for (let pi = 0; pi < nph; pi++) {
         const plist = H.load().data.bosses[id].phases[pi].patterns;
         for (let qi = 0; qi < plist.length; qi++) {
-          const pat = plist[qi]; if (pat.id === 'summon' || pat.id === 'charge') continue;
+          const pat = plist[qi]; if (pat.id === 'summon' || pat.id === 'charge' || pat.id === 'laser' || pat.id === 'meteor' || pat.id === 'mines') continue; // ground/beam patterns: telegraphed, no bullet ring
           for (let seed = 1; seed <= 3; seed++) {
             const NR = started({ seed: seed * 7 }), W = NR.world.get(), p = calm(NR); place(NR, 1200, 900);
             const b = NR.bosses.spawn(id, {}); b.x = 1200; b.y = 500; b.phase = pi + 1;
@@ -248,7 +290,7 @@ module.exports = function (H) {
       ok(peak <= cap, 'wave ' + n + ' peak ' + peak + ' > cap');
       ok(spent <= want * 1.15 + 1e-6 && spent >= want - 2.0, // +15% max pressure top-up when the player cruises (director)
       'wave ' + n + ' d' + danger + ' spent ' + spent.toFixed(2) + ' budget*count ' + want.toFixed(2));
-      for (const id in mix) ok(wd.pool.some(function (q) { return q.enemy === id; }), 'wave ' + n + ' spawned ' + id + ' outside its zone mix');
+      for (const id in mix) if (!NR.data.enemies[id].tags.includes('special')) ok(wd.pool.some(function (q) { return q.enemy === id; }), 'wave ' + n + ' spawned ' + id + ' outside its zone mix');
       ok(near === 0, 'wave ' + n + ' spawned ' + near + ' enemies on top of the player');
       if (n >= 6 && !wd.boss) { const kinds = Object.keys(mix).length; ok(kinds >= 3, 'wave ' + n + ' mix has ' + kinds + ' kinds'); }
       void direct; void onScreen; void markers; void elites;
@@ -258,7 +300,7 @@ module.exports = function (H) {
   H.test('horde: mix weights are respected and the ramp makes later halves denser', function () {
     const NR = started({ seed: 11 }), W = NR.world.get(), p = calm(NR); place(NR, 1200, 800);
     const n = 9, wd = NR.data.waves[n]; W.wave = n; W.zone = 'frost'; W.scale = NR.stats.enemyScale(n, 0);
-    const seen = [], t0 = []; NR.events.on('enemy:spawn', function (e) { seen.push(e.enemy.defId); t0.push(W.waveDur - W.waveT); });
+    const seen = [], t0 = []; NR.events.on('enemy:spawn', function (e) { if (e.enemy.flags.special) return; seen.push(e.enemy.defId); t0.push(W.waveDur - W.waveT); });
     NR.director.startWave(n); W.state = 'wave';
     for (let t = 0; t < Math.round(wd.duration * 60); t++) { p.hp = p.maxHp; NR.director.update(STEP); NR.enemies.update(STEP); for (const e of W.enemies) e.dead = true; NR.world.cleanup(); if (W.state !== 'wave') break; }
     const half = wd.duration / 2, a = t0.filter(function (x) { return x < half; }).length, b = t0.length - a;

@@ -12,7 +12,8 @@
   const evoCache = Object.create(null);
   let ctx = null, zone = 'scrap', cw = 1280, ch = 720, pal = FALLBACK_PAL, t = 0;
   let lastFireT = -10, lastFireSlot = 0, lastFireKind = '', lastFireWeapon = '';
-  const M = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };   // world -> device transform of this frame (camera applied)
+  const M = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+  const slotFire = [];   // world -> device transform of this frame (camera applied)
   let calm = false, blinkT = 0, dreadLvl = 0;
   function readM(c) { const m = c.getTransform ? c.getTransform() : null; if (m) { M.a = m.a; M.b = m.b; M.c = m.c; M.d = m.d; M.e = m.e; M.f = m.f; } }
   function resetM(c) { c.setTransform(M.a, M.b, M.c, M.d, M.e, M.f); }
@@ -74,7 +75,7 @@
     NR.events.on('run:start', function () { setZone('scrap'); });
     NR.events.on('settings:change', function (e) { if (e.key === 'quality') dirty = true; });
     NR.events.on('weapon:fire', function (e) {
-      lastFireT = now();
+      lastFireT = now(); slotFire[e.slot || 0] = lastFireT;
       lastFireSlot = e.slot || 0;
       lastFireKind = e.kind || '';
       lastFireWeapon = e.weaponId || '';
@@ -612,21 +613,22 @@
         art.light(mx, my, 18, cc, 0.5);
       }
     }
-    // held weapon at the front hand, rotated to the aim (mirrored when aiming left so it never draws upside down)
-    const timeSinceFire = t - lastFireT;
-    const recoil = timeSinceFire >= 0 && timeSinceFire < 0.12 ? (1 - timeSinceFire / 0.12) * 5 : 0;
-    const w0 = p.weapons && p.weapons[0], wId = lastFireWeapon || (w0 ? w0.id : 'pistol');
-    const hx = x + flip * R * 0.42, hy = cy + R * 0.32;
-    c.save(); c.translate(hx, hy); c.rotate(p.aim); if (flip < 0) c.scale(1, -1); c.scale(1.2, 1.2);
-    drawHeldWeapon(c, HELD_ALIAS[wId] || wId, evolved(wId), recoil);
-    c.fillStyle = p.color || '#5FA8D3'; c.strokeStyle = ink; c.lineWidth = 2;
-    c.beginPath(); c.arc(9 - recoil, 3, 3.4, 0, TAU); c.fill(); c.stroke();
-    if (timeSinceFire >= 0 && timeSinceFire < 0.055) {
-      c.fillStyle = '#FFE9A8'; c.strokeStyle = ink; c.lineWidth = 1.6;
-      star(c, 27 - recoil, 0, 7, 5, 0.45); c.fill(); c.stroke();
+    // one hand per weapon slot, floating around the body (each holds its own weapon and points at the aim)
+    const W5 = p.weapons || [], n = W5.length;
+    for (let i = 0; i < n; i++) {
+      const w = W5[i], th = -Math.PI / 2 + (i + 0.5) / n * TAU + (n === 1 ? Math.PI / 2 : 0);
+      const hx = x + Math.cos(th) * R * 1.25, hy = cy + Math.sin(th) * R * 0.85 + R * 0.1;
+      const ts = t - (slotFire[w.slot] || -10), rc = ts >= 0 && ts < 0.12 ? (1 - ts / 0.12) * 5 : 0;
+      const af = Math.cos(p.aim) >= 0 ? 1 : -1;
+      c.save(); c.translate(hx, hy); c.rotate(p.aim); if (af < 0) c.scale(1, -1); c.scale(1.1, 1.1);
+      c.translate(-8, 0);
+      drawHeldWeapon(c, HELD_ALIAS[w.id] || w.id, evolved(w.id), rc);
+      c.fillStyle = p.color || '#5FA8D3'; c.strokeStyle = ink; c.lineWidth = 2;
+      c.beginPath(); c.arc(9 - rc, 3, 3.6, 0, TAU); c.fill(); c.stroke();
+      if (ts >= 0 && ts < 0.05) { c.fillStyle = '#FFE9A8'; c.strokeStyle = ink; c.lineWidth = 1.6; star(c, 27 - rc, 0, 6, 5, 0.45); c.fill(); c.stroke(); }
+      c.restore();
+      if (ts >= 0 && ts < 0.06) art.light(hx + Math.cos(p.aim) * 26, hy + Math.sin(p.aim) * 26, 34, '#FFC86B', 0.7);
     }
-    c.restore();
-    if (timeSinceFire >= 0 && timeSinceFire < 0.07) art.light(hx + Math.cos(p.aim) * 30, hy + Math.sin(p.aim) * 30, 46, '#FFC86B', 0.9);
     if (ghost) c.globalAlpha = 1;
   }
 
@@ -900,7 +902,32 @@
     const ink = NR.config.INK, id = e.defId || 'scrap_titan';
     c.save(); c.translate(x, y); c.rotate(rot);
 
-    if (id === 'scrap_titan') {
+    if (id === 'hollow_king') {
+      // Hollow King: a floating crowned shroud with an empty hood, orbiting blades
+      const fl = Math.sin(t * 2.4) * 5;
+      c.rotate(-rot); c.translate(0, fl);
+      for (let i = 0; i < 4; i++) { const an = t * 1.2 + i * TAU / 4; c.save(); c.translate(Math.cos(an) * r * 1.35, Math.sin(an) * r * 0.9); c.rotate(an + Math.PI / 2);
+        c.fillStyle = '#E6E1FA'; c.strokeStyle = ink; c.lineWidth = 2.5; c.beginPath(); c.moveTo(0, -14); c.lineTo(6, 4); c.lineTo(0, 10); c.lineTo(-6, 4); c.closePath(); c.fill(); c.stroke(); c.restore(); }
+      c.fillStyle = '#2A2440'; c.strokeStyle = ink; c.lineWidth = 4;
+      c.beginPath(); c.moveTo(-r * 0.9, r * 0.9); c.quadraticCurveTo(-r * 1.0, -r * 0.2, -r * 0.45, -r * 0.85); c.quadraticCurveTo(0, -r * 1.15, r * 0.45, -r * 0.85); c.quadraticCurveTo(r * 1.0, -r * 0.2, r * 0.9, r * 0.9);
+      for (let i = 4; i >= -4; i--) c.lineTo(i * r * 0.22, r * (0.9 + (i & 1 ? 0.25 : 0) + Math.sin(t * 5 + i) * 0.05));
+      c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = fill; c.beginPath(); c.moveTo(-r * 0.55, -r * 0.5); c.quadraticCurveTo(0, -r * 0.95, r * 0.55, -r * 0.5); c.quadraticCurveTo(r * 0.6, r * 0.2, 0, r * 0.35); c.quadraticCurveTo(-r * 0.6, r * 0.2, -r * 0.55, -r * 0.5); c.fill(); c.stroke();
+      c.fillStyle = '#07040C'; c.beginPath(); c.ellipse(0, -r * 0.15, r * 0.36, r * 0.42, 0, 0, TAU); c.fill();
+      c.fillStyle = '#FFC23D'; c.strokeStyle = ink; c.lineWidth = 3; c.beginPath(); c.moveTo(-r * 0.45, -r * 0.8);
+      for (let i = 0; i <= 4; i++) { c.lineTo(-r * 0.45 + i * r * 0.225, -r * (i % 2 ? 0.95 : 1.25)); } c.lineTo(r * 0.45, -r * 0.8); c.closePath(); c.fill(); c.stroke();
+    } else if (id === 'brood_mother') {
+      // Brood Mother: bloated egg-sac body, chitin plates, twitching legs, dripping ovipositor
+      for (let i = 0; i < 8; i++) { const side = i < 4 ? -1 : 1, k = i % 4, an = (side < 0 ? Math.PI : 0) + (k - 1.5) * 0.45 * side, w = Math.sin(t * 9 + i) * 0.12;
+        c.strokeStyle = ink; c.lineWidth = 6; c.beginPath(); c.moveTo(Math.cos(an) * r * 0.6, Math.sin(an) * r * 0.6); c.lineTo(Math.cos(an + w) * r * 1.25, Math.sin(an + w) * r * 1.25); c.lineTo(Math.cos(an + w * 2) * r * 1.6, Math.sin(an + w * 2) * r * 1.6 + 8); c.stroke();
+        c.strokeStyle = '#4A1A30'; c.lineWidth = 3; c.stroke(); }
+      const pulse = 1 + 0.05 * Math.sin(t * 3);
+      c.fillStyle = fill; c.strokeStyle = ink; c.lineWidth = 4; c.beginPath(); c.ellipse(-r * 0.25, 0, r * 0.95 * pulse, r * 0.8 * pulse, 0, 0, TAU); c.fill(); c.stroke();
+      c.fillStyle = '#E8B4C8'; for (let i = 0; i < 6; i++) { const an = i * 1.1 + 0.4; c.beginPath(); c.ellipse(-r * 0.35 + Math.cos(an) * r * 0.45, Math.sin(an) * r * 0.4, r * 0.16, r * 0.12, an, 0, TAU); c.fill(); c.lineWidth = 2; c.stroke(); }
+      c.fillStyle = '#3A1426'; c.lineWidth = 3.5; c.beginPath(); c.ellipse(r * 0.6, 0, r * 0.45, r * 0.4, 0, 0, TAU); c.fill(); c.stroke();
+      c.fillStyle = '#F6F0DF'; for (let i = -1; i <= 1; i += 2) { c.beginPath(); c.moveTo(r * 0.9, i * r * 0.12); c.lineTo(r * 1.25, i * r * 0.28); c.lineTo(r * 0.95, i * r * 0.28); c.closePath(); c.fill(); c.stroke(); }
+      c.fillStyle = '#8BD450'; c.beginPath(); c.arc(-r * 1.2, Math.sin(t * 4) * 4, 6, 0, TAU); c.fill();
+    } else if (id === 'scrap_titan') {
       // 1. Scrap Titan: Colossal hydraulic mech
       const stomp = Math.sin(t * 5) * 5;
       // 4 heavy hydraulic piston walker legs
@@ -972,12 +999,35 @@
       c.fillStyle = '#A25CE0'; c.strokeStyle = ink; c.lineWidth = 3;
       star(c, 0, 0, r * 0.65, 8, 0.72); c.fill(); c.stroke();
       c.restore();
-      // Singularity eye core
-      c.fillStyle = ink; c.beginPath(); c.arc(0, 0, r * 0.35, 0, TAU); c.fill();
-      c.fillStyle = '#E86AA6'; c.beginPath(); c.arc(0, 0, r * 0.18, 0, TAU); c.fill();
+      // swallowing maw: black throat ringed with teeth
+      c.fillStyle = ink; c.beginPath(); c.arc(0, 0, r * 0.38, 0, TAU); c.fill();
+      c.fillStyle = '#F6F0DF';
+      for (let i = 0; i < 10; i++) { const an = i / 10 * TAU + t * 0.6; c.beginPath(); c.moveTo(Math.cos(an - 0.15) * r * 0.38, Math.sin(an - 0.15) * r * 0.38); c.lineTo(Math.cos(an) * r * 0.22, Math.sin(an) * r * 0.22); c.lineTo(Math.cos(an + 0.15) * r * 0.38, Math.sin(an + 0.15) * r * 0.38); c.closePath(); c.fill(); }
     }
 
     c.restore();
+  }
+
+  // boss weak point and burst barrier: an armoured boss shows a dull core; when exposed the core blazes (hit it now!),
+  // a hex barrier flashes up after burst damage
+  function drawBossState(c, e, x, y, r) {
+    const art = NR.fx.art, f = e.flags || {};
+    if (f.exposed) {
+      const k = 0.7 + 0.3 * Math.sin(t * 14);
+      c.lineWidth = 6; c.strokeStyle = NR.config.INK; c.beginPath(); c.arc(x, y, r * 0.42, 0, TAU); c.stroke();
+      c.lineWidth = 3; c.strokeStyle = '#FFC23D'; c.stroke();
+      c.fillStyle = '#FFF2C2'; c.beginPath(); c.arc(x, y, r * 0.22 * k, 0, TAU); c.fill();
+      for (let i = 0; i < 4; i++) { const an = t * 3 + i * TAU / 4, rr = r * 0.62; c.fillStyle = '#FFC23D'; c.beginPath(); c.moveTo(x + Math.cos(an) * rr, y + Math.sin(an) * rr); c.lineTo(x + Math.cos(an) * (rr - 10) + Math.cos(an + 1.57) * 5, y + Math.sin(an) * (rr - 10) + Math.sin(an + 1.57) * 5); c.lineTo(x + Math.cos(an) * (rr - 10) - Math.cos(an + 1.57) * 5, y + Math.sin(an) * (rr - 10) - Math.sin(an + 1.57) * 5); c.closePath(); c.fill(); }
+      art.light(x, y, r * 1.6, '#FFC23D', 0.5);
+    } else {
+      c.lineWidth = 4; c.strokeStyle = '#5C5670'; c.beginPath(); c.arc(x, y, r * 0.42, 0, TAU); c.stroke();
+    }
+    if (f.barrier) {
+      c.lineWidth = 4; c.strokeStyle = '#6FD6F2'; c.globalAlpha = 0.85; c.beginPath();
+      for (let i = 0; i <= 6; i++) { const an = i / 6 * TAU + t; const px = x + Math.cos(an) * r * 1.35, py = y + Math.sin(an) * r * 1.35; if (i) c.lineTo(px, py); else c.moveTo(px, py); }
+      c.stroke(); c.globalAlpha = 0.12; c.fillStyle = '#6FD6F2'; c.fill(); c.globalAlpha = 1;
+      art.light(x, y, r * 2, '#6FD6F2', 0.35);
+    }
   }
 
   // ---------- generic or procedural enemy dispatcher ----------
@@ -1014,6 +1064,7 @@
     const defId = e.defId;
     if (e.isBoss) {
       drawBoss(c, e, x, y, r, e.rot || 0, fill);
+      drawBossState(c, e, x, y, r);
     } else if (q < 3 && defId) {
       switch (defId) {
         case 'grunt': drawGrunt(c, e, x, y, r, e.rot || 0, fill); break;
@@ -1293,6 +1344,31 @@
     }
   }
 
+  // element trails behind player shots: tracer (physical), flame licks (fire), frost streak + sparkles (ice),
+  // crackle (shock), dripping globs (poison), swirling ring (void)
+  function trail(c, b, x, y, r, evo) {
+    const vx = b.vx || 0, vy = b.vy || 0, sp = Math.sqrt(vx * vx + vy * vy);
+    if (sp < 60) return;
+    const ux = vx / sp, uy = vy / sp, L = Math.min(70, sp * 0.045) * (evo ? 1.4 : 1), el = b.element;
+    const bx = x - ux * L, by = y - uy * L;
+    if (el === 'fire') {
+      for (let k = 1; k <= 3; k++) { const f = k / 4; c.fillStyle = k === 1 ? '#FFB347' : k === 2 ? '#FF7A2F' : '#C93A22'; c.beginPath(); c.arc(x - ux * L * f + Math.sin(t * 40 + k + b.id) * 2, y - uy * L * f + Math.cos(t * 40 + k) * 2, r * (1 - f * 0.6), 0, TAU); c.fill(); }
+    } else if (el === 'ice') {
+      c.strokeStyle = '#BFE9F7'; c.lineWidth = r * 0.9; c.lineCap = 'round'; c.beginPath(); c.moveTo(x, y); c.lineTo(bx, by); c.stroke();
+      c.fillStyle = '#FFFFFF'; c.fillRect(bx + Math.sin(b.id + t * 9) * 4 - 1, by + Math.cos(b.id + t * 9) * 4 - 1, 2.5, 2.5);
+    } else if (el === 'shock') {
+      c.strokeStyle = '#FFE066'; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y);
+      for (let k = 1; k <= 4; k++) { const f = k / 4, j = ((k + Math.floor(t * 30) + b.id) % 2 ? 1 : -1) * 5; c.lineTo(x - ux * L * f - uy * j, y - uy * L * f + ux * j); }
+      c.stroke();
+    } else if (el === 'poison') {
+      c.fillStyle = '#8BD450'; for (let k = 1; k <= 3; k++) { const f = k / 3.5; c.beginPath(); c.arc(x - ux * L * f, y - uy * L * f + k * 1.5, r * 0.45 * (1 - f * 0.5), 0, TAU); c.fill(); }
+    } else if (el === 'void') {
+      c.strokeStyle = '#A25CE0'; c.lineWidth = 2; for (let k = 1; k <= 2; k++) { const f = k / 3; c.beginPath(); c.arc(x - ux * L * f, y - uy * L * f, r * (0.6 + f), 0, TAU); c.stroke(); }
+    } else {
+      c.strokeStyle = 'rgba(246,240,223,0.55)'; c.lineWidth = Math.max(1.5, r * 0.6); c.lineCap = 'round'; c.beginPath(); c.moveTo(x, y); c.lineTo(bx, by); c.stroke();
+    }
+    c.lineCap = 'butt';
+  }
   const PHYS_SHOT = { pistol: 1, gatling_pistol: 1, scattergun: 1, smg: 1, venom_bow: 1, shredder: 0 };
   const HELD_ALIAS = { smg: 'pistol', venom_bow: 'lancer', frost_seeker: 'seeker', chakram: 'saw_ring', railgun: 'lancer', thunder_hammer: 'maul', comet_staff: 'grenade' };
   function drawBullets(c, W, a, enemy) {
@@ -1302,13 +1378,14 @@
       const x = b.px + (b.x - b.px) * a, y = b.py + (b.y - b.py) * a;
       if (!inView(x, y, 80)) continue;
       const evo = !enemy && b.weaponId && evolved(b.weaponId), r = (b.r || 5) + (enemy ? 1.5 : 1) + (evo ? 2 : 0);
+      if (!enemy && !b.orb && !b.mine) trail(c, b, x, y, r, evo);
       if (enemy) {
-        const art = NR.fx.art, hs = art.hostileBullet(b.r || 5);
+        const art = NR.fx.art, sty = b.style || 'spike', hs = art.hostileStyled(sty, b.r || 5);
         if (hs) {
-          const ang = t * 3 + b.id * 0.7, ca = Math.cos(ang) * M.a, sa = Math.sin(ang) * M.a;
+          const ang = art.orient(sty) ? Math.atan2(b.vy || 0, b.vx || 1) : t * 3 + b.id * 0.7, ca = Math.cos(ang) * M.a, sa = Math.sin(ang) * M.a;
           c.setTransform(ca, sa, -sa, ca, M.e + x * M.a, M.f + y * M.a);
           c.drawImage(hs.img, -hs.ax, -hs.ay, hs.w, hs.h);
-          art.light(x, y, (b.r || 5) * 4.2, art.T.hostileGlow, 0.55);
+          art.light(x, y, (b.r || 5) * 3.6, art.hostileColor(sty), 0.5);
         } else S.draw(c, b.shape || 'circle', x, y, r, b.rot || 0, b.sx || 1, b.sy || 1, b.color || tint, 4, true);
       } else if (PHYS_SHOT[b.weaponId]) {
         const art = NR.fx.art, ps = art.playerBullet(b.color && b.color[0] === '#' && b.color.length === 7 ? b.color : '#F2EFE6', b.r || 4, evo);

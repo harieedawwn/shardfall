@@ -1398,7 +1398,7 @@
   const S = {
     hp: 1, lag: 1, lagHold: 0, boss: 1, bossLag: 1, bossHold: 0, bossId: 0,
     gold: 0, goldPop: 0, hurt: 0, banner: null, bannerT: 0, toasts: [], time: 0, evo: 0,
-    combo: 0, comboT: 0, comboRank: 0, comboPop: 0, bossIntro: 0
+    combo: 0, comboT: 0, comboRank: 0, comboPop: 0, bossIntro: 0, bossHint: 0
   };
   const cache = {};
   function memo(key, sig, fn) { const c = cache[key]; if (c && c.s === sig) return c.v; const v = fn(); cache[key] = { s: sig, v: v }; return v; }
@@ -1500,6 +1500,7 @@
       else S.bossLag = Math.max(f, S.bossLag - 0.4 * dt);
     }
     if (S.bossIntro > 0) S.bossIntro -= dt;
+    if (S.bossHint > 0) S.bossHint -= dt;
   }
 
   // ---------- draw ----------
@@ -1528,6 +1529,7 @@
     if (L.touch) drawWeaponsRow(p, x0 + 66 * u, y0 + 52 * u);
     else { drawWeapons(p, x0, y1); drawItems(p, x0, y1 - 58 * u); }
     drawBanner(cw, ch);
+    drawAlerts(p, W, cw, ch);
     drawToasts(cw, y1 - 34 * u);
     ctx.restore();
   }
@@ -1751,6 +1753,20 @@
     if (b.l2) label(b.l2, cw / 2 + slide, y + h * 0.8, 13, C.cream, 'center');
     ctx.globalAlpha = 1;
   }
+  // situational callouts: grabbed by a Snatcher, boss weak point / barrier tips
+  function drawAlerts(p, W, cw, ch) {
+    let msg = '', col = C.cream;
+    const b = W.boss;
+    if (p.grabbedBy) { msg = t('hud.breakFree'); col = C.hpLow; }
+    else if (b && !b.dead && b.flags && b.flags.barrier) { msg = t('hud.barrier'); col = '#6FD6F2'; }
+    else if (S.bossHint > 0 && b && !b.dead) { msg = t('hud.bossHint'); col = C.gold; }
+    if (!msg) return;
+    const pulse = settings().reduceFlashing ? 1 : 0.85 + 0.15 * Math.sin(S.time * 10);
+    ctx.font = '800 ' + Math.round(16 * u) + 'px ' + FT;
+    const w = (ctx.measureText ? ctx.measureText(msg).width : msg.length * 9) + 30 * u, h = 34 * u, x = (cw - w) / 2, y = ch * 0.68;
+    box(x, y, w, h, C.panel, 2.5 * u, 17 * u);
+    ctx.globalAlpha = pulse; label(msg, cw / 2, y + h / 2 + 1 * u, 16, col, 'center', true); ctx.globalAlpha = 1;
+  }
   function drawToasts(cw, yb) {
     let y = yb - 30 * u;
     for (let i = S.toasts.length - 1; i >= 0; i--) {
@@ -1805,6 +1821,11 @@
       toast(t('hud.toastCodex', { name: d ? tx(d.name) : e.id }), C.good);
     });
     E.on('boss:death', function () { toast(t('hud.toastBoss'), C.gold); });
+    E.on('enemy:spawn', function (e) {
+      const en = e.enemy;
+      if (en && en.flags && en.flags.special && !en.flags.structure) { const d = NR.data.enemies[en.defId]; toast(t('hud.special', { name: d ? tx(d.name) : en.defId }), C.hpLow); }
+    });
+    E.on('boss:phase', function (e) { if (e.phase === 0) S.bossHint = 7; });
     // draw after FX: wrap render.draw once (FX may call NR.ui.hud.draw itself, then we skip ours)
     const R = NR.fx && NR.fx.render;
     if (ctx && R && typeof R.draw === 'function' && !R.draw.__hud) {

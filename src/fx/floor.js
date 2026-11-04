@@ -398,10 +398,9 @@
         c.fillStyle = '#2E2340'; c.fillRect(pr.x - pr.r * 0.5, pr.y - pr.r * 1.2, pr.r, pr.r * 1.5); c.lineWidth = 2; c.strokeStyle = NR.config.INK; c.strokeRect(pr.x - pr.r * 0.5, pr.y - pr.r * 1.2, pr.r, pr.r * 1.5);
         c.fillStyle = '#3B2D52'; c.beginPath(); c.moveTo(pr.x - pr.r * 0.5, pr.y - pr.r * 1.2); c.lineTo(pr.x - pr.r * 0.1, pr.y - pr.r * 1.45); c.lineTo(pr.x + pr.r * 0.5, pr.y - pr.r * 1.15); c.closePath(); c.fill(); c.stroke();
         c.strokeStyle = 'rgba(232,106,166,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(pr.x - pr.r * 0.2, pr.y - pr.r); c.lineTo(pr.x + pr.r * 0.1, pr.y - pr.r * 0.5); c.lineTo(pr.x - pr.r * 0.1, pr.y); c.stroke();
-      } else { // watching pod: a closed eye in fleshy roots
+      } else { // fleshy pod split open on a glowing seam
         c.fillStyle = '#3A1E3A'; c.beginPath(); c.ellipse(pr.x, pr.y, pr.r * 0.9, pr.r * 0.6, 0, 0, TAU); c.fill(); c.lineWidth = 2; c.strokeStyle = NR.config.INK; c.stroke();
-        c.fillStyle = '#E86AA6'; c.beginPath(); c.ellipse(pr.x, pr.y, pr.r * 0.45, pr.r * 0.16, 0, 0, TAU); c.fill();
-        c.fillStyle = '#14121F'; c.beginPath(); c.ellipse(pr.x, pr.y, pr.r * 0.1, pr.r * 0.14, 0, 0, TAU); c.fill();
+        c.strokeStyle = '#E86AA6'; c.lineWidth = 2; c.beginPath(); c.moveTo(pr.x - pr.r * 0.5, pr.y); c.quadraticCurveTo(pr.x, pr.y - pr.r * 0.18, pr.x + pr.r * 0.5, pr.y); c.stroke();
       }
     }
   }

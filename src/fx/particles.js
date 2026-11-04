@@ -218,6 +218,7 @@
     if (e.surface === 'wall') { burst('chip', e.x, e.y, '#F2EFE6', 3, { speed: 90, size: 3 }); ring(e.x, e.y, 14 + e.r, col, 0.18, { w: 3 }); }
     else if (e.surface === 'player') burst('hit', e.x, e.y, col, 4, { speed: 220 });
     else if (e.surface === 'expire') burst('spark', e.x, e.y, col, 2, { speed: 90 });
+    else if (e.surface === 'enemy' && e.team === 'player') { burst(e.element === 'ice' ? 'star' : 'spark', e.x, e.y, col, 3, { speed: 200 }); if (e.element === 'fire') embers(e.x, e.y, '#FFB347', 2, 120); }
   }
   function onArc(e) { bolt(e.points, elColor(e.element), 0.2); }
   function onExplode(e) {
@@ -227,6 +228,11 @@
     smoke(e.x, e.y, '#5A5260', Math.min(6, 2 + r / 30), r * 0.42, 60 + r * 0.5, 0.9);
     embers(e.x, e.y, '#FFC86B', Math.min(18, 5 + r / 10), 200 + r * 1.5);
     if (r > 60) ring(e.x, e.y, r * 0.6, '#F2EFE6', 0.28, { w: 5 });
+    // element signature
+    if (e.element === 'ice') burst('star', e.x, e.y, '#BFE9F7', Math.min(16, 6 + r / 10), { speed: 220 + r });
+    else if (e.element === 'poison') smoke(e.x, e.y, '#6FA83A', Math.min(7, 3 + r / 25), r * 0.5, 50, 1.4);
+    else if (e.element === 'shock') { for (let k = 0; k < 4; k++) { const an = rnd() * TAU; bolt([{ x: e.x, y: e.y }, { x: e.x + Math.cos(an) * r * 0.6, y: e.y + Math.sin(an) * r * 0.6 }, { x: e.x + Math.cos(an + 0.3) * r, y: e.y + Math.sin(an + 0.3) * r }], '#FFE066', 0.22); } }
+    else if (e.element === 'void') { ring(e.x, e.y, r * 0.3, '#A25CE0', 0.35, { w: 10 }); burst('death', e.x, e.y, '#2A1E3F', 10, { speed: -160 }); }
     burst('death', e.x, e.y, col, Math.min(26, 6 + r / 8), { speed: 120 + r, size: 4 + r * 0.02 });
     burst('spark', e.x, e.y, col, Math.min(14, 4 + r / 14), { speed: 180 + r * 1.2 });
     if (NR.fx.floor) NR.fx.floor.decal('scorch', e.x, e.y, Math.min(r * 0.8, 150), NR.config.INK);

@@ -17,7 +17,7 @@
     ents = list; count = list.length; maxR = 0;
     for (let i = 0; i < count; i++) {
       const e = list[i];
-      if (e.dead) { nxt[i] = -2; continue; }
+      if (e.dead || (e.flags && e.flags.structure)) { nxt[i] = -2; continue; } // structures (turrets) cannot be hit or targeted
       if (e.r > maxR) maxR = e.r;
       const c = cellY(e.y) * cols + cellX(e.x);
       nxt[i] = head[c]; head[c] = i;

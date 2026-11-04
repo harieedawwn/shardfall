@@ -57,7 +57,7 @@
       const hp = function (gg, cont) { if (!cont) gg.beginPath(); gg.moveTo(-R * 0.92, -R * 0.18); gg.quadraticCurveTo(-R * 0.85, -R * 1.12, R * 0.05, -R * 1.08); gg.quadraticCurveTo(R * 0.9, -R * 1.02, R * 0.94, -R * 0.24); gg.lineTo(R * 0.4, -R * 0.42); gg.lineTo(-R * 0.4, -R * 0.38); gg.closePath(); };
       if (v === V_FLASH || v === V_FROZEN) A().flat(g, hp, mode(v, '#6E7680'), lw); else A().cel(g, hp, '#6E7680', lw, { r: R * 0.9, top: -R * 1.1, bot: -R * 0.2 });
       g.fillStyle = T.ink; for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(-R * 0.5 + i * R * 0.42, -R * 0.68 - (i === 1 ? R * 0.1 : 0), R * 0.07, 0, TAU); g.fill(); }
-      if (v !== V_FLASH) eyes(g, R * 0.28, -R * 0.1, R * 0.2, R * 0.62, { angry: true });
+      if (v !== V_FLASH) { g.fillStyle = A().T.ink; g.beginPath(); g.moveTo(-R * 0.1, -R * 0.32); g.lineTo(R * 0.92, -R * 0.4); g.lineTo(R * 0.86, -R * 0.12); g.lineTo(-R * 0.05, -R * 0.06); g.closePath(); g.fill(); }
       // grin
       g.beginPath(); g.moveTo(R * 0.02, R * 0.36); g.lineTo(R * 0.7, R * 0.3); g.lineTo(R * 0.62, R * 0.52); g.lineTo(R * 0.08, R * 0.55); g.closePath();
       g.fillStyle = T.ink; g.fill();
@@ -74,10 +74,7 @@
       body(g, path, color, v, lw, R);
       g.strokeStyle = T.ink; g.lineWidth = lw * 0.6; g.beginPath(); g.moveTo(-R * 0.75, -R * 0.4); g.quadraticCurveTo(-R * 0.1, -R * 0.15, R * 0.2, R * 0.55); g.stroke();
       g.beginPath(); g.moveTo(R * 0.7, -R * 0.35); g.quadraticCurveTo(R * 1.1, -R * 1.0, R * 1.35, -R * 0.95); g.stroke();
-      if (v !== V_FLASH) {
-        g.beginPath(); g.ellipse(R * 0.42, -R * 0.12, R * 0.34, R * 0.38, 0, 0, TAU); g.fillStyle = T.eye; g.fill(); g.lineWidth = lw * 0.7; g.strokeStyle = T.ink; g.stroke();
-        g.beginPath(); g.arc(R * 0.55, -R * 0.08, R * 0.18, 0, TAU); g.fillStyle = T.pupil; g.fill();
-      }
+      if (v !== V_FLASH) { g.fillStyle = A().shade(color, -0.35); g.beginPath(); g.moveTo(R * 0.3, -R * 0.3); g.lineTo(R * 1.0, R * 0.02); g.lineTo(R * 0.35, R * 0.12); g.closePath(); g.fill(); }
     },
     // spitter toad: squat diamond body, two bulging eyes on top, brass spit nozzle forward, puffy cheek sac
     spitter: function (g, R, color, v) {
@@ -92,12 +89,8 @@
       body(g, path, color, v, lw, R);
       // belly
       g.beginPath(); g.ellipse(R * 0.08, R * 0.4, R * 0.55, R * 0.3, 0, 0, TAU); g.fillStyle = mode(v, A().mix(color, '#F6F0DF', 0.45)); g.fill();
-      // eye stalks
-      for (let i = 0; i < 2; i++) {
-        const ex = -R * 0.18 + i * R * 0.55, ey = -R * 0.78;
-        g.beginPath(); g.arc(ex, ey, R * 0.3, 0, TAU); g.fillStyle = mode(v, color); g.fill(); g.lineWidth = lw * 0.8; g.strokeStyle = T.ink; g.stroke();
-      }
-      if (v !== V_FLASH) eyes(g, R * 0.02, -R * 0.8, R * 0.19, R * 0.55, {});
+      // acid sacs on the back
+      for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(-R * 0.45 + i * R * 0.32, -R * 0.62 + (i === 1 ? -R * 0.1 : 0), R * 0.16, 0, TAU); g.fillStyle = mode(v, '#C8F27A'); g.fill(); g.lineWidth = lw * 0.6; g.strokeStyle = T.ink; g.stroke(); }
     }
   };
 
@@ -117,19 +110,31 @@
         path(g); g.lineWidth = lw; g.strokeStyle = T.ink; g.stroke();
       }
       if (v === V_FLASH) return;
-      // narrowed eyes: dark sockets with a hot pupil
-      for (let i = 0; i < 2; i++) {
-        const ex = R * (0.08 + i * 0.42), ey = -R * 0.12;
-        g.fillStyle = T.ink; g.beginPath(); g.ellipse(ex, ey, R * 0.17, R * 0.13, 0, 0, TAU); g.fill();
-        g.fillStyle = '#FFE08A'; g.beginPath(); g.ellipse(ex + R * 0.04, ey + R * 0.02, R * 0.08, R * 0.06, 0, 0, TAU); g.fill();
-      }
-      g.strokeStyle = T.ink; g.lineWidth = lw * 0.7; g.beginPath(); g.moveTo(-R * 0.08, -R * 0.36); g.lineTo(R * 0.24, -R * 0.24); g.moveTo(R * 0.72, -R * 0.38); g.lineTo(R * 0.44, -R * 0.26); g.stroke();
-      g.beginPath(); g.moveTo(R * 0.1, R * 0.3); g.quadraticCurveTo(R * 0.35, R * 0.18, R * 0.62, R * 0.3); g.stroke();
+      // faceless: armour seams and a dark jagged maw facing forward
+      g.strokeStyle = A().shade(color, -0.4); g.lineWidth = lw * 0.5; g.beginPath(); g.moveTo(-R * 0.6, -R * 0.2); g.quadraticCurveTo(0, -R * 0.45, R * 0.6, -R * 0.2); g.stroke();
+      g.fillStyle = T.ink; g.beginPath(); g.moveTo(R * 0.05, R * 0.12); g.lineTo(R * 0.25, R * 0.3); g.lineTo(R * 0.42, R * 0.14); g.lineTo(R * 0.6, R * 0.32); g.lineTo(R * 0.78, R * 0.1); g.lineTo(R * 0.7, R * 0.42); g.lineTo(R * 0.1, R * 0.42); g.closePath(); g.fill();
     };
   }
-  ['brute', 'bomber', 'lunger', 'sniper', 'shielder', 'summoner', 'splitter', 'medic', 'phantom'].forEach(function (id) {
-    DESIGNS[id] = function (g, R, color, v) { const d = NR.data.enemies[id]; generic(d ? d.shape : 'circle')(g, R, color, v); };
+  ['brute', 'bomber', 'lunger', 'sniper', 'shielder', 'summoner', 'splitter', 'medic', 'phantom', 'juggernaut', 'kidnapper', 'warlord', 'trickster', 'engineer', 'mortar'].forEach(function (id) {
+    DESIGNS[id] = function (g, R, color, v) { const d = NR.data.enemies[id]; generic(d ? d.shape : 'circle')(g, R, color, v); if (EXTRA[id]) EXTRA[id](g, R, v); };
   });
+  // specials get a signature extra on top of the generic body (baked once)
+  const EXTRA = {
+    juggernaut: function (g, R, v) { if (v === V_FLASH) return; g.fillStyle = '#2B2436'; for (let i = -1; i <= 1; i += 2) { g.beginPath(); g.moveTo(i * R * 0.95, -R * 0.4); g.lineTo(i * R * 1.25, -R * 0.95); g.lineTo(i * R * 0.6, -R * 0.75); g.closePath(); g.fill(); g.lineWidth = 2; g.strokeStyle = A().T.ink; g.stroke(); } g.fillStyle = '#FFC23D'; g.fillRect(-R * 0.5, R * 0.55, R, R * 0.12); },
+    kidnapper: function (g, R, v) { if (v === V_FLASH) return; g.strokeStyle = A().T.ink; g.lineWidth = 3; g.beginPath(); g.moveTo(R * 0.6, R * 0.1); g.quadraticCurveTo(R * 1.4, R * 0.2, R * 1.3, R * 0.8); g.moveTo(R * 0.6, -R * 0.1); g.quadraticCurveTo(R * 1.5, -R * 0.2, R * 1.4, -R * 0.75); g.stroke(); g.strokeStyle = '#B8E0C8'; g.lineWidth = 1.5; g.stroke(); },
+    warlord: function (g, R, v) { if (v === V_FLASH) return; g.fillStyle = '#FFC23D'; g.beginPath(); g.moveTo(-R * 0.5, -R * 0.85); g.lineTo(-R * 0.3, -R * 1.25); g.lineTo(-R * 0.05, -R * 0.95); g.lineTo(R * 0.2, -R * 1.3); g.lineTo(R * 0.45, -R * 0.9); g.closePath(); g.fill(); g.lineWidth = 2; g.strokeStyle = A().T.ink; g.stroke(); },
+    trickster: function (g, R, v) { if (v === V_FLASH) return; g.fillStyle = '#DDF1FF'; g.beginPath(); g.moveTo(-R * 0.9, -R * 0.1); g.lineTo(-R * 1.6, -R * 0.5); g.lineTo(-R * 1.2, R * 0.15); g.closePath(); g.fill(); g.lineWidth = 1.5; g.strokeStyle = A().T.ink; g.stroke(); },
+    engineer: function (g, R, v) { if (v === V_FLASH) return; g.fillStyle = '#5C5670'; g.fillRect(-R * 1.1, -R * 0.3, R * 0.4, R * 0.8); g.lineWidth = 2; g.strokeStyle = A().T.ink; g.strokeRect(-R * 1.1, -R * 0.3, R * 0.4, R * 0.8); g.fillStyle = '#FFC23D'; g.fillRect(R * 0.5, -R * 1.0, R * 0.25, R * 0.6); },
+    mortar: function (g, R, v) { if (v === V_FLASH) return; g.save(); g.rotate(-0.7); g.fillStyle = '#3E3A44'; g.fillRect(0, -R * 0.25, R * 1.4, R * 0.5); g.lineWidth = 2; g.strokeStyle = A().T.ink; g.strokeRect(0, -R * 0.25, R * 1.4, R * 0.5); g.fillStyle = A().T.ink; g.fillRect(R * 1.25, -R * 0.2, R * 0.15, R * 0.4); g.restore(); }
+  };
+  DESIGNS.turret = function (g, R, color, v) {
+    const T = A().T;
+    const base = function (gg) { gg.beginPath(); gg.moveTo(-R, R * 0.6); gg.lineTo(-R * 0.6, -R * 0.2); gg.lineTo(R * 0.6, -R * 0.2); gg.lineTo(R, R * 0.6); gg.closePath(); };
+    if (v === V_FLASH) { A().flat(g, base, '#FFFFFF', 2.5); return; }
+    base(g); g.fillStyle = '#4A4452'; g.fill(); g.lineWidth = 2.5; g.strokeStyle = T.ink; g.stroke();
+    g.fillStyle = '#FFC23D'; for (let i = 0; i < 3; i++) g.fillRect(-R * 0.6 + i * R * 0.45, R * 0.25, R * 0.25, R * 0.14);
+    g.beginPath(); g.arc(0, -R * 0.3, R * 0.55, 0, TAU); g.fillStyle = color; g.fill(); g.stroke();
+  };
   // dread overlay: later zones make every enemy nastier (dark veins, back spikes, extra glowing eyes, fanged maw)
   function dread(g, R, lvl, v) {
     if (!lvl || v === V_FLASH) return;
@@ -144,12 +149,11 @@
     // veins / cracks
     g.strokeStyle = lvl >= 2 ? 'rgba(255,46,77,0.55)' : 'rgba(30,22,40,0.6)'; g.lineWidth = lw * 0.45;
     g.beginPath(); g.moveTo(-R * 0.7, R * 0.1); g.lineTo(-R * 0.35, R * 0.25); g.lineTo(-R * 0.2, R * 0.55); g.moveTo(-R * 0.35, R * 0.25); g.lineTo(-R * 0.05, R * 0.1); g.stroke();
-    // extra eyes
-    const ex = lvl >= 2 ? [[-0.25, -0.5, 0.1], [0.55, -0.6, 0.08], [-0.45, -0.15, 0.07], [0.15, -0.65, 0.07]] : [[-0.25, -0.5, 0.09]];
-    for (let i = 0; i < ex.length; i++) {
-      g.fillStyle = T.ink; g.beginPath(); g.arc(R * ex[i][0], R * ex[i][1], R * ex[i][2] * 1.5, 0, TAU); g.fill();
-      g.fillStyle = eye; g.beginPath(); g.arc(R * ex[i][0], R * ex[i][1], R * ex[i][2], 0, TAU); g.fill();
-    }
+    // glowing fissures across the body
+    g.strokeStyle = eye; g.lineWidth = lw * (lvl >= 2 ? 0.55 : 0.4); g.beginPath();
+    g.moveTo(-R * 0.3, -R * 0.65); g.lineTo(-R * 0.1, -R * 0.35); g.lineTo(-R * 0.3, -R * 0.1); g.lineTo(-R * 0.05, R * 0.15);
+    if (lvl >= 2) { g.moveTo(R * 0.45, -R * 0.7); g.lineTo(R * 0.3, -R * 0.45); g.lineTo(R * 0.5, -R * 0.25); }
+    g.stroke();
     // fanged maw
     if (lvl >= 2) {
       g.fillStyle = '#120A14'; g.beginPath(); g.ellipse(R * 0.42, R * 0.4, R * 0.36, R * 0.18, 0, 0, TAU); g.fill();

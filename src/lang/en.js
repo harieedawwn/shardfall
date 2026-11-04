@@ -309,6 +309,10 @@
     "levelup.lv": "Lv {n}",
     "levelup.lvUp": "Lv {a} → {b}",
     "set.autoAim": "Auto-aim",
-    "set.autoAimTip": "Aims at the nearest enemy on any device. With no enemy near, your own aim is used."
+    "set.autoAimTip": "Aims at the nearest enemy on any device. With no enemy near, your own aim is used.",
+    "hud.special": "⚠ {name} incoming!",
+    "hud.breakFree": "GRABBED! DASH TO BREAK FREE",
+    "hud.bossHint": "Glowing gold core = weak point. Unload on it then!",
+    "hud.barrier": "Barrier! Hold fire until the core opens"
   };
 })();

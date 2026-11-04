@@ -41,3 +41,7 @@ Nhánh: `revamp/visual`. Đọc file này trước khi làm tiếp.
 - Baseline hash ghi lại sau thay đổi gameplay có chủ đích (`tools/baseline-hashes.json`).
 - Nhân vật: mũ trùm che mặt tối (không mắt), trang phục 4 bậc theo sức mạnh; quái "dread" bậc 1/2 ở frost/void.
 - Hiệu ứng: khói mềm, quả cầu lửa, tàn lửa phát sáng; âm thanh súng kiểu thực + vang phòng; hào quang icon theo độ hiếm.
+- Đợt 3: bỏ mắt mọi sinh vật; mỗi ô vũ khí là một tay cầm súng riêng quanh nhân vật; 6 quái đặc biệt + turret
+  (Kẻ Nghiền, Kẻ Bắt Cóc, Kẻ Tiếp Sức, Bóng Láu, Thợ Pháo, Pháo Thủ), 3–7 con/đợt theo đợt và độ khó;
+  đạn địch 8 kiểu; boss có giáp + lõi lộ theo chu kỳ (điểm yếu) và lá chắn chống burst; đòn mới laser/nhảy đập/thiên thạch/mìn;
+  2 boss ngẫu nhiên mới (Vua Rỗng, Mẹ Bầy), không lặp trong một ván. Baseline hash ghi lại.

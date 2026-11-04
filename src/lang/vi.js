@@ -309,6 +309,10 @@
     "levelup.lv": "Cấp {n}",
     "levelup.lvUp": "Cấp {a} → {b}",
     "set.autoAim": "Tự ngắm",
-    "set.autoAimTip": "Tự động ngắm vào kẻ địch gần nhất, mọi thiết bị. Không có địch gần thì dùng hướng ngắm của bạn."
+    "set.autoAimTip": "Tự động ngắm vào kẻ địch gần nhất, mọi thiết bị. Không có địch gần thì dùng hướng ngắm của bạn.",
+    "hud.special": "⚠ {name} xuất hiện!",
+    "hud.breakFree": "BỊ BẮT! LƯỚT ĐỂ THOÁT",
+    "hud.bossHint": "Lõi sáng vàng = điểm yếu. Dồn sát thương lúc đó!",
+    "hud.barrier": "Lá chắn! Ngừng xả, chờ lõi lộ ra"
   };
 })();
