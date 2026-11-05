@@ -212,7 +212,7 @@
       { dmgX: 1.0, rateX: 1.1, set: { ramp: 2.6, count: 3, bounce: 2 } }],
     ['venom_bow', 'venom_vial', 'hydra_bow', 'poison', 'Nỏ thủy xà', 'Hydra Bow',
       'Mũi tên độc nổ thành đám mây độc nơi nó dừng lại.', 'Venom bolts burst into a lingering poison cloud where they land.', 'capsule', '#4BE06A', 7, 0.35, 'shoot_heavy',
-      { dmgX: 2.05, rateX: 1.15, set: { cloudDmg: 36, cloudLife: 3.4, blast: 66, bounce: 0, pierce: 2, count: 3 } }],
+      { dmgX: 1.95, rateX: 1.15, set: { cloudDmg: 20, cloudLife: 3.4, blast: 66, bounce: 0, pierce: 2, count: 3 } }],
     ['frost_seeker', 'cat_cold_snap', 'glacial_seeker', 'ice', 'Băng truy tuyệt đối', 'Glacial Seeker',
       'Mỗi quả cầu đóng băng ngay lập tức kẻ nó chạm vào.', 'Each orb flash-freezes whatever it touches.', 'star', '#CFF3FF', 9, 0.3, 'shoot_light',
       { dmgX: 2.0, rateX: 1.05, set: { count: 4, fz: 1, statusChance: 1, split: 1, pierce: 3 } }],

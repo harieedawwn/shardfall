@@ -86,3 +86,13 @@ Decisions are logged here instead of asking. Baseline before this pass: 108 test
 - Old saves: new meta keys (`ach`, `progress`, `daily`) are filled by `save.mergeDefaults`; tested with tools/fixtures/pre-revamp-save.json.
 - Decision: balance runs use a fresh save, so locked content is out of the measured pools (that matches a new player).
 - Tests: new suite `tests/achievements.test.js` (9). Next: step 7 (final pass).
+
+## Step 7 - Final pass  (DONE)
+- Final `tools/balance.js` (160 runs, 1200 s, fresh save so locked content is out of the pools): **win 54.4%** (danger 0 82.5%, danger 3 26.3%), avg wave 11.80, 0 timeouts.
+  Per character d0/d3: ranger 85/15, dasher 65/5, bulwark 95/40, tinker 85/45. No damage source above 35% (top: katana 13.2%, hydra_bow 12.9%, cat_whetstone 8.4%, dragonfire 7.8%, gatling_pistol 6.6%).
+  Mean in-run share where owned: katana 59% (it is the dasher's only starter), hydra_bow 38% -> its cloud burst was trimmed (cloudDmg 36 -> 20, dmgX 1.95; DPS test ratio 1.85x). Dasher d3 (5%) and ranger d3 (15%) are the weak spots for a bot; humans dodge better than the bot does.
+- Progress table (win%, all chars, d0 / d3):
+  start 62.5 / 5.0 (dasher stuck at boss 1 in 30% of runs) -> step 1 66.3 / 3.8 -> step 2 67.5 / 12.5 -> step 3 73.8 / 12.5 -> step 4 72.5 d0 (seeds 1-10, after the bot learned to dodge meteors) -> step 5 first 92.5 / 40 (too easy), nerfed to 77.5 / 17.5 (seeds 1-10) -> final 82.5 / 26.3.
+- Locked content: verified by tests (200 shop/chest/card rolls with a fresh save never show the 7 locked ids; earning the achievement lets them appear).
+- Docs: Vietnamese "Đợt gameplay" section in `docs/REVAMP_PROGRESS.md`; SPEC sections updated at every step.
+- Known gaps / ideas: the bot ignores events (it never hunts the runner or enters the shrine on purpose); `--strict-events` still has the old baseline gaps; trait/route values are tuned against the bot only and deserve a human playtest.
