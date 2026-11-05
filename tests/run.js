@@ -30,7 +30,7 @@ function sim() {
 }
 
 function suites() {
-  const order = ['core', 'arsenal', 'horde', 'progression', 'reactions', 'events', 'traits', 'fx', 'ui'];
+  const order = ['core', 'arsenal', 'horde', 'progression', 'reactions', 'events', 'traits', 'achievements', 'fx', 'ui'];
   let pass = 0, fail = 0;
   const only = arg('only', null);
   for (const name of order) {

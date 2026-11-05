@@ -13,7 +13,7 @@ module.exports = function (H) {
   const stripCss = function (s) { return s.replace(/\/\*[\s\S]*?\*\//g, ''); };
 
   const NS = ['game', 'common', 'title', 'hint', 'menu', 'select', 'danger', 'levelup', 'shop', 'stats', 'tip', 'stat', 'rarity', 'element', 'kind', 'wp', 'pause',
-    'settings', 'set', 'ctl', 'meta', 'codex', 'victory', 'end', 'hud', 'touch', 'rotate', 'event', 'trait', 'route'];
+    'settings', 'set', 'ctl', 'meta', 'codex', 'victory', 'end', 'hud', 'touch', 'rotate', 'event', 'trait', 'route', 'ach', 'daily'];
 
   // ---- key families built from data (dynamic keys such as t('stat.' + k)) ----
   function families(NR) {
@@ -75,7 +75,7 @@ module.exports = function (H) {
     // every key in the files is used (no dead strings), except dynamic families
     const used = Object.keys(u.keys);
     const dead = Object.keys(NR.lang.vi).filter(function (k) {
-      if (used.indexOf(k) >= 0) return false;
+      if (used.indexOf(k) >= 0 || k === 'daily.share') return false; // daily.share is read by src/core/daily.js
       return !u.dyn.some(function (p) { return k.indexOf(p) === 0; });
     });
     H.eq(dead, [], 'unused lang keys');

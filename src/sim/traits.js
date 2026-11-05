@@ -56,7 +56,7 @@
     return false;
   }
   function matches(p, id) { return ownsMatch(p, D(id).match); }
-  function available(p) { const out = []; for (const id in NR.data.traits) if (lv(p, id) < D(id).max) out.push(id); return out; }
+  function available(p) { const out = []; for (const id in NR.data.traits) if (lv(p, id) < D(id).max && (!NR.achievements || NR.achievements.isUnlocked('trait', id))) out.push(id); return out; }
   // one trait card: never one of `used`, build matches are twice as likely, epics are rarer early
   function rollCard(p, used, wave) {
     const pool = available(p).filter(function (id) { return !used[id]; });

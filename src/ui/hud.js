@@ -1405,18 +1405,18 @@
       default: dot(0, 0, 0.4);
     }
   }
-  function drawTraitIcon(g, id, x, y, r, fill, o, route) {
+  function drawTraitIcon(g, id, x, y, r, fill, o, src) {
     o = o || {};
-    const d = route ? NR.data.routes[id] : NR.data.traits[id], col = fill || (d && d.color) || '#F2EFE6', sil = !!o.sil, lw = o.line === undefined ? Math.max(1.8, r * 0.1) : o.line, sh = sil ? 0 : (o.shadow === undefined ? Math.max(1.5, r * 0.12) : o.shadow);
+    const d = src === 'route' ? NR.data.routes[id] : src === 'ach' ? (NR.data.achievements[id] || NR.data.challenges[id]) : NR.data.traits[id], col = fill || (d && d.color) || '#FFD43B', sil = !!o.sil, lw = o.line === undefined ? Math.max(1.8, r * 0.1) : o.line, sh = sil ? 0 : (o.shadow === undefined ? Math.max(1.5, r * 0.12) : o.shadow);
     g.save(); g.translate(x, y);
     if (sh > 0) { g.beginPath(); g.arc(sh, sh, r, 0, Math.PI * 2); g.fillStyle = C.ink2; g.fill(); }
     g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fillStyle = sil ? '#1D1530' : '#2A2040'; g.fill(); g.lineWidth = lw * 1.4; g.strokeStyle = sil ? C.ink : col; g.stroke();
     g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.lineWidth = lw * 0.5; g.strokeStyle = C.ink; g.stroke();
-    drawGlyph(g, d ? d.glyph : '', r * 0.72, col, sil, lw);
+    drawGlyph(g, d && d.glyph ? d.glyph : 'crit', r * 0.72, col, sil, lw);
     g.restore();
   }
   function drawEntityIcon(g, kind, id, x, y, r, fill, o) {
-    if (kind === 'trait' || kind === 'route') return drawTraitIcon(g, id, x, y, r, fill, o, kind === 'route');
+    if (kind === 'trait' || kind === 'route' || kind === 'ach') return drawTraitIcon(g, id, x, y, r, fill, o, kind);
     if (kind === 'weapon' || kind === 'evolution' || (NR.data && NR.data.weapons && NR.data.weapons[id])) {
       return drawWeaponIcon(g, id, x, y, r, fill, o);
     }
@@ -1918,6 +1918,7 @@
       S.bannerT = S.banner.dur;
       S.lag = S.hp; S.lagHold = 0;
     });
+    E.on('achievement:unlock', function (e) { const d = NR.data.achievements[e.id] || NR.data.challenges[e.id]; if (d) toast(t('ach.toast', { name: tx(d.name) }), C.gold); });
     E.on('event:start', function (e) {
       const d = NR.data.waveEvents[e.id];
       if (!d) return;

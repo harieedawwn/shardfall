@@ -22,7 +22,7 @@
   // Weapons that can be offered right now: not evolved, and either a free slot or an upgradable copy we hold.
   function validWeapons(p) {
     const out = [], W = NR.data.weapons;
-    for (const id in W) if (!W[id].evolved && NR.weapons.canAdd(p, id)) out.push(id);
+    for (const id in W) if (!W[id].evolved && NR.weapons.canAdd(p, id) && (!NR.achievements || NR.achievements.isUnlocked('weapon', id))) out.push(id);
     return out;
   }
   // n cards: no duplicate stat or weapon, rarity weighted by luck and wave, weapon cards only when valid

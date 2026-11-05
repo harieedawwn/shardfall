@@ -74,3 +74,15 @@ Decisions are logged here instead of asking. Baseline before this pass: 108 test
 - Fixed on the way: `player.js` ultimate called a non-existent `NR.combat.damageEnemy` (dasher ult would throw): now `hitEnemy`.
 - Tests: new suite `tests/traits.test.js` (14); core/progression/ui tests updated for the route state and trait cards.
 - Next: step 6 (achievements, unlocks, daily run).
+
+## Step 6 - Achievements, unlocks, daily run  (DONE)
+- `src/data/achievements.js`: 15 achievements, 4 per-character challenges, 7 locked items (weapons railgun/comet_staff/chakram, items time_dial/golden_skull, traits chain_kill/shatter_master). `src/sim/achievements.js` (`NR.achievements`):
+  evaluated on boss:death, weapon:evolve, event:end, state:change, every 4th reaction, elite kills and run:end; cumulative counters (reactions/elites/eventsWon/kills) are folded into `meta.progress` at run end (live run counts toward totals while playing).
+  New event `achievement:unlock` (SPEC 8, optional in the strict-events audit). New run stats: `evolutions`, `bossNoHit` (clean from the boss spawn until any hit), `newAch`, `dailyScore`.
+- Locked content is filtered in shop (rollOne/validOffer), `items.roll` (chests), level-up weapon cards and trait cards. Tested with 200 rolls each, and that earning the achievement puts the content into the pools.
+- UI: Achievements tab in the Codex (progress bars, what each unlocks, character challenges), in-run toast (HUD) + sfx, end screen section "New achievements" with unlocked content (the end screen refreshes when run:end listeners report), character select shows the character's challenge (tick when done), codex detail says why a weapon/item is locked.
+- Daily: `src/core/daily.js` (`NR.daily`), title button "Thử thách ngày / Daily Run", screen with today's fixed character/danger, Play (spent the moment you start: abandoning counts), score, last-30-days table + best, "Copy result" (clipboard with textarea fallback) and a share line; end screen shows the daily score and a Copy button. Snapshot carries `daily`, so Continue still records the result.
+  Score = 100 x wave + kills + 150 x bosses + 1000 win. Seed/char/danger (0-3) come from a hash of the UTC date; tests override `NR.daily.nowFn`.
+- Old saves: new meta keys (`ach`, `progress`, `daily`) are filled by `save.mergeDefaults`; tested with tools/fixtures/pre-revamp-save.json.
+- Decision: balance runs use a fresh save, so locked content is out of the measured pools (that matches a new player).
+- Tests: new suite `tests/achievements.test.js` (9). Next: step 7 (final pass).

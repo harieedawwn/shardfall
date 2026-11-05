@@ -27,15 +27,15 @@
   }
   function validOffer(p, o) {
     if (!o || o.sold) return false;
-    if (o.kind === 'weapon') { const d = NR.data.weapons[o.id]; return !!d && !d.evolved && NR.weapons.canAdd(p, o.id); }
+    if (o.kind === 'weapon') { const d = NR.data.weapons[o.id]; return !!d && !d.evolved && NR.weapons.canAdd(p, o.id) && (!NR.achievements || NR.achievements.isUnlocked('weapon', o.id)); }
     const d = NR.data.items[o.id];
-    return !!d && NR.items.count(p, o.id) < d.maxStack;
+    return !!d && NR.items.count(p, o.id) < d.maxStack && (!NR.achievements || NR.achievements.isUnlocked('item', o.id));
   }
   function rollOne(taken, forceKind) {
     const W = NR.world.get(), p = W.player, w = NR.stats.rarityWeights(NR.stats.get(p, 'luck'), W.wave);
     const wp = [], ip = [];
-    for (const id in NR.data.weapons) { const d = NR.data.weapons[id]; if (!taken['w:' + id] && !d.evolved && NR.weapons.canAdd(p, id)) wp.push(id); }
-    for (const id in NR.data.items) { if (!taken['i:' + id] && NR.items.count(p, id) < NR.data.items[id].maxStack) ip.push(id); }
+    for (const id in NR.data.weapons) { const d = NR.data.weapons[id]; if (!taken['w:' + id] && !d.evolved && NR.weapons.canAdd(p, id) && (!NR.achievements || NR.achievements.isUnlocked('weapon', id))) wp.push(id); }
+    for (const id in NR.data.items) { if (!taken['i:' + id] && NR.items.count(p, id) < NR.data.items[id].maxStack && (!NR.achievements || NR.achievements.isUnlocked('item', id))) ip.push(id); }
     let kind = forceKind || (NR.rng.chance(WEAPON_SHARE) ? 'weapon' : 'item');
     if (kind === 'weapon' && !wp.length) kind = 'item';
     if (kind === 'item' && !ip.length) kind = wp.length ? 'weapon' : '';

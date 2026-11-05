@@ -12,7 +12,7 @@ const EVENTS = {
   'weapon:fire': ['weaponId', 'slot', 'kind', 'x', 'y', 'angle'], 'weapon:gain': ['weaponId', 'slot', 'level', 'isNew'],
   'weapon:evolve': ['slot', 'from', 'into'], 'projectile:impact': ['x', 'y', 'r', 'element', 'team', 'surface'],
   'damage:dealt': ['weaponId', 'target', 'isBoss', 'amount', 'crit', 'element', 'x', 'y', 'killed'],
-  'status:apply': ['target', 'status', 'stacks', 'x', 'y'], 'status:react': ['reaction', 'target', 'x', 'y', 'element', 'r'], 'event:start': ['id', 'x', 'y', 'duration', 'wave'], 'event:end': ['id', 'success', 'x', 'y', 'reason'], 'chain:arc': ['points', 'element'],
+  'status:apply': ['target', 'status', 'stacks', 'x', 'y'], 'status:react': ['reaction', 'target', 'x', 'y', 'element', 'r'], 'achievement:unlock': ['id', 'kind', 'content'], 'event:start': ['id', 'x', 'y', 'duration', 'wave'], 'event:end': ['id', 'success', 'x', 'y', 'reason'], 'chain:arc': ['points', 'element'],
   'area:explode': ['x', 'y', 'r', 'element', 'team', 'weaponId'],
   'player:hurt': ['amount', 'hp', 'srcId', 'dodged', 'revived', 'x', 'y'], 'player:dash': ['x', 'y', 'dx', 'dy', 'charges'],
   'player:death': ['x', 'y'], 'player:levelup': ['level', 'pending'], 'levelup:open': ['level', 'cards', 'rerollPrice', 'pending'],
@@ -22,7 +22,7 @@ const EVENTS = {
   'pickup:collect': ['type', 'value', 'x', 'y'], 'meta:change': ['kind', 'id'], 'codex:discover': ['kind', 'id'],
   'settings:change': ['key', 'value'], 'input:device': ['device']
 };
-const OPTIONAL_EVENTS = ['input:device', 'settings:change', 'codex:discover', 'meta:change'];
+const OPTIONAL_EVENTS = ['input:device', 'settings:change', 'codex:discover', 'meta:change', 'achievement:unlock'];
 
 const H = { ROOT: ROOT, EVENTS: EVENTS, OPTIONAL_EVENTS: OPTIONAL_EVENTS, tests: [], audit: null, cur: null };
 

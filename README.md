@@ -7,7 +7,7 @@ Double-click `index.html` (works from `file://`) or serve the folder (GitHub Pag
 
 ## Test
 ```
-node tests/run.js                                        # all seven suites (core arsenal horde progression reactions fx ui) (exit 1 on any failure)
+node tests/run.js                                        # all nine suites (core arsenal horde progression reactions events traits achievements fx ui) (exit 1 on any failure)
 node tests/run.js --only core                            # one suite
 node tests/run.js --strict-events                        # also fail when a SPEC 8 event is never emitted
 node tests/run.js --sim 300 --seed 7 --char ranger --danger 0 [--fx] [--endless]   # headless bot run, prints one JSON line

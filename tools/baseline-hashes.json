@@ -12,15 +12,15 @@
   "state": "clear"
  },
  "ranger/s1/d5": {
-  "hash": 33261187,
+  "hash": 2300269919,
   "wave": 3,
-  "kills": 107,
+  "kills": 74,
   "state": "end"
  },
  "ranger/s1/d5/fx": {
-  "hash": 33261187,
+  "hash": 2300269919,
   "wave": 3,
-  "kills": 107,
+  "kills": 74,
   "state": "end"
  },
  "ranger/s2/d0": {
@@ -36,27 +36,27 @@
   "state": "clear"
  },
  "ranger/s2/d5": {
-  "hash": 2871919149,
+  "hash": 3224735671,
   "wave": 3,
-  "kills": 75,
+  "kills": 86,
   "state": "end"
  },
  "ranger/s2/d5/fx": {
-  "hash": 2871919149,
+  "hash": 3224735671,
   "wave": 3,
-  "kills": 75,
+  "kills": 86,
   "state": "end"
  },
  "ranger/s3/d0": {
-  "hash": 3263662294,
+  "hash": 1502069191,
   "wave": 4,
-  "kills": 96,
+  "kills": 136,
   "state": "clear"
  },
  "ranger/s3/d0/fx": {
-  "hash": 3263662294,
+  "hash": 1502069191,
   "wave": 4,
-  "kills": 96,
+  "kills": 136,
   "state": "clear"
  },
  "ranger/s3/d5": {
@@ -72,51 +72,51 @@
   "state": "clear"
  },
  "dasher/s1/d0": {
-  "hash": 935971304,
+  "hash": 3983356647,
   "wave": 4,
-  "kills": 130,
+  "kills": 107,
   "state": "clear"
  },
  "dasher/s1/d0/fx": {
-  "hash": 935971304,
+  "hash": 3983356647,
   "wave": 4,
-  "kills": 130,
+  "kills": 107,
   "state": "clear"
  },
  "dasher/s1/d5": {
-  "hash": 2466742983,
+  "hash": 535713482,
   "wave": 3,
   "kills": 88,
   "state": "end"
  },
  "dasher/s1/d5/fx": {
-  "hash": 2466742983,
+  "hash": 535713482,
   "wave": 3,
   "kills": 88,
   "state": "end"
  },
  "dasher/s2/d0": {
-  "hash": 727127511,
+  "hash": 917495850,
   "wave": 4,
-  "kills": 99,
+  "kills": 110,
   "state": "clear"
  },
  "dasher/s2/d0/fx": {
-  "hash": 727127511,
+  "hash": 917495850,
   "wave": 4,
-  "kills": 99,
+  "kills": 110,
   "state": "clear"
  },
  "dasher/s2/d5": {
-  "hash": 2136340814,
+  "hash": 261093047,
   "wave": 3,
-  "kills": 119,
+  "kills": 118,
   "state": "end"
  },
  "dasher/s2/d5/fx": {
-  "hash": 2136340814,
+  "hash": 261093047,
   "wave": 3,
-  "kills": 119,
+  "kills": 118,
   "state": "end"
  },
  "dasher/s3/d0": {
@@ -132,27 +132,27 @@
   "state": "clear"
  },
  "dasher/s3/d5": {
-  "hash": 486198468,
+  "hash": 2735231691,
   "wave": 4,
-  "kills": 115,
-  "state": "clear"
+  "kills": 110,
+  "state": "end"
  },
  "dasher/s3/d5/fx": {
-  "hash": 486198468,
+  "hash": 2735231691,
   "wave": 4,
-  "kills": 115,
-  "state": "clear"
+  "kills": 110,
+  "state": "end"
  },
  "bulwark/s1/d0": {
-  "hash": 831183188,
+  "hash": 28374405,
   "wave": 4,
-  "kills": 123,
+  "kills": 116,
   "state": "clear"
  },
  "bulwark/s1/d0/fx": {
-  "hash": 831183188,
+  "hash": 28374405,
   "wave": 4,
-  "kills": 123,
+  "kills": 116,
   "state": "clear"
  },
  "bulwark/s1/d5": {
@@ -204,15 +204,15 @@
   "state": "clear"
  },
  "bulwark/s3/d5": {
-  "hash": 1953648354,
+  "hash": 2402290458,
   "wave": 4,
-  "kills": 132,
+  "kills": 168,
   "state": "clear"
  },
  "bulwark/s3/d5/fx": {
-  "hash": 1953648354,
+  "hash": 2402290458,
   "wave": 4,
-  "kills": 132,
+  "kills": 168,
   "state": "clear"
  },
  "tinker/s1/d0": {
@@ -228,15 +228,15 @@
   "state": "clear"
  },
  "tinker/s1/d5": {
-  "hash": 3875816090,
+  "hash": 3150355938,
   "wave": 3,
-  "kills": 78,
+  "kills": 71,
   "state": "end"
  },
  "tinker/s1/d5/fx": {
-  "hash": 3875816090,
+  "hash": 3150355938,
   "wave": 3,
-  "kills": 78,
+  "kills": 71,
   "state": "end"
  },
  "tinker/s2/d0": {
@@ -252,15 +252,15 @@
   "state": "clear"
  },
  "tinker/s2/d5": {
-  "hash": 2879395988,
+  "hash": 2699228843,
   "wave": 4,
-  "kills": 159,
+  "kills": 156,
   "state": "clear"
  },
  "tinker/s2/d5/fx": {
-  "hash": 2879395988,
+  "hash": 2699228843,
   "wave": 4,
-  "kills": 159,
+  "kills": 156,
   "state": "clear"
  },
  "tinker/s3/d0": {
@@ -276,15 +276,15 @@
   "state": "clear"
  },
  "tinker/s3/d5": {
-  "hash": 370941290,
+  "hash": 1644612662,
   "wave": 4,
-  "kills": 170,
+  "kills": 173,
   "state": "clear"
  },
  "tinker/s3/d5/fx": {
-  "hash": 370941290,
+  "hash": 1644612662,
   "wave": 4,
-  "kills": 170,
+  "kills": 173,
   "state": "clear"
  }
 }

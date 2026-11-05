@@ -248,6 +248,7 @@
     E.on('chain:arc', function () { sfx('shock'); });
     E.on('status:apply', function () { sfx('status'); });
     E.on('event:start', function () { sfx('event_start'); });
+    E.on('achievement:unlock', function () { sfx('event_win'); });
     E.on('event:end', function (e) { sfx(e.success ? 'event_win' : 'event_fail'); });
     E.on('status:react', function (e) { sfx(e.reaction === 'toxic_blast' ? 'react_toxic' : e.reaction === 'superconduct' ? 'react_shock' : 'react_' + e.reaction); });
     E.on('enemy:attack', function () { sfx('telegraph'); });

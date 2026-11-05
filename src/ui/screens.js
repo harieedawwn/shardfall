@@ -91,6 +91,7 @@
     if (kind === 'character') return NR.data.characters[id];
     if (kind === 'trait') return NR.data.traits[id];
     if (kind === 'route') return NR.data.routes[id];
+    if (kind === 'ach') return NR.data.achievements[id] || NR.data.challenges[id];
     return null;
   }
   function iconOf(kind, id, size, sil) {
@@ -340,6 +341,7 @@
           if (!NR.run.continueRun()) flash(t('menu.continueFail'), true);
         }, { fk: 'cont' }));
       }
+      menu.appendChild(btn('big', [h('span', '', t('menu.daily')), h('small', 'bsub', t('menu.dailyInfo'))], function () { show('daily'); }, { fk: 'daily' }));
       menu.appendChild(btn('big', [h('span', '', t('menu.upgrades')), shards(meta.shards)], function () { show('meta'); }, { fk: 'meta' }));
       menu.appendChild(btn('big', t('menu.codex'), function () { show('codex'); }, { fk: 'codex' }));
       menu.appendChild(btn('big', t('menu.settings'), function () { settingsFrom = 'title'; show('settings'); }, { fk: 'settings' }));
@@ -406,6 +408,8 @@
       const id = D.charId, ch = NR.data.characters[id], ok = NR.meta.charUnlocked(id), pv = h('section', 'panel preview');
       pv.appendChild(h('div', 'pv-top', [iconOf('character', id, 72, !ok), h('div', 'pv-name', [h('h3', 'h', ok ? tx(ch.name) : '???'), h('p', '', tx(ch.desc))])]));
       if (tx(ch.passive)) pv.appendChild(h('p', 'passive', [h('b', '', t('select.passive') + ': '), tx(ch.passive)]));
+      const chal = NR.data.challenges['ch_' + id];
+      if (chal) pv.appendChild(h('p', 'passive chal' + (NR.achievements.earned('ch_' + id) ? ' done' : ''), [h('b', '', NR.achievements.earned('ch_' + id) ? t('select.challengeDone') : t('select.challenge', { text: tx(chal.desc) }))]));
       const st = charPreview(id), all = ids.map(charPreview);
       const sl = h('div', 'pstats');
       PREVIEW_STATS.forEach(function (k) {
@@ -633,6 +637,61 @@
       main.appendChild(B);
       wrap.appendChild(main);
       wrap.appendChild(foot('1-4 ' + t('shop.buy') + ' · R ' + t('shop.reroll') + ' · N ' + t('shop.next'), 'Y ' + t('shop.reroll')));
+      s.appendChild(wrap);
+      return s;
+    }
+  };
+
+  // =====================================================================================================
+  // DAILY RUN: fixed seed/character/danger per UTC day, one scored attempt, 30-day history, share text
+  // =====================================================================================================
+  function copyText(text) {
+    const done = function () { flash(t('daily.copied')); }, fail = function () { flash(t('daily.copyFail'), true); };
+    try {
+      const nav = globalThis.navigator;
+      if (nav && nav.clipboard && nav.clipboard.writeText) { nav.clipboard.writeText(text).then(done, fail); return; }
+    } catch (e) { /* fall through */ }
+    try {
+      const d = globalThis.document, ta = d.createElement('textarea'); ta.value = text; d.body.appendChild(ta); ta.select();
+      const okc = d.execCommand && d.execCommand('copy'); d.body.removeChild(ta);
+      if (okc) done(); else fail();
+    } catch (e) { fail(); }
+  }
+  SCREENS.daily = {
+    guard: false,
+    back: function () { show('title'); },
+    build: function () {
+      const key = NR.daily.todayKey(), cfg = NR.daily.config(key), e = NR.daily.entry(key), lang = NR.i18n.getLang();
+      const s = scr('daily', 'solid'), wrap = h('div', 'wrap');
+      wrap.appendChild(head(t('daily.title'), t('daily.sub', { date: key }), function () { show('title'); }));
+      const pn = h('section', 'panel preview');
+      pn.appendChild(h('div', 'pv-top', [iconOf('character', cfg.charId, 72, false), h('div', 'pv-name', [h('h3', 'h', charName(cfg.charId)), h('p', '', t('daily.danger', { n: cfg.danger }))])]));
+      const wd = NR.data.characters[cfg.charId].startWeapon && NR.data.weapons[NR.data.characters[cfg.charId].startWeapon];
+      if (wd) pn.appendChild(h('div', 'pv-weapon', [iconOf('weapon', NR.data.characters[cfg.charId].startWeapon, 40), h('div', '', [h('b', '', [t('select.startWeapon') + ': ', tx(wd.name)])])]));
+      const acts = h('div', 'actions col');
+      if (!e) acts.appendChild(btn('pri big', t('daily.play'), function () { NR.run.start({ charId: cfg.charId, danger: cfg.danger, seed: cfg.seed, daily: key }); }, { fk: 'dplay', auto: true }));
+      else if (e.state === 'started') pn.appendChild(h('p', 'note', t('daily.started')));
+      else {
+        pn.appendChild(h('p', 'note', t('daily.played')));
+        pn.appendChild(h('div', 'grid4', [kv(t('daily.score'), num(e.score)), kv(t('end.wave'), e.wave), kv(t('end.kills'), num(e.kills)), kv(t('end.time'), mmss(e.time))]));
+        acts.appendChild(btn('pri big', t('daily.copy'), function () { copyText(NR.daily.shareText(key, lang)); }, { fk: 'dcopy', auto: true }));
+        pn.appendChild(h('p', 'sharetxt', NR.daily.shareText(key, lang)));
+      }
+      pn.appendChild(acts);
+      pn.appendChild(h('p', 'note', t('daily.note')));
+      wrap.appendChild(pn);
+      const hist = h('section', 'panel'), rec = NR.daily.recent(key);
+      hist.appendChild(h('h3', 'h sm', t('daily.history')));
+      hist.appendChild(h('p', 'note rec', t('daily.best', { n: num(NR.daily.best(key)) })));
+      if (!rec.length) hist.appendChild(h('p', 'none', t('daily.none')));
+      const tb = h('table', 'dtab'), tbody = h('tbody');
+      rec.forEach(function (r) {
+        const en = r.entry;
+        tbody.appendChild(h('tr', '', [h('td', 'dn', r.key), h('td', '', charName(en.charId) + ' · D' + en.danger), h('td', 'dv', en.state === 'done' ? num(en.score) : '-'), h('td', 'dp', en.state === 'done' ? t('end.' + en.result) : '')]));
+      });
+      tb.appendChild(tbody); hist.appendChild(tb);
+      wrap.appendChild(hist);
+      wrap.appendChild(foot('', ''));
       s.appendChild(wrap);
       return s;
     }
@@ -869,7 +928,7 @@
   // =====================================================================================================
   // CODEX
   // =====================================================================================================
-  const CODEX_TABS = ['weapon', 'item', 'enemy', 'boss', 'character', 'evolution'];
+  const CODEX_TABS = ['weapon', 'item', 'enemy', 'boss', 'character', 'evolution', 'achievement'];
   function codexIds(kind) {
     if (kind === 'weapon') return Object.keys(NR.data.weapons).filter(function (id) { return !NR.data.weapons[id].evolved; });
     if (kind === 'item') return Object.keys(NR.data.items);
@@ -877,9 +936,11 @@
     if (kind === 'boss') return Object.keys(NR.data.bosses);
     if (kind === 'character') return Object.keys(NR.data.characters);
     if (kind === 'evolution') return (NR.data.evolutions || []).map(function (e) { return e.into; });
+    if (kind === 'achievement') return NR.achievements.all();
     return [];
   }
   function found(kind, id) {
+    if (kind === 'achievement') return NR.achievements.earned(id);
     const c = NR.save.getCodex(), k = c[kind] || {};
     if (k[id]) return true;
     if (kind === 'evolution') { const e = (NR.data.evolutions || []).filter(function (x) { return x.into === id; })[0]; return !!(e && (k[e.weapon + '+' + e.catalyst] || (c.weapon && c.weapon[id]))); }
@@ -892,6 +953,7 @@
     box.appendChild(h('div', 'pv-top', [iconOf(kind, id, 72), h('div', 'pv-name', [h('h3', 'h', tx(d.name)), d.rarity ? rarityTag(d.rarity) : null])]));
     if (d.desc && tx(d.desc)) box.appendChild(h('p', 'od', tx(d.desc)));
     const rows = [];
+    if ((kind === 'weapon' || kind === 'item') && !NR.achievements.isUnlocked(kind, id)) { const lk = NR.data.locked.filter(function (l) { return l.kind === kind && l.id === id; })[0]; box.appendChild(h('p', 'od lockmsg', t('ach.lockedBy', { name: tx(NR.achievements.def(lk.ach).name) }))); }
     if (kind === 'weapon' || kind === 'evolution') {
       rows.push([t('codex.kind'), t('kind.' + d.kind)], [t('codex.element'), t('element.' + d.element)]);
       const L = d.levels[d.levels.length - 1];
@@ -917,6 +979,26 @@
     box.appendChild(dl);
     return box;
   }
+  // achievements + character challenges with progress; the content an achievement unlocks is listed on its row
+  function achRow(id) {
+    const d = NR.achievements.def(id), pr = NR.achievements.progress(id), unl = NR.achievements.contentOf(id);
+    const names = unl.map(function (l) { const dd = l.kind === 'weapon' ? NR.data.weapons[l.id] : l.kind === 'item' ? NR.data.items[l.id] : NR.data.traits[l.id]; return tx(dd.name); });
+    const f = h('i', '', ''); f.style.width = Math.round(pr.cur / pr.goal * 100) + '%';
+    const row = h('div', 'ach' + (pr.done ? ' done' : ''), [
+      iconOf('ach', id, 44, false),
+      h('div', 'at', [h('b', '', tx(d.name)), h('span', 'ad', tx(d.desc)), names.length ? h('small', 'au', t('ach.unlocks', { names: names.join(', ') })) : null]),
+      pr.done ? h('span', 'ap ok', t('ach.earned')) : (pr.goal > 1 ? h('span', 'ap', [h('span', 'abar', f), h('small', '', pr.cur + '/' + pr.goal)]) : h('span', 'ap', ''))
+    ]);
+    return row;
+  }
+  function achievementList() {
+    const box = h('div', 'ach-list');
+    box.appendChild(h('h3', 'h sm', t('ach.list')));
+    Object.keys(NR.data.achievements).forEach(function (id) { box.appendChild(achRow(id)); });
+    box.appendChild(h('h3', 'h sm', t('ach.challenges')));
+    Object.keys(NR.data.challenges).forEach(function (id) { box.appendChild(achRow(id)); });
+    return box;
+  }
   SCREENS.codex = {
     guard: false,
     back: function () { show('title'); },
@@ -934,6 +1016,7 @@
         tabs.appendChild(b);
       });
       wrap.appendChild(tabs);
+      if (D.codexTab === 'achievement') { wrap.appendChild(achievementList()); wrap.appendChild(foot('', 'LB/RB ' + t('codex.tabs'))); s.appendChild(wrap); return s; }
       const ids = codexIds(D.codexTab);
       if (!D.codexSel || ids.indexOf(D.codexSel) < 0) D.codexSel = ids[0] || null;
       const body = h('div', 'cdx-body');
@@ -1008,6 +1091,20 @@
       const shN = h('b', 'sh-n', '+' + (st.shardsEarned || 0));
       L.appendChild(h('div', 'shard-earn', [icon('diamond', '#7FD3F0', 34), h('small', '', t('end.shards')), shN]));
       if (o && o.first && (st.shardsEarned || 0) > 0 && globalThis.requestAnimationFrame && !NR.save.getSettings().reduceFlashing) countUp(shN, st.shardsEarned);
+      if (st.dailyScore || W.daily) {
+        L.appendChild(h('p', 'note rec', t('end.dailyScore', { n: num(st.dailyScore || 0) })));
+        L.appendChild(btn('', t('daily.copy'), function () { copyText(NR.daily.shareText(W.daily, NR.i18n.getLang())); }, { fk: 'dcopy2' }));
+      }
+      if ((st.newAch || []).length) { // achievements earned this run and what they unlocked
+        const AP = h('div', 'newach');
+        AP.appendChild(h('h3', 'h sm', t('end.achievements')));
+        st.newAch.forEach(function (id) {
+          const d = NR.achievements.def(id);
+          AP.appendChild(h('div', 'ach done', [iconOf('ach', id, 36, false), h('div', 'at', [h('b', '', tx(d.name)), h('span', 'ad', tx(d.desc))])]));
+          NR.achievements.contentOf(id).forEach(function (l) { const dd = l.kind === 'weapon' ? NR.data.weapons[l.id] : l.kind === 'item' ? NR.data.items[l.id] : NR.data.traits[l.id]; AP.appendChild(h('p', 'note unl', t('end.unlockedContent', { name: tx(dd.name) }))); });
+        });
+        L.appendChild(AP);
+      }
       body.appendChild(L);
       // damage per weapon
       const R = h('section', 'panel dmg');
@@ -1314,6 +1411,9 @@
       if (cur === 'meta' || cur === 'select' || cur === 'end' || cur === 'title') rerender();
     });
     E.on('codex:discover', function () { if (cur === 'codex') rerender(); });
+    // the end screen opens before run:end listeners (achievements, daily score) have run: refresh it when they report
+    E.on('achievement:unlock', function () { if (cur === 'end') rerender(); });
+    E.on('run:end', function () { if (cur === 'end') rerender(); });
     if (globalThis.addEventListener) {
       globalThis.addEventListener('keydown', onKey);
       globalThis.addEventListener('pointerdown', function (ev) { setInput(ev.pointerType === 'touch' ? 'touch' : 'kbm'); }, true);

@@ -48,6 +48,9 @@ Contract for six parallel builders (**Core, Arsenal, Horde, Progression, FX, UI*
 - **Affixes (7, `NR.data.affixes`)**: `shielded` (barrier = 60% max HP soaks damage first), `splitter` (3 small copies on death), `toxic` (poison trail pools), `hasty` (+35% speed), `vampiric` (heals 25% max HP when it hits you), `volatile` (telegraphed death blast), `magnetic` (drags the player in within 380 px). Elites carry 1 (2 at danger >= 3 or wave >= 11), are outlined in the affix colour with a glyph badge, and always drop a `chest`.
 - **Bosses (3)**: `scrap_titan` (scrap, 2 phases: stomp rings, bolt volleys, summons grunts); `frost_warden` (frost, 3: spike fans, freeze nova, charge); `void_maw` (void, 3: pull vortex, orb spirals, enraged + phantoms).
 - **Pickups (6)**: `xp_shard` XP; `gold` Gold; `heart` heal; `magnet` pulls all pickups; `nova_bomb` screen-wide blast; `chest` item or Gold burst.
+- **Achievements (15, `NR.data.achievements`) + 4 character challenges (`NR.data.challenges`)**: `first_win boss_nohit triple_evo reaction_50 elites_20 win_ranger win_dasher win_bulwark win_tinker win_d3 events_10 trait_collector rich slayer endless_20`; challenges `ch_ranger ch_dasher ch_bulwark ch_tinker` (win with a condition). Types: win / run / total (cumulative across runs) / bossNoHit / traits / endless. Earned ids are saved in `meta.ach`, cumulative counters (`reactions elites eventsWon kills`) in `meta.progress`; each unlock emits `achievement:unlock` and is listed in `W.stats.newAch` for the end screen.
+- **Locked content (`NR.data.locked`, 7)**: weapons `railgun`(boss_nohit) `comet_staff`(reaction_50) `chakram`(elites_20); items `time_dial`(win_dasher) `golden_skull`(rich); traits `chain_kill`(slayer) `shatter_master`(triple_evo). They never appear in shop, chest or level-up pools until earned (`NR.achievements.isUnlocked(kind,id)`); starting weapons/items are never locked.
+- **Daily run (`NR.daily`)**: seed, character and danger (0-3) derive from the UTC date; one scored attempt per day (starting it spends the attempt, abandoning counts); score = 100 x wave + kills + 150 x bosses + 1000 if won; results of the last 30 days in `meta.daily.days`; "Copy result" share text. Snapshots carry `daily`.
 - **Meta nodes (10, Shards)**: `m_hp` maxHp; `m_damage` damage; `m_slot` +1 weapon slot; `m_gold` startGold; `m_reroll` shopDiscount; `m_xp` xpGain; `m_luck` luck; `m_dash` +1 dash charge; `m_revive` +1 revive per run; `m_magnet` pickupRange. **Unlock keys**: `char:dasher`, `char:bulwark`, `char:tinker` (Shards); danger via wins. **Codex kinds**: `weapon item enemy boss evolution character`.
 ## 5 Stats & Formulas
 - **Stat keys** (`NR.stats.defaults`; characters override): the 20 upgrade keys + `knockback lifesteal projSpeed weaponSlots shopDiscount revives startGold`.
@@ -103,6 +106,7 @@ Contract for six parallel builders (**Core, Arsenal, Horde, Progression, FX, UI*
 | `status:apply` | target,status,stacks,x,y | combat | fx.particles, fx.audio |
 | `event:start` | id,x,y,duration,wave | waveEvents | ui.hud, fx.particles, fx.audio |
 | `event:end` | id,success,x,y,reason | waveEvents | ui.hud, fx.particles, fx.audio |
+| `achievement:unlock` | id,kind('achievement'/'challenge'),content[{kind,id}] | achievements | ui.hud, ui.screens, fx.audio |
 | `status:react` | reaction,target,x,y,element,r | reactions | run, fx.particles, fx.audio, fx.juice |
 | `chain:arc` | points[{x,y}],element | combat | fx.particles, fx.audio |
 | `area:explode` | x,y,r,element,team,weaponId | combat | fx.particles, fx.floor, fx.juice, fx.audio |
@@ -158,6 +162,8 @@ Each data file sets `NR.data.<name> = {id: def}` (insertion order = display orde
 | `NR.main` | `boot()`: init modules, wire loop callbacks (`step=run.step`, `frame` calls `fx.*.update`, `ui.hud.update`, `NR.input.consumePause`→`run.togglePause`), show menu; `?stress=1` spawns the 400/600/1500 scenario |
 | `NR.weapons` | `reset()`; `update(dt)`: cooldowns, orbits, drones, auras; `add(p,weaponId)→{ok,slot,level,reason}`; `canAdd(p,weaponId)→bool`; `remove(p,slot)→weaponId`; `evolve(p,slot,intoId)`; `def(id)→def`; `resolve(p,slot)→numbers` final stats for tooltips |
 | `NR.projectiles` | `reset()`; `spawn(opts)→proj/null`: any team; `update(dt)`; `clearHostile()` |
+| `NR.achievements` | `init()`; `evaluate(result)`: check every unearned achievement; `earned(id)`; `isUnlocked(kind,id)`; `progress(id)→{cur,goal,done}`; `all()`; `def(id)`; `contentOf(id)` |
+| `NR.daily` | `todayKey()`; `config(key)→{seed,charId,danger}`; `entry(key)`; `attempted(key)`; `begin(key)`; `finish(key,stats,result)`; `recent(today)`; `best(today)`; `score(stats,result)`; `shareText(key,lang)` |
 | `NR.traits` | `init()`; `reset()`; `grant(p,id,level?)→bool`; `lv(p,id)`; `count(p)`; `available(p)`; `rollCard(p,used,wave)→card/null`; `text(id,level,lang)`; `update(dt)`; `critForced()`; `hitMult(e,wid,dot)`; `shatterBonus()`; `frozenBonus()` |
 | `NR.waveEvents` | `init()`; `reset()`; `start(wave)`: roll the wave's event (run.startWave); `update(dt)`; `begin(id)`; `finish(success,reason)`; `pending()`; `current()` |
 | `NR.reactions` | `init()`; `reset()`; `check(e,element,hit,weaponId)→id/''`: called by `combat.hitEnemy`; `setCount(p,element)→n`; `setActive(p,element)→bool`; `sets(p)→[{element,count,active}]` |
@@ -183,7 +189,7 @@ Each data file sets `NR.data.<name> = {id: def}` (insertion order = display orde
 | `NR.bot` | `create(opts)→bot`; `bot.think(W)→intent`; `bot.act(W)`: picks cards, buys, leaves shop; `play(opts)→summary` |
 | `NR.fakeCanvas` | `create(w,h)→ctx`: records calls, `ctx.banned[]`; `fakeDom()→{document,root}` for ui tests |
 ## 11 Save & Settings
-- `localStorage['shardfall.save']` JSON `{v:1, meta:{shards,nodes{id:lvl},chars[],maxDanger,runs,wins,bestWave}, codex{weapon{},item{},enemy{},boss{},evolution{},character{}}, settings{language:'vi',master:.8,music:.6,sfx:.8,shake:100,reduceFlashing:false,damageNumbers:true,autoFire:false,aimAssist:true,showFps:false,fullscreen:false}, run:null|snapshot}`.
+- `localStorage['shardfall.save']` JSON `{v:1, meta:{shards,nodes{id:lvl},chars[],maxDanger,runs,wins,bestWave,ach{},progress{},daily{days{}}}, codex{weapon{},item{},enemy{},boss{},evolution{},character{}}, settings{language:'vi',master:.8,music:.6,sfx:.8,shake:100,reduceFlashing:false,damageNumbers:true,autoFire:false,aimAssist:true,showFps:false,fullscreen:false}, run:null|snapshot}`.
 - Snapshot (written by `NR.run` when entering `shop`): `{v,seed,rng,charId,danger,wave,endless,player{hp,gold,xp,level,weapons,items,upgrades,traits},shop{offers,rerolls},stats}`; mods are rebuilt from items/upgrades/meta on restore. `NR.save.clearRun()` on run end.
 - Load: parse → `migrate(v)` stepwise → merge defaults. Corrupt or newer version → keep raw copy under `shardfall.backup`, start fresh. Storage unavailable → in-memory fallback, no exception. UTF-8 only; Vietnamese diacritics round-trip.
 ## 12 Visual & Audio Direction
@@ -216,5 +222,5 @@ Each data file sets `NR.data.<name> = {id: def}` (insertion order = display orde
 10. Save: round-trip meta/codex/settings; Continue at the shop restores gold, weapons, items, offers and rng state; corrupt JSON loads defaults without exception.
 11. Input: keyboard+mouse, gamepad and virtual (touch) intents all move, aim, fire, dash, pause (tested by `inject`/`setVirtual`; manual check on a real device).
 12. No banned visual feature (§12 list) appears in `src` or `css` (grep test); `NR.fakeCanvas` records zero banned calls over a 30 s bot render.
-13. Events: every emitted name is in §8 with the listed payload fields; across a 3-run bot sweep every §8 event except `input:device`, `settings:change`, `codex:discover`, `meta:change` is emitted at least once.
+13. Events: every emitted name is in §8 with the listed payload fields; across a 3-run bot sweep every §8 event except `input:device`, `settings:change`, `codex:discover`, `meta:change`, `achievement:unlock` is emitted at least once.
 14. Perf: stress test (400 enemies, 600 projectiles) averages ≤4 ms/tick in Node; `index.html?stress=1` holds ≥55 FPS with 1500 particles on target hardware (manual).

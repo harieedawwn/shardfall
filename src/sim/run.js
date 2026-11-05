@@ -5,7 +5,7 @@
   const stateP = { from: '', to: '' };
   const startP = { seed: 0, charId: '', danger: 0, endless: false };
   const endP = { result: '', stats: null };
-  let clearT = 0, deathFlag = false, pausedFrom = null, inited = false, runs = 0;
+  let bossClean = false, clearT = 0, deathFlag = false, pausedFrom = null, inited = false, runs = 0;
 
   function W() { return NR.world.get(); }
   function call(mod, fn, a, b) { const m = NR[mod]; if (m && m[fn]) return m[fn](a, b); }
@@ -21,6 +21,11 @@
     E.on('enemy:death', function (e) { const st = W().stats; st.kills++; if (e.elite) st.elites++; });
     E.on('boss:death', function () { W().stats.bossesKilled++; });
     E.on('status:react', function () { W().stats.reactions++; });
+    E.on('weapon:evolve', function () { W().stats.evolutions++; });
+    // boss no-hit: clean from the boss spawn (phase 0) until a hit lands; a boss killed while still clean counts
+    E.on('boss:phase', function (e) { if (e.phase === 0) bossClean = true; });
+    E.on('player:hurt', function (e) { if (!e.dodged && e.amount > 0) bossClean = false; });
+    E.on('boss:death', function () { if (bossClean) W().stats.bossNoHit++; });
     E.on('damage:dealt', function (e) {
       const d = W().stats.damageByWeapon, id = e.weaponId || 'other';
       d[id] = (d[id] || 0) + e.amount;
@@ -50,7 +55,7 @@
     const seed = opts.seed !== undefined ? opts.seed : NR.util.hash('run' + (++runs));
     const w = NR.world.create({ seed: seed, charId: opts.charId, danger: opts.danger || 0, endless: !!opts.endless });
     NR.rng.seed(seed);
-    deathFlag = false; pausedFrom = null; clearT = 0;
+    deathFlag = false; pausedFrom = null; clearT = 0; bossClean = false;
     resetModules();
     const p = NR.player.create(opts.charId);
     call('meta', 'applyToRun', p);
@@ -63,6 +68,8 @@
     const charId = (NR.data.characters[opts.charId] ? opts.charId : 'ranger');
     const danger = NR.util.clamp(opts.danger | 0, 0, 5);
     const w = begin({ seed: opts.seed, charId: charId, danger: danger });
+    w.daily = opts.daily || '';
+    if (w.daily) NR.daily.begin(w.daily);
     const p = w.player, ch = NR.data.characters[charId];
     if (ch.startWeapon) call('weapons', 'add', p, ch.startWeapon);
     const si = ch.startItems || [];
@@ -207,7 +214,7 @@
     const w = W(), p = w.player;
     return NR.util.clone({
       v: 1, seed: w.seed, rng: NR.rng.getState(), charId: p.charId, danger: w.danger, wave: w.wave, endless: w.endless,
-      time: w.time,
+      time: w.time, daily: w.daily || '',
       player: { hp: p.hp, gold: p.gold, xp: p.xp, level: p.level, weapons: p.weapons, items: p.items, upgrades: p.upgrades, revives: p.revives, traits: p.traits },
       shop: { offers: w.shop.offers, rerolls: w.shop.rerolls },
       stats: w.stats
@@ -224,7 +231,7 @@
     snap = NR.util.clone(snap);
     const w = begin({ seed: snap.seed, charId: snap.charId, danger: snap.danger }, snap);
     const p = w.player, S = NR.stats;
-    w.endless = !!snap.endless; w.wave = snap.wave; w.zone = NR.director.zoneOf(snap.wave);
+    w.endless = !!snap.endless; w.daily = snap.daily || ''; w.wave = snap.wave; w.zone = NR.director.zoneOf(snap.wave);
     w.scale = S.enemyScale(snap.wave, w.danger); w.time = snap.time || 0;
     const ps = snap.player;
     p.level = ps.level; p.xp = ps.xp;

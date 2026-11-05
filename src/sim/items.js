@@ -233,7 +233,7 @@
     const p = W().player, w = NR.stats.rarityWeights(luck, wave), ids = [];
     let pool = Object.keys(NR.data.items).filter(function (id) {
       const d = NR.data.items[id];
-      return (!p || count(p, id) < d.maxStack) && (!filterFn || filterFn(id, d));
+      return (!p || count(p, id) < d.maxStack) && (!NR.achievements || NR.achievements.isUnlocked('item', id)) && (!filterFn || filterFn(id, d));
     });
     for (let i = 0; i < n && pool.length; i++) {
       const id = NR.rng.weighted(pool, function (x) { return w[NR.data.items[x].rarity]; });

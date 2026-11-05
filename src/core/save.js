@@ -8,7 +8,7 @@
   function defaults() {
     return {
       v: VERSION,
-      meta: { shards: 0, nodes: {}, chars: ['ranger', 'dasher'], maxDanger: 0, runs: 0, wins: 0, bestWave: 0 },
+      meta: { shards: 0, nodes: {}, chars: ['ranger', 'dasher'], maxDanger: 0, runs: 0, wins: 0, bestWave: 0, ach: {}, progress: {}, daily: { days: {} } },
       codex: { weapon: {}, item: {}, enemy: {}, boss: {}, evolution: {}, character: {} },
       settings: {
         language: 'vi', master: 0.8, music: 0.6, sfx: 0.8, shake: 100, reduceFlashing: false,
