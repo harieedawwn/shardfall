@@ -89,6 +89,8 @@
     if (kind === 'enemy') return NR.data.enemies[id];
     if (kind === 'boss') return NR.data.bosses[id];
     if (kind === 'character') return NR.data.characters[id];
+    if (kind === 'trait') return NR.data.traits[id];
+    if (kind === 'route') return NR.data.routes[id];
     return null;
   }
   function iconOf(kind, id, size, sil) {
@@ -474,17 +476,17 @@
       const row = h('div', 'cards');
       if (!cards.length) pn.appendChild(btn('pri', t('common.continue'), function () { NR.run.onLevelUpsDone(); }, { fk: 'cont', auto: true }));
       cards.forEach(function (c, i) {
-        const isW = c.kind === 'weapon' || !!c.id;
-        const wdef = isW ? NR.data.weapons[c.id] : null;
-        const d = isW ? null : NR.data.upgrades[c.stat];
-        const cv = isW ? 0 : p.stats[c.stat], nv = isW ? 0 : previewStat(p, c.stat, c.add, c.pct);
-        const nameStr = isW ? tx(wdef.name) : tx(d.name);
-        const deltaStr = isW ? (c.isNew ? upper(t('levelup.new')) : t('levelup.lv', { n: c.level })) : fmtDelta(c.stat, c.add, c.pct);
-        const ftStr = isW ? (c.isNew ? t('shop.weapon') : t('levelup.lvUp', { a: c.level - 1, b: c.level })) : (fmtVal(c.stat, cv) + '  →  ' + fmtVal(c.stat, nv));
-        const dsStr = isW ? (tx(wdef.desc) || '') : t('tip.' + c.stat);
-        const iconEl = isW ? iconOf('weapon', c.id, 56) : (c.stat ? iconOf('stat', c.stat, 52) : null);
-        const b = h('button', 'btn card up r-' + c.rarity, [
-          h('span', 'band', [h('span', '', t('rarity.' + c.rarity)), keycap(String(i + 1))]),
+        const isT = c.kind === 'trait', isW = c.kind === 'weapon';
+        const wdef = isW ? NR.data.weapons[c.id] : null, tdef = isT ? NR.data.traits[c.id] : null;
+        const d = isW || isT ? null : NR.data.upgrades[c.stat];
+        const cv = isW || isT ? 0 : p.stats[c.stat], nv = isW || isT ? 0 : previewStat(p, c.stat, c.add, c.pct);
+        const nameStr = isT ? tx(tdef.name) : isW ? tx(wdef.name) : tx(d.name);
+        const deltaStr = isT ? (c.isNew ? upper(t('levelup.new')) : t('levelup.lv', { n: c.level })) : isW ? (c.isNew ? upper(t('levelup.new')) : t('levelup.lv', { n: c.level })) : fmtDelta(c.stat, c.add, c.pct);
+        const ftStr = isT ? (c.match ? t('levelup.synergy', { hint: tx(tdef.synergy) }) : tx(tdef.synergy)) : isW ? (c.isNew ? t('shop.weapon') : t('levelup.lvUp', { a: c.level - 1, b: c.level })) : (fmtVal(c.stat, cv) + '  →  ' + fmtVal(c.stat, nv));
+        const dsStr = isT ? NR.traits.text(c.id, c.level, NR.i18n.getLang()) : isW ? (tx(wdef.desc) || '') : t('tip.' + c.stat);
+        const iconEl = isT ? iconOf('trait', c.id, 56) : isW ? iconOf('weapon', c.id, 56) : (c.stat ? iconOf('stat', c.stat, 52) : null);
+        const b = h('button', 'btn card up r-' + c.rarity + (isT ? ' trait' + (c.match ? ' match' : '') : ''), [
+          h('span', 'band', [h('span', '', isT ? upper(t('levelup.trait')) + ' · ' + t('rarity.' + c.rarity) : t('rarity.' + c.rarity)), keycap(String(i + 1))]),
           h('span', 'ub', [
             iconEl ? h('div', 'uico', [iconEl]) : null,
             h('b', 'big', deltaStr),
@@ -497,7 +499,7 @@
         b.setAttribute('aria-label', nameStr + ' ' + deltaStr + ', ' + t('rarity.' + c.rarity));
         b.addEventListener('click', function () { if (guarded()) return; sfx('ui_click'); NR.progression.pick(i); });
         // the card itself shows name, description and the real before/after values, so no tooltip covers the reroll row
-        if (!isW) b.setAttribute('title', t('tip.now', { v: fmtVal(c.stat, cv), base: fmtVal(c.stat, NR.stats.defaults[c.stat]) }));
+        if (!isW && !isT) b.setAttribute('title', t('tip.now', { v: fmtVal(c.stat, cv), base: fmtVal(c.stat, NR.stats.defaults[c.stat]) }));
         row.appendChild(b);
       });
       pn.appendChild(row);
@@ -581,6 +583,18 @@
     setTip(c, [tx(d.name), itemInfo(d), t('shop.stack', { n: n, max: d.maxStack })]);
     return c;
   }
+  // owned traits as small badges with their level (shop, pause)
+  function traitChips(p) {
+    const ids = Object.keys(p.traits || {}), box = h('div', 'ichips');
+    if (!ids.length) box.appendChild(h('p', 'none', t('trait.none')));
+    ids.forEach(function (id) {
+      const d = NR.data.traits[id], n = p.traits[id];
+      const c = h('div', 'ichip trait r-' + (d.rarity || 'rare'), [iconOf('trait', id, 30), h('span', 'in', [h('b', '', tx(d.name)), h('small', '', t('trait.lvl', { n: n, max: d.max }))])]);
+      setTip(c, [tx(d.name) + '  ' + t('trait.lvl', { n: n, max: d.max }), NR.traits.text(id, n, NR.i18n.getLang())], true);
+      box.appendChild(c);
+    });
+    return box;
+  }
   SCREENS.shop = {
     guard: true, once: true,
     build: function (o) {
@@ -611,6 +625,7 @@
       if (!ids.length) ig.appendChild(h('p', 'none', t('shop.noItems')));
       ids.forEach(function (id) { ig.appendChild(itemChip(id, p.items[id], p)); });
       si.appendChild(ig); A.appendChild(si);
+      const stt = h('section', 'sec'); stt.appendChild(h('h3', 'h sm', t('trait.title', { n: Object.keys(p.traits || {}).length }))); stt.appendChild(traitChips(p)); A.appendChild(stt);
       main.appendChild(A);
       const B = h('div', 'col-b');
       B.appendChild(btn('stats-toggle', t(D.statsOpen ? 'stats.hide' : 'stats.show'), function () { D.statsOpen = !D.statsOpen; rerender(); }, { fk: 'stog' }));
@@ -619,6 +634,36 @@
       wrap.appendChild(main);
       wrap.appendChild(foot('1-4 ' + t('shop.buy') + ' · R ' + t('shop.reroll') + ' · N ' + t('shop.next'), 'Y ' + t('shop.reroll')));
       s.appendChild(wrap);
+      return s;
+    }
+  };
+
+  // =====================================================================================================
+  // ROUTE: pick 1 of 2-3 wave modifiers between the shop and the next normal wave
+  // =====================================================================================================
+  SCREENS.route = {
+    guard: true,
+    build: function () {
+      const W = world(), R = W.route || { options: [], wave: W.wave + 1 };
+      const s = scr('route', 'dim');
+      const pn = h('section', 'panel lv');
+      pn.appendChild(h('div', 'lv-top', [h('h2', 'h ttl', t('route.title')), h('p', 'sub', t('route.sub', { n: R.wave }))]));
+      const row = h('div', 'cards');
+      R.options.forEach(function (id, i) {
+        const d = NR.data.routes[id];
+        const b = h('button', 'btn card up route', [
+          h('span', 'band', [h('span', '', upper(t('route.pick'))), keycap(String(i + 1))]),
+          h('span', 'ub', [h('div', 'uico', [iconOf('route', id, 56)]), h('b', 'big', tx(d.name)), h('span', 'ds', tx(d.desc))])
+        ]);
+        if (b.style && b.style.setProperty) b.style.setProperty('--rc', d.color);
+        b.setAttribute('type', 'button'); b.setAttribute('data-fk', 'r' + i); if (i === 0) b.setAttribute('data-auto', '1');
+        b.setAttribute('aria-label', tx(d.name) + ': ' + tx(d.desc));
+        b.addEventListener('click', function () { if (guarded()) return; sfx('ui_click'); NR.run.chooseRoute(i); });
+        row.appendChild(b);
+      });
+      pn.appendChild(row);
+      pn.appendChild(foot('1-' + R.options.length + ' ' + t('route.pick'), 'A ' + t('route.pick')));
+      s.appendChild(pn);
       return s;
     }
   };
@@ -649,6 +694,8 @@
         p.weapons.forEach(function (w) { const d = NR.data.weapons[w.id]; const e = h('span', 'pw', [iconOf('weapon', w.id, 26), h('b', '', d.evolved ? 'EVO' : String(w.lvl))]); setTip(e, weaponTip(w.id, w.lvl), true); wl.appendChild(e); });
         Object.keys(p.items).forEach(function (id) { const d = NR.data.items[id]; const e = h('span', 'pw', [iconOf('item', id, 22), p.items[id] > 1 ? h('b', '', '×' + p.items[id]) : null]); setTip(e, [tx(d.name), itemInfo(d)], true); wl.appendChild(e); });
         R.appendChild(wl);
+        R.appendChild(h('h3', 'h sm', t('trait.title', { n: Object.keys(p.traits || {}).length })));
+        R.appendChild(traitChips(p));
         R.appendChild(statsPanel(p));
         pn.appendChild(R);
       }
@@ -971,8 +1018,8 @@
       const tb = h('table', 'dtab'); const tbody = h('tbody');
       rows.forEach(function (r) {
         const d = NR.data.weapons[r[0]], pre = r[0].indexOf(':') > 0 ? r[0].split(':') : null;
-        const alt = pre && pre[0] === 'item' ? NR.data.items[pre[1]] : pre && pre[0] === 'reaction' ? NR.data.reactions[pre[1]] : null;
-        const nameStr = d ? tx(d.name) : alt ? t(pre[0] === 'item' ? 'end.itemProc' : 'end.reaction', { name: tx(alt.name) }) : t('end.other');
+        const alt = pre && pre[0] === 'item' ? NR.data.items[pre[1]] : pre && pre[0] === 'reaction' ? NR.data.reactions[pre[1]] : pre && pre[0] === 'trait' ? NR.data.traits[pre[1]] : null;
+        const nameStr = d ? tx(d.name) : alt ? t(pre[0] === 'item' ? 'end.itemProc' : pre[0] === 'trait' ? 'end.trait' : 'end.reaction', { name: tx(alt.name) }) : t('end.other');
         const fill = h('i', '', '');
         fill.style.width = Math.max(2, Math.round(r[1] / top * 100)) + '%';
         fill.style.background = (d && d.color) || (alt && alt.color) || '#C9A24B';
@@ -1127,6 +1174,7 @@
   }
   function pickNumber(n) {
     if (cur === 'levelup') { const c = world().levelup.cards || []; if (c[n] && !guarded()) { sfx('ui_click'); NR.progression.pick(n); } }
+    else if (cur === 'route') { if (!guarded()) { sfx('ui_click'); NR.run.chooseRoute(n); } }
     else if (cur === 'shop') buy(n);
   }
   function onKey(e) {
@@ -1145,7 +1193,7 @@
     }
     if (e.repeat) return;
     const m = /^(?:Digit|Numpad)([1-4])$/.exec(code);
-    if (m && (cur === 'levelup' || cur === 'shop')) { e.preventDefault(); pickNumber(Number(m[1]) - 1); return; }
+    if (m && (cur === 'levelup' || cur === 'shop' || cur === 'route')) { e.preventDefault(); pickNumber(Number(m[1]) - 1); return; }
     if (code === 'KeyR' && (cur === 'levelup' || cur === 'shop')) { e.preventDefault(); reroll(); return; }
     if (code === 'KeyN' && cur === 'shop') { e.preventDefault(); if (!guarded()) NR.run.leaveShop(); return; }
     if (code === 'Tab') setInput('kbm');
@@ -1176,14 +1224,14 @@
     if (any || dir) setInput('pad');
     if (padWait) { if (!any && !dir) padWait = false; pad.prev = cur2b; return; }
     // Start pauses/resumes where the sim is not polling the pad
-    if (edge(9) && (st === 'paused' || st === 'levelup' || st === 'shop')) NR.run.togglePause();
+    if (edge(9) && (st === 'paused' || st === 'levelup' || st === 'shop' || st === 'route')) NR.run.togglePause();
     if (cur) {
       if (dir) {
         if (dir !== pad.dir) { pad.dir = dir; pad.nextAt = 0.38; move(dir); }
         else { pad.nextAt -= dt; if (pad.nextAt <= 0) { pad.nextAt = 0.12; move(dir); } }
       } else pad.dir = '';
       if (edge(0)) activate();
-      if (edge(1)) { if (!back() && (st === 'levelup' || st === 'shop')) NR.run.togglePause(); }
+      if (edge(1)) { if (!back() && (st === 'levelup' || st === 'shop' || st === 'route')) NR.run.togglePause(); }
       if (edge(3) && (cur === 'levelup' || cur === 'shop')) reroll();
       if (cur === 'codex' && (edge(4) || edge(5))) cycleTab(edge(5) ? 1 : -1);
     } else pad.dir = '';
@@ -1237,6 +1285,7 @@
     if (to === 'menu') show('title');
     else if (to === 'paused') show('pause');
     else if (to === 'levelup') show('levelup');
+    else if (to === 'route') show('route');
     else if (to === 'shop') show('shop', { first: e.from !== 'paused' });
     else if (to === 'victory') show('victory');
     else if (to === 'end') {

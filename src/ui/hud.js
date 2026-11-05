@@ -1374,7 +1374,49 @@
     g.restore();
   }
 
+  // ---------- trait / route badges: dark disc, coloured ring, one flat glyph ----------
+  function drawGlyph(g, name, r, col, sil, lw) {
+    const ink = C.ink;
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    function line(pts, w) { g.beginPath(); g.moveTo(pts[0][0] * r, pts[0][1] * r); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0] * r, pts[i][1] * r); g.lineWidth = w || lw * 1.6; g.strokeStyle = sil ? ink : col; g.stroke(); }
+    function poly(pts) { g.beginPath(); g.moveTo(pts[0][0] * r, pts[0][1] * r); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0] * r, pts[i][1] * r); g.closePath(); g.fillStyle = sil ? ink : col; g.fill(); }
+    function dot(x, y, k) { g.beginPath(); g.arc(x * r, y * r, k * r, 0, Math.PI * 2); g.fillStyle = sil ? ink : col; g.fill(); }
+    switch (name) {
+      case 'bounce': line([[-0.6, 0.5], [-0.1, -0.4], [0.2, 0.3], [0.65, -0.5]]); poly([[0.65, -0.65], [0.8, -0.3], [0.45, -0.4]]); break;
+      case 'flame': poly([[0, -0.7], [0.45, 0], [0.3, 0.6], [0, 0.7], [-0.3, 0.6], [-0.45, 0.05], [-0.15, -0.2]]); break;
+      case 'eye': line([[-0.7, 0], [-0.3, -0.35], [0.3, -0.35], [0.7, 0], [0.3, 0.35], [-0.3, 0.35], [-0.7, 0]]); dot(0, 0, 0.2); break;
+      case 'dash': line([[-0.7, -0.3], [-0.1, -0.3]]); line([[-0.7, 0.3], [-0.1, 0.3]]); poly([[0, -0.5], [0.7, 0], [0, 0.5]]); break;
+      case 'ice': for (let i = 0; i < 3; i++) { const a = i * Math.PI / 3; line([[Math.cos(a) * -0.7, Math.sin(a) * -0.7], [Math.cos(a) * 0.7, Math.sin(a) * 0.7]]); } break;
+      case 'multi': dot(-0.4, 0.3, 0.2); dot(0.4, 0.3, 0.2); dot(0, -0.45, 0.2); line([[-0.4, 0.3], [0, -0.45], [0.4, 0.3]], lw); break;
+      case 'heart': poly([[0, 0.65], [-0.7, 0], [-0.55, -0.45], [-0.15, -0.5], [0, -0.2], [0.15, -0.5], [0.55, -0.45], [0.7, 0]]); break;
+      case 'drop': poly([[0, -0.7], [0.45, 0.1], [0.3, 0.55], [0, 0.7], [-0.3, 0.55], [-0.45, 0.1]]); break;
+      case 'spike': for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; line([[Math.cos(a) * 0.25, Math.sin(a) * 0.25], [Math.cos(a) * 0.7, Math.sin(a) * 0.7]]); } break;
+      case 'coin': g.beginPath(); g.arc(0, 0, 0.55 * r, 0, Math.PI * 2); g.lineWidth = lw * 1.6; g.strokeStyle = sil ? ink : col; g.stroke(); dot(0, 0, 0.22); break;
+      case 'bolt': poly([[0.15, -0.75], [-0.5, 0.1], [-0.05, 0.1], [-0.2, 0.75], [0.5, -0.15], [0.05, -0.15]]); break;
+      case 'pierce': line([[-0.75, 0], [0.55, 0]]); poly([[0.4, -0.3], [0.8, 0], [0.4, 0.3]]); line([[-0.2, -0.35], [-0.2, 0.35]]); break;
+      case 'scope': g.beginPath(); g.arc(0, 0, 0.5 * r, 0, Math.PI * 2); g.lineWidth = lw * 1.4; g.strokeStyle = sil ? ink : col; g.stroke(); line([[-0.75, 0], [-0.25, 0]]); line([[0.25, 0], [0.75, 0]]); line([[0, -0.75], [0, -0.25]]); line([[0, 0.25], [0, 0.75]]); break;
+      case 'wind': line([[-0.7, -0.25], [0.2, -0.25], [0.5, -0.55]]); line([[-0.7, 0.05], [0.5, 0.05]]); line([[-0.7, 0.35], [0, 0.35], [0.3, 0.65]]); break;
+      case 'boots': poly([[-0.4, -0.6], [0.1, -0.6], [0.1, 0.1], [0.7, 0.3], [0.7, 0.6], [-0.4, 0.6]]); break;
+      case 'pulse': g.beginPath(); g.arc(0, 0, 0.3 * r, 0, Math.PI * 2); g.lineWidth = lw * 1.4; g.strokeStyle = sil ? ink : col; g.stroke(); g.beginPath(); g.arc(0, 0, 0.62 * r, 0, Math.PI * 2); g.stroke(); break;
+      case 'skull': dot(0, -0.1, 0.5); g.fillStyle = sil ? ink : C.ink; g.beginPath(); g.arc(-0.2 * r, -0.12 * r, 0.12 * r, 0, Math.PI * 2); g.arc(0.2 * r, -0.12 * r, 0.12 * r, 0, Math.PI * 2); g.fill(); poly([[-0.25, 0.3], [0.25, 0.3], [0.2, 0.62], [-0.2, 0.62]]); break;
+      case 'target': g.beginPath(); g.arc(0, 0, 0.6 * r, 0, Math.PI * 2); g.lineWidth = lw * 1.3; g.strokeStyle = sil ? ink : col; g.stroke(); g.beginPath(); g.arc(0, 0, 0.3 * r, 0, Math.PI * 2); g.stroke(); dot(0, 0, 0.1); break;
+      case 'run': poly([[-0.1, -0.6], [0.2, -0.6], [0.2, -0.2], [0.65, 0.1], [0.5, 0.3], [0.05, 0.05], [-0.1, 0.5], [-0.45, 0.5], [-0.3, 0]]); break;
+      case 'crit': for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; poly([[Math.cos(a) * 0.7, Math.sin(a) * 0.7], [Math.cos(a + 0.4) * 0.2, Math.sin(a + 0.4) * 0.2], [Math.cos(a - 0.4) * 0.2, Math.sin(a - 0.4) * 0.2]]); } break;
+      default: dot(0, 0, 0.4);
+    }
+  }
+  function drawTraitIcon(g, id, x, y, r, fill, o, route) {
+    o = o || {};
+    const d = route ? NR.data.routes[id] : NR.data.traits[id], col = fill || (d && d.color) || '#F2EFE6', sil = !!o.sil, lw = o.line === undefined ? Math.max(1.8, r * 0.1) : o.line, sh = sil ? 0 : (o.shadow === undefined ? Math.max(1.5, r * 0.12) : o.shadow);
+    g.save(); g.translate(x, y);
+    if (sh > 0) { g.beginPath(); g.arc(sh, sh, r, 0, Math.PI * 2); g.fillStyle = C.ink2; g.fill(); }
+    g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fillStyle = sil ? '#1D1530' : '#2A2040'; g.fill(); g.lineWidth = lw * 1.4; g.strokeStyle = sil ? C.ink : col; g.stroke();
+    g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.lineWidth = lw * 0.5; g.strokeStyle = C.ink; g.stroke();
+    drawGlyph(g, d ? d.glyph : '', r * 0.72, col, sil, lw);
+    g.restore();
+  }
   function drawEntityIcon(g, kind, id, x, y, r, fill, o) {
+    if (kind === 'trait' || kind === 'route') return drawTraitIcon(g, id, x, y, r, fill, o, kind === 'route');
     if (kind === 'weapon' || kind === 'evolution' || (NR.data && NR.data.weapons && NR.data.weapons[id])) {
       return drawWeaponIcon(g, id, x, y, r, fill, o);
     }
@@ -1534,8 +1576,8 @@
     drawBoss(W, cw, y0 + 62 * u, vitalsW);
     drawEvent(W, cw, ch, y0 + 58 * u);
     drawDash(p, cw, y1);
-    if (L.touch) { drawWeaponsRow(p, x0 + 66 * u, y0 + 52 * u); drawSets(p, x0 + 66 * u, y0 + 52 * u + 36 * u); }
-    else { drawWeapons(p, x0, y1); drawItems(p, x0, y1 - 58 * u); drawSets(p, x0, y1 - 58 * u - (Object.keys(p.items).length ? 32 : 0) * u - 28 * u); }
+    if (L.touch) { drawWeaponsRow(p, x0 + 66 * u, y0 + 52 * u); drawSets(p, x0 + 66 * u, y0 + 52 * u + 36 * u); drawTraits(p, x0 + 66 * u, y0 + 52 * u + (Object.keys(p.traits || {}).length ? 66 : 36) * u - 0, 22 * u); }
+    else { drawWeapons(p, x0, y1); drawTraits(p, x0 + Math.max(4, p.weapons.length, Math.round(p.stats && p.stats.weaponSlots ? p.stats.weaponSlots : 4)) * 57 * u + 8 * u, y1, 30 * u); drawItems(p, x0, y1 - 58 * u); drawSets(p, x0, y1 - 58 * u - (Object.keys(p.items).length ? 32 : 0) * u - 28 * u); }
     drawBanner(cw, ch);
     drawAlerts(p, W, cw, ch);
     drawToasts(cw, y1 - 34 * u);
@@ -1781,6 +1823,19 @@
       y -= 0; x += w + 8 * u; shown++;
     }
   }
+  // owned traits: round badges with their level, to the right of the weapon slots (touch: a compact row)
+  function drawTraits(p, x0, y1, sz) {
+    const ids = Object.keys(p.traits || {});
+    if (!ids.length) return;
+    const gap = 5 * u, y = L.touch ? y1 - 4 * u : y1 - sz;
+    for (let i = 0; i < ids.length && i < 12; i++) {
+      const id = ids[i], d = NR.data.traits[id], x = x0 + i * (sz + gap);
+      if (!d) continue;
+      drawTraitIcon(ctx, id, x + sz / 2, y + sz / 2, sz / 2 - 1.5 * u, d.color, { line: 1.6 * u, shadow: 1.5 * u });
+      const n = p.traits[id];
+      if (n > 1 || d.max > 1) label(String(n), x + sz - 1 * u, y + sz - 3 * u, 11, d.color, 'right', true);
+    }
+  }
   const muteCache = {};
   function mute(hex) { return muteCache[hex] || (muteCache[hex] = NR.util.shade(hex, -0.45)); }
 
@@ -1858,7 +1913,8 @@
       const z = NR.data.zones && NR.data.zones[e.zone], pal = z && z.palette ? z.palette : null;
       const endless = NR.world.get().endless;
       const l1 = e.isBoss ? upper(t('hud.bossWave', { n: e.wave })) : upper(endless ? t('hud.wave', { n: e.wave }) : t('hud.waveOf', { n: e.wave, max: NR.config.WAVES }));
-      S.banner = { l1: l1, l2: z ? upper(tx(z.name)) : '', color: e.isBoss ? C.boss : (pal ? pal[4] : C.panel), dur: 1.8 };
+      const rt = NR.world.get().mod && NR.data.routes[NR.world.get().mod];
+      S.banner = { l1: l1, l2: (z ? upper(tx(z.name)) : '') + (rt ? '  ·  ' + upper(t('route.banner', { name: tx(rt.name) })) : ''), color: e.isBoss ? C.boss : (pal ? pal[4] : C.panel), dur: 1.8 };
       S.bannerT = S.banner.dur;
       S.lag = S.hp; S.lagHold = 0;
     });
@@ -1917,6 +1973,6 @@
   NR.ui.hud = {
     init: init, update: update, draw: draw, toast: toast, shape: drawShape, colors: C,
     drawWeapon: drawWeaponIcon, drawItem: drawItemIcon, drawCharacter: drawCharacterIcon,
-    drawPickup: drawPickupIcon, drawStat: drawStatIcon, drawEnemy: drawEnemyIcon, drawBoss: drawBossIcon, drawEntityIcon: drawEntityIcon
+    drawPickup: drawPickupIcon, drawTrait: drawTraitIcon, drawStat: drawStatIcon, drawEnemy: drawEnemyIcon, drawBoss: drawBossIcon, drawEntityIcon: drawEntityIcon
   };
 })();

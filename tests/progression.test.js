@@ -327,7 +327,7 @@ module.exports = function (H) {
 
   test('progression: level-up cards - 4 unique, rarity-valid, weapon cards only when valid (1000 seeds)', function () {
     const NR = fresh('ranger', 1), U = NR.data.upgrades, TIER = { common: 0, rare: 1, epic: 2, legendary: 3 };
-    let weaponCards = 0, fullNoWeapon = 0;
+    let weaponCards = 0, fullNoWeapon = 0, traitCards = 0;
     for (let seed = 1; seed <= 1000; seed++) {
       NR.run.start({ charId: ['ranger', 'dasher', 'bulwark', 'tinker'][seed % 4], seed: seed });
       const r = lcg(seed); randomLoadout(NR, r); const p = W(NR).player;
@@ -342,15 +342,18 @@ module.exports = function (H) {
           ok(NR.data.weapons[c.id] && !NR.data.weapons[c.id].evolved, 'evolved weapon offered seed ' + seed);
           ok(NR.weapons.canAdd(p, c.id), 'invalid weapon card ' + c.id + ' seed ' + seed + ' (slots ' + p.weapons.length + '/' + Math.round(p.stats.weaponSlots) + ')');
           eq(c.stat, 'weapon'); ok(U.weapon, 'pseudo upgrade entry for UIs');
+        } else if (c.kind === 'trait') {
+          ok(NR.data.traits[c.id] && !wp['t:' + c.id], 'trait card ' + c.id); wp['t:' + c.id] = 1; ok(c.level >= 1 && c.level <= NR.data.traits[c.id].max, 'trait level'); eq(c.stat, 'trait');
         } else {
           eq(c.kind, 'stat'); ok(!st[c.stat], 'duplicate stat card seed ' + seed); st[c.stat] = 1;
           ok(U[c.stat] && !U[c.stat].nonStat, 'known stat'); ok(TIER[c.rarity] >= TIER[U[c.stat].min], c.stat + ' below its minimum rarity');
           near(c.add, U[c.stat].rarities[c.rarity].add); near(c.pct, U[c.stat].rarities[c.rarity].pct);
         }
       });
+      ok(cards.some(function (c) { return c.kind === 'trait'; }), 'at least one trait card per offer, seed ' + seed); traitCards += cards.filter(function (c) { return c.kind === 'trait'; }).length;
       if (p.weapons.length >= Math.round(p.stats.weaponSlots) && p.weapons.every(function (w) { return w.lvl >= NR.config.MAX_LEVEL; })) { fullNoWeapon++; ok(!cards.some(function (c) { return c.kind === 'weapon'; }), 'weapon card with full maxed slots'); }
     }
-    ok(weaponCards > 100, 'weapon cards do appear (' + weaponCards + ')');
+    ok(weaponCards > 100, 'weapon cards do appear (' + weaponCards + ')'); ok(traitCards >= 1000 && traitCards < 1400, 'trait cards ' + traitCards);
     console.log('       (info) level-up weapon cards over 1000 seeds: ' + weaponCards + ', fully maxed loadouts checked: ' + fullNoWeapon);
   });
   test('progression: level-up odds - luck and wave raise rarity; picking applies stat and weapon cards; rerolls cost more each time', function () {
@@ -543,7 +546,7 @@ module.exports = function (H) {
     eq(NR2.run.getState(), 'shop'); eq(JSON.stringify(p.items), want.items); eq(JSON.stringify(p.weapons), want.weapons); eq(JSON.stringify(w.shop.offers), want.offers); eq(p.gold, want.gold); eq(NR2.rng.getState(), want.rng);
     eq(p.maxHp, want.maxHp, 'meta + items + passive rebuilt'); eq(p.stats.weaponSlots, want.slots); near(p.stats.statusPower, 1.3, 'tinker passive restored'); eq(p.charId, 'tinker'); eq(w.danger, 1);
     // the restored run keeps playing: hooks are alive again and the shop works
-    ok(NR2.items.active.dash.length > 0, 'item hooks rebuilt'); p.gold = 500; ok(NR2.shop.reroll()); NR2.run.leaveShop(); eq(NR2.run.getState(), 'wave');
+    ok(NR2.items.active.dash.length > 0, 'item hooks rebuilt'); p.gold = 500; ok(NR2.shop.reroll()); NR2.run.leaveShop(); NR2.run.chooseRoute(0); eq(NR2.run.getState(), 'wave');
     for (let i = 0; i < 120; i++) NR2.run.step(1 / 60); ok(!H.findNaN(W(NR2)), 'steps cleanly after restore');
     // corrupt storage is survived
     store.setItem('shardfall.save', '{nope'); const NR3 = boot({ storage: store }); eq(NR3.save.getMeta().shards, 0);

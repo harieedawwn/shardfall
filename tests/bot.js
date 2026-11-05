@@ -159,9 +159,13 @@ module.exports = function (NR) {
       const s = W.state;
       if (s === 'levelup') {
         for (let g = 0; g < 200 && W.state === 'levelup'; g++) {
-          const n = W.levelup.cards.length;
+          const cards = W.levelup.cards, n = cards.length;
           if (!n) break;
-          NR.progression.pick(Math.floor(rnd() * n));
+          // heuristic: build-matching traits first, other traits 60% of the time, otherwise anything
+          let pick = -1;
+          for (let i = 0; i < n && pick < 0; i++) if (cards[i].kind === 'trait' && cards[i].match) pick = i;
+          if (pick < 0 && rnd() < 0.6) for (let i = 0; i < n && pick < 0; i++) if (cards[i].kind === 'trait') pick = i;
+          NR.progression.pick(pick >= 0 ? pick : Math.floor(rnd() * n));
         }
       } else if (s === 'shop') {
         const failed = {};
@@ -177,6 +181,12 @@ module.exports = function (NR) {
           if (!r || !r.ok) failed[i] = true;
         }
         NR.run.leaveShop();
+      } else if (s === 'route') {
+        // hurt: the calm route; otherwise the richest/most dangerous one on offer
+        const opts = W.route.options, hurt = W.player.hp < W.player.maxHp * 0.6, order = hurt ? ['calm', 'omen', 'elite_hunt', 'swarm', 'gold_rush'] : ['elite_hunt', 'omen', 'swarm', 'gold_rush', 'calm'];
+        let idx = 0;
+        for (let k = 0; k < order.length; k++) { const j = opts.indexOf(order[k]); if (j >= 0) { idx = j; break; } }
+        NR.run.chooseRoute(idx);
       } else if (s === 'victory') {
         if (opts.endless) NR.run.enterEndless(); else NR.run.endRun('win');
       } else if (s === 'paused') NR.run.togglePause();

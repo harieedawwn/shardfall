@@ -335,6 +335,16 @@
     "event.storm.short": "Né vùng báo, nhặt kinh nghiệm · {s}s",
     "event.win": "Hoàn thành: {name}!",
     "event.fail": "Thất bại: {name}",
-    "event.escaped": "Kẻ mang vàng đã trốn thoát"
+    "event.escaped": "Kẻ mang vàng đã trốn thoát",
+    "levelup.trait": "Đặc tính",
+    "levelup.synergy": "★ Hợp bản dựng · {hint}",
+    "trait.title": "Đặc tính ({n})",
+    "trait.none": "Chưa có đặc tính. Chọn thẻ ĐẶC TÍNH khi lên cấp.",
+    "trait.lvl": "Cấp {n}/{max}",
+    "route.title": "Chọn lộ trình",
+    "route.sub": "Đợt {n} sắp bắt đầu. Mỗi lộ trình chỉ áp dụng cho đợt này.",
+    "route.pick": "Chọn",
+    "route.banner": "Lộ trình: {name}",
+    "end.trait": "Đặc tính: {name}"
   };
 })();

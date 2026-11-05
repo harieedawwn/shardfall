@@ -59,7 +59,7 @@
   }
   function size(d, e, hit) {
     const base = Math.max(hit * d.mult, e.maxHp * d.hpPct * (e.isBoss ? 0.25 : 1));
-    return base;
+    return d === NR.data.reactions.shatter && NR.traits ? base * (1 + NR.traits.shatterBonus()) : base; // Shatter Master
   }
   function blast(x, y, r, dmg, el, id, knock, sc) {
     XO.element = el; XO.weaponId = 'reaction:' + id; XO.knock = knock || 0; XO.statusChance = sc || 0;

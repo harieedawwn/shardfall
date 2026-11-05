@@ -29,7 +29,7 @@
   function W() { return NR.world.get(); }
   function critRoll(p, bonus) {
     const c = NR.util.clamp(NR.stats.get(p, 'critChance') + (bonus || 0), 0, 1);
-    crit.crit = NR.rng.chance(c);
+    crit.crit = (NR.traits && NR.traits.critForced()) || NR.rng.chance(c); // Dead Eye forces the crit of the next volley
     crit.mult = crit.crit ? NR.stats.get(p, 'critDamage') : 1;
     return crit;
   }
@@ -44,8 +44,9 @@
     if (e.dodge > 0 && !dot && NR.rng.chance(e.dodge)) return 0;
     const st = e.status;
     let m = dot ? 1 : NR.stats.armorMult(e.armor || 0);
+    if (!dot && NR.traits) m *= NR.traits.hitMult(e, wid, dot); // Executioner, Focus Fire
     if (st) {
-      if (st.frozen && st.frozen.t > 0) m *= FROZEN_VULN + (NR.reactions && NR.reactions.setActive(W().player, 'ice') ? ICE_SET_VULN : 0);
+      if (st.frozen && st.frozen.t > 0) m *= FROZEN_VULN + (NR.reactions && NR.reactions.setActive(W().player, 'ice') ? ICE_SET_VULN : 0) + (NR.traits ? NR.traits.frozenBonus() : 0);
       if (st.void && st.void.t > 0) m *= 1 + ST.void.vuln * (st.void.pw || 1) * (e.isBoss ? 0.5 : 1);
     }
     const dealt = Math.max(1, dmg * m);

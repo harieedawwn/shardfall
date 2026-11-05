@@ -61,3 +61,16 @@ Decisions are logged here instead of asking. Baseline before this pass: 108 test
 - Bot: dodges meteor marks. Without that the storm dragged bot win rate d0 from 73% to 29% (affixes alone: 75%); with it 72.5% (seeds 1-10). The bot never seeks events on purpose.
 - Tests: new suite `tests/events.test.js` (11 tests: data, each affix, each event + rewards, scheduling window/rate/boss exclusion, HUD with arrow, bots finish runs, determinism).
 - Next: step 5 (mechanic level-up traits + route choice after the shop).
+
+## Step 5 - Mechanic traits + route choice  (DONE)
+- `src/data/traits.js` (20 traits + 5 routes, all {vi,en}), `src/sim/traits.js` (`NR.traits`). Traits: ricochet, ember_dash, dead_eye, dash_refund, shatter_master, split_shot, adrenaline, siphon, thorns, bounty, chain_kill, needle, far_sight,
+  second_wind, light_feet, shockstep, executioner, focus_fire, momentum, crit_surge (most stack Lv1-3). Hooks: stat mods per level, event listeners, live buffs, `combat.hitMult/critForced`, ricochet in weapons.js, shatter bonus in reactions.js.
+- Level-up: `progression.rollCards` always includes >=1 trait card (20% for a 2nd), placed in the last slots; build matches (owned weapon element/kind) are twice as likely and flagged `match` (synergy hint highlighted). Distinct card look (dashed border, TRAIT band, glyph badge). Picks go through `NR.traits.grant`.
+- Owned traits: HUD badges (right of the weapon slots; touch: compact row), shop section, pause panel; end screen names `trait:<id>` damage. Snapshot stores `player.traits`; restore grants levels; older snapshots/saves default to {}.
+- Route: new run state `route` (SPEC 2) between shop and a non-boss wave. `W.route {options, wave}`, `W.mod`, `W.pendingMod`; multipliers applied to `W.scale` in `run.startWave`. UI: `SCREENS.route` (keys 1-3, pad A, touch/click), banner shows the route.
+  Pause is allowed from `route`. Boss waves skip it. Calm/Omen change the event roll in `waveEvents.start`.
+- Bot: picks build-matching traits first, other traits 60%, routes by HP (hurt -> calm else elite_hunt/omen/...).
+- Balance: first pass made the bot far too strong (d0 92%, d3 40%); traits nerfed (needle, executioner, focus_fire, momentum, adrenaline, crit_surge, siphon, split_shot penalty) and Elite Hunt (+0.2 elite chance): now d0 77.5% / d3 17.5% (10 seeds).
+- Fixed on the way: `player.js` ultimate called a non-existent `NR.combat.damageEnemy` (dasher ult would throw): now `hitEnemy`.
+- Tests: new suite `tests/traits.test.js` (14); core/progression/ui tests updated for the route state and trait cards.
+- Next: step 6 (achievements, unlocks, daily run).

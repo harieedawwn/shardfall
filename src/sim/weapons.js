@@ -123,6 +123,7 @@
 
   // ---- projectile / spread / homing
   function fireBullets(p, w, i, d, n, a, rt) {
+    const RIC = NR.traits ? NR.traits.lv(p, 'ricochet') : 0; // Ricochet trait: extra bounces
     let cnt = Math.max(1, n.count), fan = d.kind === 'spread', full = false;
     const rng = NR.rng, blast = n.blast > 0, cloud = n.cloudDmg > 0;
     const r = rsize(d, n);
@@ -136,7 +137,7 @@
       b.weaponId = w.id; b.x = p.x + Math.cos(ang) * (p.r + 6); b.y = p.y + Math.sin(ang) * (p.r + 6);
       b.vx = Math.cos(ang) * sp; b.vy = Math.sin(ang) * sp; b.r = r; b.dmg = n.dmg * cr.mult; b.crit = cr.crit; b.element = d.element;
       b.pierce = n.pierce; b.life = n.range / sp; b.knock = n.knock; b.statusChance = n.statusChance; b.homing = n.homing; b.hr = 420;
-      b.bounce = n.bounce; b.wb = n.wbounce; b.split = n.split; b.pullS = d.kind === 'homing' ? n.pull : 0; b.weight = d.hit; b.spread = n.spreadFire;
+      b.bounce = n.bounce + RIC; b.wb = n.wbounce; b.split = n.split; b.pullS = d.kind === 'homing' ? n.pull : 0; b.weight = d.hit; b.spread = n.spreadFire;
       if (blast) { b.onEnd = NR.projectiles.END_EXPLODE; b.blastR = n.blast * Math.sqrt(n.area); b.bd = n.blastDmg || 0.6; }
       if (cloud) { b.onEnd = NR.projectiles.END_CLOUD; b.blastR = (n.blast || 60) * Math.sqrt(n.area); b.cdmg = n.cloudDmg; b.cl = n.cloudLife; b.statusChance = Math.max(0.6, n.statusChance); }
       if (n.rehit > 0) { b.rehit = n.rehit; }
@@ -420,7 +421,7 @@
         if (R.jitter > 0) ang += (NR.rng.next() - 0.5) * 2 * R.jitter;
         const cr = NR.combat.critRoll(p, R.crit), b = NR.projectiles.begin(), sp = R.speed;
         b.weaponId = w.id; b.x = dr.x; b.y = dr.y; b.vx = Math.cos(ang) * sp; b.vy = Math.sin(ang) * sp; b.r = d.size; b.dmg = R.dmg * cr.mult; b.crit = cr.crit; b.element = d.element;
-        b.pierce = R.pierce; b.life = R.range / sp * 1.15; b.knock = R.knock; b.statusChance = R.statusChance; b.homing = R.homing; b.hr = 360; b.weight = d.hit;
+        b.bounce = NR.traits ? NR.traits.lv(p, 'ricochet') : 0; b.pierce = R.pierce; b.life = R.range / sp * 1.15; b.knock = R.knock; b.statusChance = R.statusChance; b.homing = R.homing; b.hr = 360; b.weight = d.hit;
         b.shape = d.shape === 'hex' ? 'diamond' : 'circle'; b.color = d.color; b.size = d.size; b.trail = d.trail; b.rot = ang;
         NR.projectiles.launch();
         dr.cd += 1 / R.rate; if (dr.cd < 0) dr.cd = 0;

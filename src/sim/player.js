@@ -36,7 +36,7 @@
       charId: charId, hp: 0, maxHp: 0, gold: 0, xp: 0, level: 1, pending: 0,
       weapons: [], items: {}, upgrades: [], mods: [], baseStats: base, stats: {},
       dash: { charges: 0, max: 0, cd: 0, t: 0, dx: 1, dy: 0, iframes: dash.iframes !== undefined ? dash.iframes : DEF_IFRAMES, dist: dash.dist || DEF_DIST },
-      iframes: 0, hurtT: 0, aim: 0, revives: 0, _revStat: 0, status: {}, kbx: 0, kby: 0
+      traits: {}, iframes: 0, hurtT: 0, aim: 0, revives: 0, _revStat: 0, status: {}, kbx: 0, kby: 0
     };
     p.maxHp = 1; p.hp = 1;
     p.ultCharge = 0;
@@ -115,7 +115,7 @@
         const strikes = Math.min(6, Math.max(1, valid.length));
         for (let i = 0; i < strikes; i++) {
           const tgt = valid[i % valid.length] || p;
-          NR.combat.damageEnemy(tgt, Math.round(90 * dmgMult), { crit: true, element: 'physical' });
+          NR.combat.hitEnemy(tgt, Math.round(90 * dmgMult), { weaponId: 'ult', crit: true, element: 'physical' });
           NR.combat.createArea({ areaKind: 'cone', x: tgt.x, y: tgt.y, len: 130, arc: 2.4, life: 0.25, element: 'shock', team: 'player' });
         }
       } else if (p.charId === 'bulwark') {

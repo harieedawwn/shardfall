@@ -26,7 +26,21 @@
     return out;
   }
   // n cards: no duplicate stat or weapon, rarity weighted by luck and wave, weapon cards only when valid
+  // every offer holds at least one trait card while any trait can still be taken (a second one with 20% chance); the rest are stat/weapon cards
   function rollCards(n, luck, wave) {
+    const p = NR.world.get().player, out = [], usedT = {};
+    let nt = 0;
+    if (p && NR.traits) {
+      const first = NR.traits.rollCard(p, usedT, wave);
+      if (first) { usedT[first.id] = true; nt = 1; out.push(first); if (n > 3 && NR.rng.chance(0.2)) { const sec = NR.traits.rollCard(p, usedT, wave); if (sec) { usedT[sec.id] = true; nt++; out.push(sec); } } }
+    }
+    const rest = rollStatWeapon(n - nt, luck, wave);
+    for (let i = 0; i < rest.length; i++) out.push(rest[i]);
+    // trait cards sit in the last slots so the familiar stat cards keep their positions
+    out.sort(function (a, b) { return (a.kind === 'trait' ? 1 : 0) - (b.kind === 'trait' ? 1 : 0); });
+    return out;
+  }
+  function rollStatWeapon(n, luck, wave) {
     const p = NR.world.get().player, w = NR.stats.rarityWeights(luck, wave), out = [];
     const U = NR.data.upgrades, statKeys = Object.keys(U).filter(function (k) { return !U[k].nonStat; });
     const weapons = p ? validWeapons(p) : [];
@@ -69,7 +83,9 @@
   function pick(index) {
     const W = NR.world.get(), p = W.player, c = W.levelup.cards[index];
     if (!c) return p.pending;
-    if (c.kind === 'weapon') {
+    if (c.kind === 'trait') {
+      NR.traits.grant(p, c.id);
+    } else if (c.kind === 'weapon') {
       if (!NR.weapons.add(p, c.id).ok) NR.player.addGold(20 + 4 * W.wave); // cannot happen unless the loadout changed under the card
     } else {
       NR.stats.addMod(p, 'upgrade:' + p.upgrades.length, { stat: c.stat, add: c.add, pct: c.pct });

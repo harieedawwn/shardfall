@@ -13,7 +13,7 @@ module.exports = function (H) {
   const stripCss = function (s) { return s.replace(/\/\*[\s\S]*?\*\//g, ''); };
 
   const NS = ['game', 'common', 'title', 'hint', 'menu', 'select', 'danger', 'levelup', 'shop', 'stats', 'tip', 'stat', 'rarity', 'element', 'kind', 'wp', 'pause',
-    'settings', 'set', 'ctl', 'meta', 'codex', 'victory', 'end', 'hud', 'touch', 'rotate', 'event'];
+    'settings', 'set', 'ctl', 'meta', 'codex', 'victory', 'end', 'hud', 'touch', 'rotate', 'event', 'trait', 'route'];
 
   // ---- key families built from data (dynamic keys such as t('stat.' + k)) ----
   function families(NR) {
@@ -221,7 +221,8 @@ module.exports = function (H) {
     const before = NR.world.get().player.gold; byFk(root, 'reroll').click(); ok(NR.world.get().player.gold < before, 'reroll cost gold');
     byFk(root, 'buy0').click(); ok(NR.world.get().shop.offers[0].sold, 'bought');
     const sw = byFk(root, 'sw0'); if (sw) { const n = NR.world.get().player.weapons.length; sw.click(); ok(NR.world.get().player.weapons.length === n, 'first click only arms'); sw.click(); ok(NR.world.get().player.weapons.length === n - 1, 'second click sells'); }
-    byFk(root, 'next').click(); ok(NR.run.getState() === 'wave' && NR.world.get().wave === 2);
+    byFk(root, 'next').click(); ok(NR.run.getState() === 'route', 'route screen after the shop'); ok(NR.ui.screens.current() === 'route');
+    ok(byFk(root, 'r0') && byFk(root, 'r1'), 'route cards'); byFk(root, 'r1').click(); ok(NR.run.getState() === 'wave' && NR.world.get().wave === 2 && NR.world.get().mod, 'route picked by click');
   });
 
   H.test('ui: anti-misclick guard ignores clicks right after a level-up/end screen opens', function () {

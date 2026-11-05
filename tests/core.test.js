@@ -309,7 +309,7 @@ module.exports = function (H) {
     steps(NR, 80); eq(NR.run.getState(), 'clear'); steps(NR, 20); eq(NR.run.getState(), 'shop');
     eq(W.shop.offers.length, 4); ok(NR.save.readRun(), 'snapshot written entering the shop');
     NR.run.togglePause(); eq(NR.run.getState(), 'paused'); NR.run.togglePause(); eq(NR.run.getState(), 'shop');
-    NR.run.leaveShop(); eq(NR.run.getState(), 'wave'); eq(W.wave, 2);
+    NR.run.leaveShop(); eq(NR.run.getState(), 'route', 'route choice before a normal wave'); ok(W.route.options.length >= 2 && W.route.options.length <= 3); NR.run.togglePause(); eq(NR.run.getState(), 'paused'); NR.run.togglePause(); eq(NR.run.getState(), 'route'); NR.run.chooseRoute(0); eq(NR.run.getState(), 'wave'); eq(W.wave, 2); ok(W.mod);
     // clear -> levelup only when queued, then shop
     W.player.pending = 2; NR.events.emit('wave:clear', { wave: 2, isBoss: false }); steps(NR, 100);
     eq(NR.run.getState(), 'levelup'); ok(W.levelup.cards.length > 0, 'cards offered');
@@ -329,9 +329,9 @@ module.exports = function (H) {
     // wave 15 clear -> victory -> endless -> shop -> wave 16
     NR.run.start({ charId: 'ranger', danger: 0, seed: 24 }); W = NR.world.get(); idle(NR); W.wave = 15;
     NR.events.emit('wave:clear', { wave: 15, isBoss: true }); steps(NR, 100); eq(NR.run.getState(), 'victory');
-    NR.run.enterEndless(); eq(NR.run.getState(), 'shop'); eq(W.endless, true); NR.run.leaveShop(); eq(NR.run.getState(), 'wave'); eq(W.wave, 16);
+    NR.run.enterEndless(); eq(NR.run.getState(), 'shop'); eq(W.endless, true); NR.run.leaveShop(); NR.run.chooseRoute(0); eq(NR.run.getState(), 'wave'); eq(W.wave, 16);
     W.player.hp = 1e6; NR.events.emit('wave:clear', { wave: 16, isBoss: false }); steps(NR, 100); eq(NR.run.getState(), 'shop', 'endless never returns to victory');
-    ok(log.indexOf('clear>levelup') >= 0 && log.indexOf('levelup>shop') >= 0 && log.indexOf('shop>wave') >= 0 && log.indexOf('end>menu') >= 0);
+    ok(log.indexOf('clear>levelup') >= 0 && log.indexOf('levelup>shop') >= 0 && log.indexOf('shop>route') >= 0 && log.indexOf('route>wave') >= 0 && log.indexOf('end>menu') >= 0);
   });
   test('run: stats written by run only (kills, damage, dashes, bosses, per-weapon)', function () {
     const NR = started(), W = NR.world.get(), E = NR.events; idle(NR);
@@ -354,7 +354,7 @@ module.exports = function (H) {
     eq(JSON.stringify(W.shop.offers), want.offers); eq(NR.rng.getState(), want.rng); eq(W.wave, want.wave); eq(W.danger, 2); eq(W.player.level, want.level);
     NR = H.load({ storage: store }); NR.main.boot(); eq(NR.run.continueRun(), true); W = NR.world.get();
     eq(NR.run.getState(), 'shop'); eq(W.player.gold, want.gold); eq(JSON.stringify(W.shop.offers), want.offers); eq(NR.rng.getState(), want.rng);
-    NR.run.leaveShop(); eq(W.wave, want.wave + 1); eq(NR.run.continueRun(), false, 'snapshot cleared once the wave starts');
+    NR.run.leaveShop(); if (NR.run.getState() === 'route') NR.run.chooseRoute(0); eq(W.wave, want.wave + 1); eq(NR.run.continueRun(), false, 'snapshot cleared once the wave starts');
   });
 
   // ---------- determinism / fx independence / bot ----------

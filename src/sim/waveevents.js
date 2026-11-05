@@ -29,8 +29,9 @@
   function start(n) {
     const w = W(), R = NR.data.waveEventRules;
     pend = null; w.event = null;
-    if (!w.player || n < R.firstWave || NR.director.waveInfo(n).isBoss) return;
-    if (!NR.rng.chance(R.chance)) return;
+    const rt = w.mod && NR.data.routes[w.mod], force = rt && rt.event === 'force';
+    if (!w.player || n < R.firstWave || NR.director.waveInfo(n).isBoss || (rt && rt.event === 'none')) return; // Calm: no event, Omen: always
+    if (!force && !NR.rng.chance(R.chance)) return;
     const ids = Object.keys(NR.data.waveEvents), id = ids[NR.rng.int(0, ids.length - 1)];
     pend = { id: id, at: w.waveDur * NR.rng.range(R.startFrom, R.startTo) };
   }

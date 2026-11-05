@@ -169,6 +169,13 @@ small { font-size: 0.82em; font-weight: 600; }
 .btn.card.up { flex-direction: column; align-items: stretch; justify-content: flex-start; padding: 0; min-height: 14em; text-transform: none; letter-spacing: 0; text-align: left; background: var(--card); animation: cardin 220ms ease-out both; }
 .btn.card.up:hover, .btn.card.up:focus { transform: translate(-3px, -5px) scale(1.04); box-shadow: 10px 11px 0 var(--ink2); background: var(--card2); }
 .card .band { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--rc); color: var(--ink); padding: 0.3em 0.6em; font-weight: 800; text-transform: uppercase; font-stretch: condensed; border-bottom: 3px solid var(--ink); }
+.btn.card.up.trait { border-style: dashed; }
+.btn.card.up.trait .band { background: var(--ink); color: var(--rc); border-bottom: 3px dashed var(--rc); }
+.btn.card.up.trait.match { box-shadow: 6px 6px 0 var(--yellow); }
+.btn.card.up.trait .ft { color: var(--dim); }
+.btn.card.up.trait.match .ft { color: var(--yellow); }
+.ichip.trait { border-left-style: dashed; }
+.btn.card.up.route { --rc: var(--yellow); }
 .card .band .kh { background: var(--ink); color: var(--cream); }
 .ub { display: flex; flex-direction: column; gap: 0.35em; padding: 0.8em; flex: 1; }
 .ub .uico { display: flex; align-items: center; justify-content: center; height: 48px; margin: 2px 0 4px; }

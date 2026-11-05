@@ -1,7 +1,7 @@
 (function () {
   const NR = globalThis.NR = globalThis.NR || {};
   const CLEAR_TIME = 1.5;
-  const RESET_MODULES = ['weapons', 'projectiles', 'combat', 'reactions', 'enemies', 'bosses', 'director', 'waveEvents', 'items', 'progression', 'shop', 'pickups'];
+  const RESET_MODULES = ['weapons', 'projectiles', 'combat', 'reactions', 'enemies', 'bosses', 'director', 'waveEvents', 'traits', 'items', 'progression', 'shop', 'pickups'];
   const stateP = { from: '', to: '' };
   const startP = { seed: 0, charId: '', danger: 0, endless: false };
   const endP = { result: '', stats: null };
@@ -79,6 +79,9 @@
     const w = W();
     w.wave = n; w.zone = NR.director.zoneOf(n);
     w.scale = NR.stats.enemyScale(n, w.danger);
+    w.mod = w.pendingMod || ''; w.pendingMod = '';   // the route chosen after the shop applies to this wave only
+    const rm = w.mod && NR.data.routes[w.mod];
+    if (rm) { const m = rm.mods, sc = w.scale; if (m.count) sc.count *= m.count; if (m.gold) sc.gold *= m.gold; if (m.xp) sc.xp *= m.xp; if (m.hp) sc.hp *= m.hp; if (m.speed) sc.speed *= m.speed; if (m.elite) sc.elite += m.elite; }
     NR.director.startWave(n);
     NR.waveEvents.start(n);
   }
@@ -107,6 +110,7 @@
     NR.combat.update(dt);
     NR.pickups.update(dt);
     NR.items.update(dt);
+    NR.traits.update(dt);
     // bookkeeping
     w.time += dt; w.tick++;
     if (deathFlag) { deathFlag = false; NR.world.cleanup(); endRun('lose'); return; }
@@ -140,8 +144,26 @@
     const w = W();
     if (w.state !== 'shop') return;
     NR.save.clearRun(); // the snapshot is only valid while standing in the shop
+    const n = w.wave + 1;
+    if (NR.data.routes && !NR.director.waveInfo(n).isBoss) { openRoute(); return; }
+    startWave(n);
+    setState('wave');
+  }
+  // route choice: 2-3 wave modifiers before a normal wave (never before a boss)
+  function openRoute() {
+    const w = W(), ids = NR.rng.shuffle(Object.keys(NR.data.routes));
+    w.route = { options: ids.slice(0, NR.rng.chance(0.5) ? 3 : 2), wave: w.wave + 1 };
+    setState('route');
+  }
+  function chooseRoute(index) {
+    const w = W();
+    if (w.state !== 'route' || !w.route) return false;
+    const id = w.route.options[index];
+    if (!id) return false;
+    w.pendingMod = id; w.route = null;
     startWave(w.wave + 1);
     setState('wave');
+    return true;
   }
   function enterEndless() {
     const w = W();
@@ -156,7 +178,7 @@
       setState(to);
       return;
     }
-    if (w.state === 'wave' || w.state === 'clear' || w.state === 'levelup' || w.state === 'shop') {
+    if (w.state === 'wave' || w.state === 'clear' || w.state === 'levelup' || w.state === 'shop' || w.state === 'route') {
       pausedFrom = w.state;
       setState('paused');
       w.prevState = pausedFrom;
@@ -186,7 +208,7 @@
     return NR.util.clone({
       v: 1, seed: w.seed, rng: NR.rng.getState(), charId: p.charId, danger: w.danger, wave: w.wave, endless: w.endless,
       time: w.time,
-      player: { hp: p.hp, gold: p.gold, xp: p.xp, level: p.level, weapons: p.weapons, items: p.items, upgrades: p.upgrades, revives: p.revives },
+      player: { hp: p.hp, gold: p.gold, xp: p.xp, level: p.level, weapons: p.weapons, items: p.items, upgrades: p.upgrades, revives: p.revives, traits: p.traits },
       shop: { offers: w.shop.offers, rerolls: w.shop.rerolls },
       stats: w.stats
     });
@@ -213,6 +235,7 @@
       const u = p.upgrades[i], def = NR.data.upgrades[u.stat], v = def && def.rarities[u.rarity];
       if (v) S.addMod(p, 'upgrade:' + i, { stat: u.stat, add: v.add, pct: v.pct });
     }
+    if (ps.traits) for (const id in ps.traits) NR.traits.grant(p, id, ps.traits[id]); // older saves have no traits
     p.gold = ps.gold;
     p.hp = Math.min(ps.hp, p.maxHp);
     if (ps.revives !== undefined) p.revives = ps.revives;
@@ -225,5 +248,5 @@
     setState('shop');
   }
 
-  NR.run = { init, start, continueRun, step, setState, getState, togglePause, abandon, endRun, enterEndless, leaveShop, onLevelUpsDone, snapshot, restore };
+  NR.run = { init, start, continueRun, step, setState, getState, togglePause, abandon, endRun, enterEndless, leaveShop, chooseRoute, onLevelUpsDone, snapshot, restore };
 })();

@@ -335,6 +335,16 @@
     "event.storm.short": "Dodge the marks, grab the XP · {s}s",
     "event.win": "{name} cleared!",
     "event.fail": "{name} failed",
-    "event.escaped": "The gold carrier got away"
+    "event.escaped": "The gold carrier got away",
+    "levelup.trait": "Trait",
+    "levelup.synergy": "★ Build match · {hint}",
+    "trait.title": "Traits ({n})",
+    "trait.none": "No traits yet. Pick TRAIT cards when you level up.",
+    "trait.lvl": "Lv {n}/{max}",
+    "route.title": "Choose your route",
+    "route.sub": "Wave {n} is next. Each route applies to that wave only.",
+    "route.pick": "Pick",
+    "route.banner": "Route: {name}",
+    "end.trait": "Trait: {name}"
   };
 })();
